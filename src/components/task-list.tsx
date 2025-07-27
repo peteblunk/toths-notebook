@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Plus, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Bot, Plus, Sparkles } from "lucide-react";
 
 import { type Task, type FilterCategory } from '@/lib/types';
 import { AddTaskDialog } from '@/components/add-task-dialog';
@@ -10,13 +10,6 @@ import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { prioritizeUserTasks } from '@/app/actions';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SidebarTrigger } from './ui/sidebar';
 import { isToday } from 'date-fns';
 
@@ -29,7 +22,7 @@ const createLocalDate = (dateString: string) => {
 };
 
 const initialTasks: Task[] = [
-  { id: '1', title: 'Morning meditation ritual', dueDate: createLocalDate('2024-08-15'), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
+  { id: '1', title: 'Morning meditation ritual', dueDate: new Date(), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
   { id: '2', title: 'Prepare weekly project report', dueDate: createLocalDate('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Regular Responsibilities', completed: false },
   { id: '3', title: 'Explore the hidden sector of Cy-Giza', dueDate: new Date(), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
   { id: '4', title: 'Update firewall and security protocols', dueDate: createLocalDate('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Regular Responsibilities', completed: false },
@@ -115,7 +108,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <header className="flex items-center justify-between mb-6">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="md:hidden" />
           <div>
@@ -123,7 +116,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
             <p className="text-muted-foreground">Your Cyber-Egyptian Task Manager</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end md:self-auto">
             <Button variant="outline" onClick={handlePrioritize} disabled={isPending}>
                 {isPending ? <Bot className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                 Prioritize
@@ -133,7 +126,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
       </header>
       
       {filteredTasks.length > 0 ? (
-        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             <AnimatePresence>
             {filteredTasks.map(task => (
                 <motion.div

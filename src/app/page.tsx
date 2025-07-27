@@ -10,7 +10,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('Today');
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full flex-col md:flex-row">
       <Sidebar>
         <AppSidebar activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </Sidebar>

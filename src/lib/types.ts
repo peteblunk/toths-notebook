@@ -1,5 +1,7 @@
 export type TaskCategory = 'Daily Rituals' | 'Regular Responsibilities' | 'Special Missions' | 'Grand Expeditions';
 
+export type FilterCategory = TaskCategory | 'All' | 'Today';
+
 export type TaskImportance = 'high' | 'medium' | 'low';
 
 export type Task = {

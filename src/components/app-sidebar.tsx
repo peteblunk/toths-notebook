@@ -14,9 +14,16 @@ import { AnkhIcon } from "./icons/ankh-icon";
 import { ScarabBeetleIcon } from "./icons/scarab-beetle-icon";
 import { PyramidsIcon } from "./icons/pyramids-icon";
 import { ScrollIcon } from "./icons/scroll-icon";
-import { BookCopy, FolderUp, LogOut, Settings } from "lucide-react";
+import { BookCopy, CalendarClock, FolderUp, LogOut, Settings } from "lucide-react";
+import { FilterCategory } from "@/lib/types";
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  activeCategory: FilterCategory;
+  setActiveCategory: (category: FilterCategory) => void;
+};
+
+
+export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProps) {
   return (
     <>
       <SidebarHeader>
@@ -29,26 +36,32 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
+           <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => setActiveCategory('Today')} isActive={activeCategory === 'Today'}>
+              <CalendarClock />
+              Today
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#" isActive>
+            <SidebarMenuButton onClick={() => setActiveCategory('Daily Rituals')} isActive={activeCategory === 'Daily Rituals'}>
               <EyeOfHorusIcon />
               Daily Rituals
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#">
+            <SidebarMenuButton onClick={() => setActiveCategory('Regular Responsibilities')} isActive={activeCategory === 'Regular Responsibilities'}>
               <AnkhIcon />
               Responsibilities
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#">
+            <SidebarMenuButton onClick={() => setActiveCategory('Special Missions')} isActive={activeCategory === 'Special Missions'}>
               <ScarabBeetleIcon />
               Special Missions
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton href="#">
+            <SidebarMenuButton onClick={() => setActiveCategory('Grand Expeditions')} isActive={activeCategory === 'Grand Expeditions'}>
               <PyramidsIcon />
               Grand Expeditions
             </SidebarMenuButton>

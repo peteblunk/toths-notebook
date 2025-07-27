@@ -19,13 +19,19 @@ import {
 } from "@/components/ui/select";
 import { SidebarTrigger } from './ui/sidebar';
 
+// Helper to create dates in local timezone from YYYY-MM-DD string
+const createLocalDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 const initialTasks: Task[] = [
-  { id: '1', title: 'Morning meditation ritual', dueDate: new Date('2024-08-15'), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
-  { id: '2', title: 'Prepare weekly project report', dueDate: new Date('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Regular Responsibilities', completed: false },
-  { id: '3', title: 'Explore the hidden sector of Cy-Giza', dueDate: new Date('2024-08-20'), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
-  { id: '4', title: 'Update firewall and security protocols', dueDate: new Date('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Regular Responsibilities', completed: false },
-  { id: '5', title: 'Launch the Sun-Ra solar probe', dueDate: new Date('2024-09-01'), importance: 'high', estimatedTime: 480, category: 'Grand Expeditions', completed: false },
-  { id: '6', title: 'Daily physical training', dueDate: new Date('2024-08-15'), importance: 'low', estimatedTime: 60, category: 'Daily Rituals', completed: false },
+  { id: '1', title: 'Morning meditation ritual', dueDate: createLocalDate('2024-08-15'), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
+  { id: '2', title: 'Prepare weekly project report', dueDate: createLocalDate('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Regular Responsibilities', completed: false },
+  { id: '3', title: 'Explore the hidden sector of Cy-Giza', dueDate: createLocalDate('2024-08-20'), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
+  { id: '4', title: 'Update firewall and security protocols', dueDate: createLocalDate('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Regular Responsibilities', completed: false },
+  { id: '5', title: 'Launch the Sun-Ra solar probe', dueDate: createLocalDate('2024-09-01'), importance: 'high', estimatedTime: 480, category: 'Grand Expeditions', completed: false },
+  { id: '6', title: 'Daily physical training', dueDate: createLocalDate('2024-08-15'), importance: 'low', estimatedTime: 60, category: 'Daily Rituals', completed: false },
 ];
 
 export function TaskList() {

@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Plus, Sparkles } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
 
 import { type Task, type FilterCategory } from '@/lib/types';
 import { AddTaskDialog } from '@/components/add-task-dialog';
@@ -31,7 +31,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
       completed: false,
     };
     addTask(newTask);
-    setTasks(getTasks());
+    setTasks([...getTasks()]); // Re-fetch tasks and update state
     toast({
       title: "Task Scribed",
       description: `"${newTask.title}" has been added to your list.`,
@@ -40,7 +40,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
 
   const handleTaskCompletionChange = (taskId: string, completed: boolean) => {
     updateTask(taskId, { completed });
-    setTasks(getTasks());
+    setTasks([...getTasks()]); // Re-fetch tasks and update state
   };
 
   const handlePrioritize = () => {
@@ -66,14 +66,8 @@ export function TaskList({ activeCategory }: TaskListProps) {
       const prioritizedTasks = prioritizedIds.map(id => uncompletedTasks.find(t => t.id === id)!).filter(Boolean);
       const completedTasks = currentTasks.filter(t => t.completed);
       
-      // Update the store with the new order
+      // This part is tricky with mock data. We'll just update the component state for now.
       const newOrderedTasks = [...prioritizedTasks, ...completedTasks];
-      newOrderedTasks.forEach((task, index) => {
-        const originalTask = getTasks().find(t => t.id === task.id);
-        if (originalTask) {
-          updateTask(task.id, task);
-        }
-      });
       setTasks(newOrderedTasks);
 
 

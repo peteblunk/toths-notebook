@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,6 +46,13 @@ const formSchema = z.object({
   dueDate: z.date(),
   estimatedTime: z.coerce.number().min(1, "Estimated time must be at least 1 minute."),
 });
+
+const categoryDescriptions: Record<TaskCategory, string> = {
+  'Daily Rituals': 'Tasks that repeat every day.',
+  'Regular Responsibilities': 'Core duties and recurring obligations.',
+  'Special Missions': 'Unique, one-off objectives with specific goals.',
+  'Grand Expeditions': 'Large, long-term projects with multiple phases.',
+};
 
 type AddTaskDialogProps = {
   onTaskAdd: (task: Omit<Task, 'id' | 'completed'>) => void;
@@ -119,6 +127,9 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                       <SelectItem value="Grand Expeditions">Grand Expeditions</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    {categoryDescriptions[field.value as TaskCategory]}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

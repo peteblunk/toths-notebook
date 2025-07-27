@@ -37,31 +37,51 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
       <SidebarContent>
         <SidebarMenu>
            <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setActiveCategory('Today')} isActive={activeCategory === 'Today'}>
+            <SidebarMenuButton 
+              onClick={() => setActiveCategory('Today')} 
+              isActive={activeCategory === 'Today'}
+              tooltip="Tasks due today and daily rituals"
+            >
               <CalendarClock />
               Today
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setActiveCategory('Daily Rituals')} isActive={activeCategory === 'Daily Rituals'}>
+            <SidebarMenuButton 
+              onClick={() => setActiveCategory('Daily Rituals')} 
+              isActive={activeCategory === 'Daily Rituals'}
+              tooltip="Tasks that repeat every day."
+            >
               <EyeOfHorusIcon />
               Daily Rituals
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setActiveCategory('Regular Responsibilities')} isActive={activeCategory === 'Regular Responsibilities'}>
+            <SidebarMenuButton 
+              onClick={() => setActiveCategory('Regular Responsibilities')} 
+              isActive={activeCategory === 'Regular Responsibilities'}
+              tooltip="Core duties and recurring obligations."
+            >
               <AnkhIcon />
               Responsibilities
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setActiveCategory('Special Missions')} isActive={activeCategory === 'Special Missions'}>
+            <SidebarMenuButton 
+              onClick={() => setActiveCategory('Special Missions')} 
+              isActive={activeCategory === 'Special Missions'}
+              tooltip="Unique, one-off objectives with specific goals."
+            >
               <ScarabBeetleIcon />
               Special Missions
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => setActiveCategory('Grand Expeditions')} isActive={activeCategory === 'Grand Expeditions'}>
+            <SidebarMenuButton 
+              onClick={() => setActiveCategory('Grand Expeditions')} 
+              isActive={activeCategory === 'Grand Expeditions'}
+              tooltip="Large, long-term projects with multiple phases."
+            >
               <PyramidsIcon />
               Grand Expeditions
             </SidebarMenuButton>

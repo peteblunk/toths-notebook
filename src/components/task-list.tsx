@@ -12,30 +12,15 @@ import { useToast } from '@/hooks/use-toast';
 import { prioritizeUserTasks } from '@/app/actions';
 import { SidebarTrigger } from './ui/sidebar';
 import { isToday } from 'date-fns';
+import { getTasks, addTask, updateTask } from '@/lib/mock-data';
 
-// Helper to create dates in local timezone from YYYY-MM-DD string
-const createLocalDate = (dateString: string) => {
-  const [year, month, day] = dateString.split('-').map(Number);
-  // Create date in UTC to avoid timezone shifts, then treat as local
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-};
-
-const initialTasks: Task[] = [
-  { id: '1', title: 'Morning meditation ritual', dueDate: new Date(), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
-  { id: '2', title: 'Prepare weekly project report', dueDate: createLocalDate('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Regular Responsibilities', completed: false },
-  { id: '3', title: 'Explore the hidden sector of Cy-Giza', dueDate: new Date(), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
-  { id: '4', title: 'Update firewall and security protocols', dueDate: createLocalDate('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Regular Responsibilities', completed: false },
-  { id: '5', title: 'Launch the Sun-Ra solar probe', dueDate: createLocalDate('2024-09-01'), importance: 'high', estimatedTime: 480, category: 'Grand Expeditions', completed: false },
-  { id: '6', title: 'Daily physical training', dueDate: new Date(), importance: 'low', estimatedTime: 60, category: 'Daily Rituals', completed: false },
-];
 
 type TaskListProps = {
   activeCategory: FilterCategory;
 };
 
 export function TaskList({ activeCategory }: TaskListProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(getTasks());
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -45,7 +30,8 @@ export function TaskList({ activeCategory }: TaskListProps) {
       id: crypto.randomUUID(),
       completed: false,
     };
-    setTasks(prev => [...prev, newTask]);
+    addTask(newTask);
+    setTasks(getTasks());
     toast({
       title: "Task Scribed",
       description: `"${newTask.title}" has been added to your list.`,
@@ -53,15 +39,14 @@ export function TaskList({ activeCategory }: TaskListProps) {
   };
 
   const handleTaskCompletionChange = (taskId: string, completed: boolean) => {
-    setTasks(prev =>
-      prev.map(task => (task.id === taskId ? { ...task, completed } : task))
-    );
+    updateTask(taskId, { completed });
+    setTasks(getTasks());
   };
 
   const handlePrioritize = () => {
     startTransition(async () => {
-      const uncompletedTasks = tasks.filter(t => !t.completed);
-      const completedTasks = tasks.filter(t => t.completed);
+      const currentTasks = getTasks();
+      const uncompletedTasks = currentTasks.filter(t => !t.completed);
       
       if (uncompletedTasks.length < 2) {
         toast({
@@ -78,10 +63,19 @@ export function TaskList({ activeCategory }: TaskListProps) {
       });
 
       const prioritizedIds = await prioritizeUserTasks(uncompletedTasks);
+      const prioritizedTasks = prioritizedIds.map(id => uncompletedTasks.find(t => t.id === id)!).filter(Boolean);
+      const completedTasks = currentTasks.filter(t => t.completed);
       
-      const prioritizedUncompleted = prioritizedIds.map(id => uncompletedTasks.find(t => t.id === id)!).filter(Boolean);
-      
-      setTasks([...prioritizedUncompleted, ...completedTasks]);
+      // Update the store with the new order
+      const newOrderedTasks = [...prioritizedTasks, ...completedTasks];
+      newOrderedTasks.forEach((task, index) => {
+        const originalTask = getTasks().find(t => t.id === task.id);
+        if (originalTask) {
+          updateTask(task.id, task);
+        }
+      });
+      setTasks(newOrderedTasks);
+
 
       toast({
         title: "Tasks Prioritized",

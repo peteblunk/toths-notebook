@@ -2,6 +2,7 @@
 // In a real application, you would fetch the task data based on the id.
 "use client";
 
+import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -9,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { useSearchParams } from 'next/navigation';
 
 // This is mock data. In a real app, you'd fetch this from a database or a global state.
 const getTaskById = (id: string) => {

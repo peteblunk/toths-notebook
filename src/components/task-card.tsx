@@ -1,12 +1,15 @@
 "use client";
 
 import { format } from "date-fns";
-import { Calendar, Clock, Tag } from "lucide-react";
+import { Calendar, Clock, Tag, ExternalLink } from "lucide-react";
+import Link from "next/link";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 type TaskCardProps = {
   task: Task;
@@ -58,6 +61,14 @@ export function TaskCard({ task, onTaskCompletionChange }: TaskCardProps) {
             <Tag className="h-4 w-4" />
             <Badge variant="outline">{task.category}</Badge>
           </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+            <Button asChild variant="ghost" size="sm">
+                <Link href={`/task/${task.id}`}>
+                    Details
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
         </div>
       </CardContent>
     </Card>

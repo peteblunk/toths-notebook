@@ -48,7 +48,7 @@ export function TaskCard({ task, onTaskCompletionChange }: TaskCardProps) {
         />
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>{format(task.dueDate, "MMM d, yyyy")}</span>

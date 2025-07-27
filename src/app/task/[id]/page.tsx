@@ -2,18 +2,21 @@
 // In a real application, you would fetch the task data based on the id.
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import Link from 'link';
+import { notFound, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { useSearchParams } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Task } from '@/lib/types';
+
 
 // This is mock data. In a real app, you'd fetch this from a database or a global state.
-const getTaskById = (id: string) => {
+const getTaskById = (id: string | undefined): Task | undefined => {
+    if (!id) return undefined;
     const tasks = [
         { id: '1', title: 'Morning meditation ritual', dueDate: new Date('2024-08-15'), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
         { id: '2', title: 'Prepare weekly project report', dueDate: new Date('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Regular Responsibilities', completed: false },
@@ -26,8 +29,42 @@ const getTaskById = (id: string) => {
 }
 
 
-export default function TaskDetailPage({ params }: { params: { id: string } }) {
-    const task = getTaskById(params.id);
+export default function TaskDetailPage() {
+    const params = useParams();
+    const [task, setTask] = useState<Task | null | undefined>(undefined);
+
+    useEffect(() => {
+        if (params.id) {
+            const taskId = Array.isArray(params.id) ? params.id[0] : params.id;
+            const foundTask = getTaskById(taskId);
+            setTask(foundTask);
+        }
+    }, [params.id]);
+
+    if (task === undefined) {
+        return (
+            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+                <Skeleton className="h-10 w-36 mb-4" />
+                <Card className="bg-card/70">
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                         <div>
+                            <Skeleton className="h-6 w-1/4 mb-2" />
+                            <Skeleton className="h-48 w-full" />
+                        </div>
+                         <div>
+                            <Skeleton className="h-6 w-1/4 mb-2" />
+                             <div className="p-4 border-2 border-dashed border-muted rounded-lg text-center text-muted-foreground">
+                                <p>Loading sub-tasks...</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
     if (!task) {
         notFound();

@@ -4,7 +4,8 @@
 
 *Manage your tasks with the wisdom of the ancients and the power of modern technology.*
 
-![Thoth's Notebook Hero Image](https://i.imgur.com/u5wF2g1.jpeg)
+<img width="2550" height="1220" alt="image" src="https://github.com/user-attachments/assets/324604f2-9f4b-4fb9-a08c-f11922770b13" />
+
 
 ---
 
@@ -103,7 +104,7 @@ thoths-notebook/
 
 * **Themed Interface:** A dark, futuristic UI inspired by ancient Egyptian mythology.
 * **Task Management:** Create, update, and delete tasks with ease.
-* **Category Filtering:** Organize tasks into categories like "Today," "Work," "Coast Guard," and "Personal Interests" using the sidebar.
+* **Category Filtering:** Organize tasks into categories like "Today," "Daily Rituals," "Responsibilities,", "Special Missions", and "Grand Expeditions using the sidebar.
 * **Persistent Storage:** All tasks are securely stored and synced in real-time using Google Firestore.
 * **User Authentication:** Secure login system powered by Firebase Auth to protect your personal data.
 * **Responsive Design:** Fully functional and beautiful on all devices, from desktop to mobile.

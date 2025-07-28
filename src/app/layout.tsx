@@ -1,7 +1,9 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
+
+import { AuthProvider } from '@/components/auth-provider'; // Import our new provider
 
 export const metadata: Metadata = {
   title: "Thoth's Notebook",
@@ -22,9 +24,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          {children}
-        </SidebarProvider>
+        <AuthProvider> {/* Wrap everything with the AuthProvider */}
+
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

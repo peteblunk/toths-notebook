@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, useTransition, useMemo } from 'react';
+import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, Sparkles } from "lucide-react";
+import { isToday } from 'date-fns';
+
+// Firebase and Auth Imports
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/components/auth-provider';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 import { type Task, type FilterCategory } from '@/lib/types';
 import { AddTaskDialog } from '@/components/add-task-dialog';
@@ -11,42 +17,96 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { prioritizeUserTasks } from '@/app/actions';
 import { SidebarTrigger } from './ui/sidebar';
-import { isToday } from 'date-fns';
-import { getTasks, addTask, updateTask } from '@/lib/mock-data';
-
 
 type TaskListProps = {
   activeCategory: FilterCategory;
 };
 
 export function TaskList({ activeCategory }: TaskListProps) {
-  const [tasks, setTasks] = useState<Task[]>(getTasks());
+  const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const { user } = useAuth();
 
-  const handleTaskAdd = (newTaskData: Omit<Task, 'id' | 'completed'>) => {
-    const newTask: Task = {
-      ...newTaskData,
-      id: crypto.randomUUID(),
-      completed: false,
-    };
-    addTask(newTask);
-    setTasks([...getTasks()]); // Re-fetch tasks and update state
-    toast({
-      title: "Task Scribed",
-      description: `"${newTask.title}" has been added to your list.`,
+  useEffect(() => {
+    if (!user) {
+      setTasks([]);
+      return;
+    }
+
+    // --- DEBUGGING STEP 1 ---
+    // Let's confirm we have the correct user ID before we query.
+    console.log("Setting up listener for user:", user.uid);
+
+    const tasksCollection = collection(db, 'tasks');
+    const q = query(tasksCollection, where("userId", "==", user.uid));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      // --- DEBUGGING STEP 2 ---
+      // This will show us exactly what Firestore is sending back.
+      console.log(`Received ${querySnapshot.size} tasks from Firestore.`);
+
+      const tasksData: Task[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        tasksData.push({
+          id: doc.id,
+          ...data,
+          dueDate: data.dueDate?.toDate(), 
+          createdAt: data.createdAt?.toDate(),
+        } as Task);
+      });
+      setTasks(tasksData);
     });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleTaskAdd = async (newTaskData: Omit<Task, 'id' | 'completed'>) => {
+    if (!user) return;
+
+    const newTaskPayload = {
+      ...newTaskData,
+      userId: user.uid,
+      completed: false,
+      createdAt: serverTimestamp(),
+      details: '',
+    };
+    
+    try {
+      await addDoc(collection(db, "tasks"), newTaskPayload);
+      toast({
+        title: "Task Scribed",
+        description: `"${newTaskData.title}" has been added to your list.`,
+      });
+    } catch (error) {
+      console.error("Error adding task: ", error);
+      toast({ title: "Error", description: "Could not add task.", variant: 'destructive' });
+    }
   };
 
-  const handleTaskCompletionChange = (taskId: string, completed: boolean) => {
-    updateTask(taskId, { completed });
-    setTasks([...getTasks()]); // Re-fetch tasks and update state
+  const handleTaskCompletionChange = async (taskId: string, completed: boolean) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await updateDoc(taskDocRef, { completed });
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await deleteDoc(taskDocRef);
+      toast({ title: "Task Erased", description: "The task has been removed from the scrolls." });
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
   };
 
   const handlePrioritize = () => {
     startTransition(async () => {
-      const currentTasks = getTasks();
-      const uncompletedTasks = currentTasks.filter(t => !t.completed);
+      const uncompletedTasks = tasks.filter(t => !t.completed);
       
       if (uncompletedTasks.length < 2) {
         toast({
@@ -64,12 +124,10 @@ export function TaskList({ activeCategory }: TaskListProps) {
 
       const prioritizedIds = await prioritizeUserTasks(uncompletedTasks);
       const prioritizedTasks = prioritizedIds.map(id => uncompletedTasks.find(t => t.id === id)!).filter(Boolean);
-      const completedTasks = currentTasks.filter(t => t.completed);
+      const completedTasks = tasks.filter(t => t.completed);
       
-      // This part is tricky with mock data. We'll just update the component state for now.
       const newOrderedTasks = [...prioritizedTasks, ...completedTasks];
       setTasks(newOrderedTasks);
-
 
       toast({
         title: "Tasks Prioritized",
@@ -80,16 +138,15 @@ export function TaskList({ activeCategory }: TaskListProps) {
 
   const filteredTasks = useMemo(() => {
     if (activeCategory === 'Today') {
-      return tasks.filter(task => isToday(task.dueDate) || task.category === 'Daily Rituals');
+      return tasks.filter(task => (task.dueDate && isToday(task.dueDate)) || task.category === 'Daily Rituals');
     }
-    if (activeCategory === 'All') return tasks;
+    if (activeCategory === 'All') return tasks; 
     return tasks.filter(task => task.category === activeCategory);
   }, [tasks, activeCategory]);
   
   const getHeaderText = () => {
     switch (activeCategory) {
         case 'Today': return "Today's Agenda";
-        case 'All': return "All Scrolls";
         default: return activeCategory;
     }
   }
@@ -128,6 +185,7 @@ export function TaskList({ activeCategory }: TaskListProps) {
                 <TaskCard
                     task={task}
                     onTaskCompletionChange={handleTaskCompletionChange}
+                    onTaskDelete={handleTaskDelete}
                 />
                 </motion.div>
             ))}

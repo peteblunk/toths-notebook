@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Calendar, Clock, Tag, ExternalLink } from "lucide-react";
+import { Calendar, Clock, Tag, ExternalLink, Trash2 } from "lucide-react"; // Added Trash2 icon
 import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +11,12 @@ import { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
+// --- THE FIX IS HERE ---
+// We've updated the props to accept the onTaskDelete function
 type TaskCardProps = {
   task: Task;
   onTaskCompletionChange: (taskId: string, completed: boolean) => void;
+  onTaskDelete: (taskId: string) => void; // Added this line
 };
 
 const importanceStyles = {
@@ -22,7 +25,8 @@ const importanceStyles = {
   low: "border-l-4 border-primary",
 };
 
-export function TaskCard({ task, onTaskCompletionChange }: TaskCardProps) {
+// Destructure the new onTaskDelete prop
+export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCardProps) {
   return (
     <Card
       className={cn(
@@ -62,13 +66,25 @@ export function TaskCard({ task, onTaskCompletionChange }: TaskCardProps) {
             <Badge variant="outline">{task.category}</Badge>
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
-            <Button asChild variant="ghost" size="sm">
-                <Link href={`/task/${task.id}`}>
-                    Details
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                </Link>
-            </Button>
+        <div className="mt-4 flex justify-end items-center gap-2">
+           {/* --- THE FIX IS HERE --- */}
+           {/* We've added a new button for deleting the task. */}
+           <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={() => onTaskDelete(task.id)} // It calls the function passed down from TaskList
+           >
+             <Trash2 className="h-4 w-4" />
+             <span className="sr-only">Delete Task</span>
+           </Button>
+
+           <Button asChild variant="ghost" size="sm">
+             <Link href={`/task/${task.id}`}>
+               Details
+               <ExternalLink className="ml-2 h-4 w-4" />
+             </Link>
+           </Button>
         </div>
       </CardContent>
     </Card>

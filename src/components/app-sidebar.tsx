@@ -8,6 +8,8 @@ import {
   SidebarMenuButton,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button"; // Added for custom button
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Added for tooltip
 import {
   Home,
   Sunrise,
@@ -43,11 +45,8 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
     { name: "Grand Expeditions", icon: <Mountain /> },
   ];
 
-  // THE FIX IS HERE: We are returning a React Fragment (<>) instead of another <Sidebar>.
-  // This provides the "guts" of the sidebar, which are then correctly placed
-  // inside the main <Sidebar> component in `page.tsx`.
   return (
-    <>
+    <div className="flex flex-col h-full">
       <SidebarHeader>
         <div className="flex items-center justify-center p-2">
             <h1 className="text-xl font-bold text-cyan-400 font-display tracking-wider">
@@ -56,7 +55,7 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
         </div>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="flex-grow overflow-y-auto">
         <SidebarMenu>
           {mainNavItems.map((item) => (
             <SidebarMenuButton
@@ -83,14 +82,25 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
                     </SidebarGroupLabel>
                 </div>
             </div>
-            <SidebarMenuButton 
-                onClick={handleSignOut} 
-                icon={<LogOut className="w-5 h-5" />} 
-                className="h-8 w-8 p-0 flex-shrink-0"
-                tooltip="Logout"
-            />
+            {/* THE FIX IS HERE: Replaced SidebarMenuButton with a custom styled Button and Tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                    onClick={handleSignOut}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+                >
+                    <LogOut className="w-5 h-5" />
+                    <span className="sr-only">Logout</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                  <p>Logout</p>
+              </TooltipContent>
+            </Tooltip>
         </div>
       </SidebarFooter>
-    </>
+    </div>
   );
 }

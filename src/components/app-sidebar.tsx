@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarMenu,
@@ -21,29 +20,21 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 
-// This is the main sidebar component.
-// We've added the logic for signing out here.
+// This is the main sidebar component, now correctly structured.
 export function AppSidebar({ activeCategory, setActiveCategory }) {
-  // 1. Hooks at the top - this is the correct place for them.
-  const router = useRouter();
-  const { user } = useAuth(); // Get the current user to display their name
+  const { user } = useAuth();
 
-  // 2. Helper functions next.
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      // After signing out, the AuthProvider will detect the change,
-      // and the protected route on the main page will automatically
-      // redirect the user to the /login page.
+      // The AuthProvider will automatically handle the redirect.
       console.log("User signed out successfully.");
     } catch (error) {
       console.error("Error signing out: ", error);
     }
   };
 
-  // A helper array for our main navigation items
   const mainNavItems = [
     { name: "Today", icon: <Home /> },
     { name: "Daily Rituals", icon: <Sunrise /> },
@@ -52,39 +43,53 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
     { name: "Grand Expeditions", icon: <Mountain /> },
   ];
 
-  // 3. JSX return at the end.
+  // THE FIX IS HERE: We are returning a React Fragment (<>) instead of another <Sidebar>.
+  // This provides the "guts" of the sidebar, which are then correctly placed
+  // inside the main <Sidebar> component in `page.tsx`.
   return (
     <>
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <User className="w-6 h-6 text-cyan-400" />
-          {/* Display the user's name if they are logged in */}
-          <SidebarGroupLabel className="text-lg font-semibold text-cyan-400">
-            {user ? user.displayName : "Scribe"}
-          </SidebarGroupLabel>
+        <div className="flex items-center justify-center p-2">
+            <h1 className="text-xl font-bold text-cyan-400 font-display tracking-wider">
+                Thoth's Notebook
+            </h1>
         </div>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col flex-grow">
-        <Sidebar>
-          <SidebarMenu>
-            {/* We now map over the mainNavItems array to create the buttons dynamically */}
-            {mainNavItems.map((item) => (
-              <SidebarMenuButton
-                key={item.name}
-                icon={item.icon}
-                isActive={activeCategory === item.name}
-                onClick={() => setActiveCategory(item.name)}
-              >
-                {item.name}
-              </SidebarMenuButton>
-            ))}
-          </SidebarMenu>
-        </Sidebar>
+      
+      <SidebarContent>
+        <SidebarMenu>
+          {mainNavItems.map((item) => (
+            <SidebarMenuButton
+              key={item.name}
+              icon={item.icon}
+              isActive={activeCategory === item.name}
+              onClick={() => setActiveCategory(item.name)}
+            >
+              {item.name}
+            </SidebarMenuButton>
+          ))}
+        </SidebarMenu>
       </SidebarContent>
+      
       <SidebarFooter>
-        <SidebarMenuButton onClick={handleSignOut} icon={<LogOut />}>
-          Logout
-        </SidebarMenuButton>
+        <div className="flex items-center justify-between gap-2 border-t border-border p-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+                <div className="w-8 h-8 bg-cyan-900/50 flex items-center justify-center rounded-full flex-shrink-0">
+                    <User className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                    <SidebarGroupLabel className="text-sm font-semibold text-foreground truncate">
+                        {user ? user.displayName : "Scribe"}
+                    </SidebarGroupLabel>
+                </div>
+            </div>
+            <SidebarMenuButton 
+                onClick={handleSignOut} 
+                icon={<LogOut className="w-5 h-5" />} 
+                className="h-8 w-8 p-0 flex-shrink-0"
+                tooltip="Logout"
+            />
+        </div>
       </SidebarFooter>
     </>
   );

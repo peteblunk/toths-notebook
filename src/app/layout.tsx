@@ -7,6 +7,16 @@ import { AuthProvider } from '@/components/auth-provider';
 export const metadata: Metadata = {
   title: "Thoth's Notebook",
   description: 'Manage your tasks with the wisdom of the ancients.',
+  
+  // This line tells the browser where to find your app's manifest
+  manifest: '/manifest.json',
+
+  // --- Author & Profile Links ---
+  // This section helps search engines and other services identify the creator.
+  authors: [
+    { name: 'Pete Blunk', url: 'https://unclepetelaboratories.net' },
+    { name: 'GitHub Profile', url: 'https://github.com/peteblunk' },
+  ],
 
   // --- Favicon and App Icons ---
   icons: {
@@ -23,7 +33,6 @@ export const metadata: Metadata = {
     siteName: "Thoth's Notebook",
     images: [
       {
-        // Corrected Path: Added a leading slash
         url: '/images/social-preview.png', 
         width: 1200,
         height: 630,
@@ -32,9 +41,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     type: 'website',
   },
-
-
-}; // Removed extra closing brace and semicolon from here
+};
 
 export default function RootLayout({
   children,
@@ -44,12 +51,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        {/* The manifest link is now handled by the metadata object above! */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Removed redundant icon <link> tags from here.
-          The `metadata.icons` object above handles this automatically.
-        */}
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">

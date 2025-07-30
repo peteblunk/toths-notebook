@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,40 +35,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Task, TaskImportance } from "@/lib/types";
-import { Pencil } from "lucide-react";
+import { Task, TaskImportance, Subtask } from "@/lib/types";
+import { Pencil, X } from "lucide-react";
 
-// Schema for editing a ritual. Note: category is read-only.
+// THE FIX IS HERE: Added subtasks to the schema
+const subtaskSchema = z.object({
+  text: z.string(),
+  completed: z.boolean(),
+});
+
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
   importance: z.enum(['low', 'medium', 'high']),
   estimatedTime: z.coerce.number().min(1, "Estimated time must be at least 1 minute."),
   details: z.string().optional(),
+  subtasks: z.array(subtaskSchema).optional(),
 });
 
 type EditRitualDialogProps = {
-  ritual: Task; // The ritual data to be edited
+  ritual: Task;
 };
 
 export function EditRitualDialog({ ritual }: EditRitualDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  // State to manage subtasks within the dialog
+  const [subtasks, setSubtasks] = useState<Subtask[]>(ritual.subtasks || []);
+  const [subtaskText, setSubtaskText] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    // Pre-populate the form with the existing ritual data
     defaultValues: {
       title: ritual.title,
       importance: ritual.importance,
       estimatedTime: ritual.estimatedTime,
       details: ritual.details || "",
+      subtasks: ritual.subtasks || [],
     },
   });
+
+  // Reset form and subtask state when the dialog is opened/closed
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        title: ritual.title,
+        importance: ritual.importance,
+        estimatedTime: ritual.estimatedTime,
+        details: ritual.details || "",
+      });
+      setSubtasks(ritual.subtasks || []);
+    }
+  }, [open, ritual, form]);
+
+  const handleAddSubtask = () => {
+    if (subtaskText.trim()) {
+      setSubtasks([...subtasks, { text: subtaskText, completed: false }]);
+      setSubtaskText("");
+    }
+  };
+
+  const handleRemoveSubtask = (indexToRemove: number) => {
+    setSubtasks(subtasks.filter((_, index) => index !== indexToRemove));
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const ritualDocRef = doc(db, "dailyRituals", ritual.id);
     try {
-      await updateDoc(ritualDocRef, values);
+      // Include the updated subtasks array in the payload
+      await updateDoc(ritualDocRef, { ...values, subtasks });
       toast({ title: "Success", description: "Ritual has been updated." });
       setOpen(false);
     } catch (error) {
@@ -123,6 +157,31 @@ export function EditRitualDialog({ ritual }: EditRitualDialogProps) {
                 </FormItem>
               )}
             />
+            
+            {/* --- NEW SUBTASK MANAGEMENT SECTION --- */}
+            <div>
+              <FormLabel>Default Sub-tasks</FormLabel>
+              <div className="space-y-2 mt-2">
+                {subtasks.map((subtask, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-background/50 p-2 rounded-md">
+                    <p className="flex-1 text-sm">{subtask.text}</p>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveSubtask(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Input
+                  value={subtaskText}
+                  onChange={(e) => setSubtaskText(e.target.value)}
+                  placeholder="Add a new sub-task..."
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); }}}
+                />
+                <Button type="button" onClick={handleAddSubtask}>Add</Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}

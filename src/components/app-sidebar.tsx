@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarMenu,
   SidebarFooter,
   SidebarMenuButton,
   SidebarGroupLabel,
+  useSidebar, // THE FIX IS HERE: Added the missing import
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,15 +20,18 @@ import {
   Mountain,
   LogOut,
   User,
+  BookOpen,
 } from "lucide-react";
+import Link from 'next/link';
 import { useAuth } from "@/components/auth-provider";
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { MoonPhaseIcon } from './moon-phase-icon'; // Import our new component
+import { MoonPhaseIcon } from "./moon-phase-icon";
 
 // This is the main sidebar component.
 export function AppSidebar({ activeCategory, setActiveCategory }) {
   const { user } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     try {
@@ -37,10 +42,17 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
     }
   };
 
+  const handleCategoryClick = (categoryName: string) => {
+    setActiveCategory(categoryName);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const mainNavItems = [
     { name: "Today", icon: <Home /> },
     { name: "Daily Rituals", icon: <Sunrise /> },
-    { name: "Responsibilities", icon: <Eye /> },
+    { name: "Sacred Duties", icon: <Eye /> },
     { name: "Special Missions", icon: <Scroll /> },
     { name: "Grand Expeditions", icon: <Mountain /> },
   ];
@@ -48,10 +60,11 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader>
-        <div className="flex items-center justify-center p-2">
+        <div className="flex items-center justify-between p-2">
             <h1 className="text-xl font-bold text-cyan-400 font-display tracking-wider">
                 Thoth's Notebook
             </h1>
+            <MoonPhaseIcon />
         </div>
       </SidebarHeader>
       
@@ -62,7 +75,8 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
               key={item.name}
               icon={item.icon}
               isActive={activeCategory === item.name}
-              onClick={() => setActiveCategory(item.name)}
+              onClick={() => handleCategoryClick(item.name)}
+              className="text-sidebar-foreground"
             >
               {item.name}
             </SidebarMenuButton>
@@ -84,8 +98,19 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
             </div>
             
             <div className="flex items-center gap-1">
-                {/* Our new moon icon is placed here! */}
-                <MoonPhaseIcon />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400/70 hover:text-cyan-400">
+                      <Link href="/rituals">
+                        <BookOpen className="w-5 h-5" />
+                        <span className="sr-only">Manage Rituals</span>
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" align="center">
+                      <p>Manage Rituals</p>
+                  </TooltipContent>
+                </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>

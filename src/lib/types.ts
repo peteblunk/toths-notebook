@@ -4,6 +4,11 @@ export type Subtask = {
   completed: boolean;
 };
 
+// Harmonized 'Responsibilities' to 'Sacred Duties'
+export type TaskCategory = 'Today' | 'Daily Rituals' | 'Sacred Duties' | 'Special Missions' | 'Grand Expeditions';
+
+export type TaskImportance = 'low' | 'medium' | 'high';
+
 export type Task = {
   id: string;
   title: string;
@@ -16,8 +21,4 @@ export type Task = {
   subtasks?: Subtask[]; // An array of sub-task objects
 };
 
-export type FilterCategory = 'Today' | 'All' | TaskCategory;
-
-export type TaskCategory = 'Daily Rituals' | 'Regular Responsibilities' | 'Special Missions' | 'Grand Expeditions';
-
-export type TaskImportance = 'low' | 'medium' | 'high';
+export type FilterCategory = 'All' | TaskCategory;

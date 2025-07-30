@@ -8,8 +8,8 @@ import {
   SidebarMenuButton,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button"; // Added for custom button
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Added for tooltip
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Home,
   Sunrise,
@@ -22,15 +22,15 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { MoonPhaseIcon } from './moon-phase-icon'; // Import our new component
 
-// This is the main sidebar component, now correctly structured.
+// This is the main sidebar component.
 export function AppSidebar({ activeCategory, setActiveCategory }) {
   const { user } = useAuth();
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      // The AuthProvider will automatically handle the redirect.
       console.log("User signed out successfully.");
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -82,23 +82,28 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
                     </SidebarGroupLabel>
                 </div>
             </div>
-            {/* THE FIX IS HERE: Replaced SidebarMenuButton with a custom styled Button and Tooltip */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                    onClick={handleSignOut}
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
-                >
-                    <LogOut className="w-5 h-5" />
-                    <span className="sr-only">Logout</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                  <p>Logout</p>
-              </TooltipContent>
-            </Tooltip>
+            
+            <div className="flex items-center gap-1">
+                {/* Our new moon icon is placed here! */}
+                <MoonPhaseIcon />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                        onClick={handleSignOut}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <span className="sr-only">Logout</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" align="center">
+                      <p>Logout</p>
+                  </TooltipContent>
+                </Tooltip>
+            </div>
         </div>
       </SidebarFooter>
     </div>

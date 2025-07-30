@@ -104,6 +104,10 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
       subtasks, // Make sure the local subtasks state is included
     };
     onTaskAdd(newTaskData);
+    toast({
+        title: "Task Scribed",
+        description: `"${newTaskData.title}" has been added to your list.`,
+    });
     form.reset();
     setSubtasks([]);
     setOpen(false);

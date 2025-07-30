@@ -5,10 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, Sparkles } from "lucide-react";
 import { isToday } from 'date-fns';
 
+// Firebase and Auth Imports
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/components/auth-provider';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+
 import { type Task, type FilterCategory } from '@/lib/types';
 import { AddTaskDialog } from '@/components/add-task-dialog';
 import { TaskCard } from '@/components/task-card';
-import { getTasks, addTask, updateTask, deleteTask } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { prioritizeUserTasks } from '@/app/actions';
@@ -22,40 +26,93 @@ export function TaskList({ activeCategory }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const { user } = useAuth(); // Get the current user
 
+  // --- REAL-TIME DATA FETCHING FROM FIRESTORE ---
+  // This hook replaces the old mock data fetching.
   useEffect(() => {
-    setTasks(getTasks());
-  }, []);
+    if (!user) {
+      setTasks([]);
+      return;
+    }
 
-  const refreshTasks = () => {
-    setTasks(getTasks());
-  };
+    const tasksCollection = collection(db, 'tasks');
+    const q = query(tasksCollection, where("userId", "==", user.uid));
 
-  const handleTaskAdd = (newTaskData: Omit<Task, 'id' | 'completed'>) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      ...newTaskData,
-      completed: false,
-    };
-    addTask(newTask);
-    toast({
-        title: "Task Scribed",
-        description: `"${newTask.title}" has been added to your list.`,
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const tasksData: Task[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        tasksData.push({
+          id: doc.id,
+          ...data,
+          dueDate: data.dueDate?.toDate(), 
+          createdAt: data.createdAt?.toDate(),
+        } as Task);
+      });
+      setTasks(tasksData);
     });
-    refreshTasks();
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // --- FIRESTORE CRUD FUNCTIONS ---
+  // These functions replace the old mock data handlers.
+
+  const handleTaskAdd = async (newTaskData: Omit<Task, 'id' | 'completed'>) => {
+    if (!user) return;
+
+    // Logic to handle saving to 'tasks' or 'dailyRituals'
+    const isRitual = newTaskData.category === 'Daily Rituals';
+    const collectionName = isRitual ? 'dailyRituals' : 'tasks';
+    
+    const payload = isRitual ? {
+        userId: user.uid,
+        title: newTaskData.title,
+        category: newTaskData.category,
+        importance: newTaskData.importance,
+        estimatedTime: newTaskData.estimatedTime,
+        details: newTaskData.details || '',
+        subtasks: newTaskData.subtasks || [],
+    } : {
+        ...newTaskData,
+        userId: user.uid,
+        completed: false,
+        createdAt: serverTimestamp(),
+    };
+    
+    try {
+      await addDoc(collection(db, collectionName), payload);
+      toast({
+        title: isRitual ? "Daily Ritual Created" : "Task Scribed",
+        description: `"${newTaskData.title}" has been successfully recorded.`,
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      toast({ title: "Error", description: "Could not save the task.", variant: 'destructive' });
+    }
   };
 
-  const handleTaskCompletionChange = (taskId: string, completed: boolean) => {
-    updateTask(taskId, { completed });
-    refreshTasks();
+  const handleTaskCompletionChange = async (taskId: string, completed: boolean) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await updateDoc(taskDocRef, { completed });
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
 
-  const handleTaskDelete = (taskId: string) => {
-    deleteTask(taskId);
-    toast({ title: "Task Erased", description: "The task has been removed from the scrolls." });
-    refreshTasks();
+  const handleTaskDelete = async (taskId: string) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await deleteDoc(taskDocRef);
+      toast({ title: "Task Erased", description: "The task has been removed from the scrolls." });
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+    }
   };
 
+  // This function remains the same, affecting local state for now.
   const handlePrioritize = () => {
     startTransition(async () => {
       const uncompletedTasks = tasks.filter(t => !t.completed);
@@ -89,10 +146,13 @@ export function TaskList({ activeCategory }: TaskListProps) {
   };
 
   const filteredTasks = useMemo(() => {
+    // Added a check for 'Sacred Duties' to align with our recent change
+    if (activeCategory === 'Sacred Duties') {
+        return tasks.filter(task => task.category === 'Sacred Duties');
+    }
     if (activeCategory === 'Today') {
       return tasks.filter(task => (task.dueDate && isToday(task.dueDate)) || task.category === 'Daily Rituals');
     }
-    if (activeCategory === 'All') return tasks; 
     return tasks.filter(task => task.category === activeCategory);
   }, [tasks, activeCategory]);
   

@@ -134,7 +134,7 @@ export function EditRitualDialog({ ritual }: EditRitualDialogProps) {
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select level" />
-                        </Trigger>
+                        </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                         <SelectItem value="low">Low</SelectItem>

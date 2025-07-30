@@ -222,7 +222,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select level" />
-                        </Trigger>
+                        </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                         <SelectItem value="low">Low</SelectItem>

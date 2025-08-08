@@ -23,6 +23,10 @@ function getMoonPhase() {
   jd /= 29.5305882;
   b = parseInt(jd.toString());
   jd -= b;
+
+  // Adjust for the epoch being a full moon instead of a new moon.
+  jd = (jd + 0.5) % 1;
+
   b = Math.round(jd * 8);
   if (b >= 8) b = 0;
 

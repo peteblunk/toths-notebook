@@ -21,12 +21,16 @@ import {
   LogOut,
   User,
   BookOpen,
+  Flame,
+  Eclipse,
 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from "@/components/auth-provider";
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { MoonPhaseIcon } from "./moon-phase-icon";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { KhonsuTimer } from "@/components/khonsu-timer";
 
 // This is the main sidebar component.
 export function AppSidebar({ activeCategory, setActiveCategory }) {
@@ -61,13 +65,13 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
     <div className="flex flex-col h-full">
       <SidebarHeader>
         <div className="flex items-center justify-between p-2">
-            <h1 className="text-xl font-bold text-cyan-400 font-display tracking-wider">
-                Thoth's Notebook
-            </h1>
-            <MoonPhaseIcon />
+          <h1 className="text-xl font-bold text-cyan-400 font-display tracking-wider">
+            Thoth's Notebook
+          </h1>
+          <MoonPhaseIcon />
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent className="flex-grow overflow-y-auto">
         <SidebarMenu>
           {mainNavItems.map((item) => (
@@ -81,54 +85,71 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
               {item.name}
             </SidebarMenuButton>
           ))}
+          <div className="pt-4 mt-4 border-t border-cyan-900/30">
+            <Dialog>
+              <DialogTrigger asChild>
+                <SidebarMenuButton className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50 group">
+                  {/* The Eclipse icon spins slowly on hover for that "Charging Up" effect */}
+                  <Eclipse className="group-hover:animate-spin-slow transition-all duration-700" />
+                  <span className="font-bold tracking-wide">Invoke Khonsu</span>
+                </SidebarMenuButton>
+              </DialogTrigger>
+              <DialogContent className="p-0 border-none bg-transparent max-w-md shadow-none sm:max-w-lg">
+                {/* 👇 This title is invisible to the eye, but satisfies the error! */}
+                <DialogTitle className="sr-only">Invoke Khonsu Timer</DialogTitle>
+
+                <KhonsuTimer />
+              </DialogContent>
+            </Dialog>
+          </div>
         </SidebarMenu>
       </SidebarContent>
-      
+
       <SidebarFooter>
         <div className="flex items-center justify-between gap-2 border-t border-border p-2">
-            <div className="flex items-center gap-2 overflow-hidden">
-                <div className="w-8 h-8 bg-cyan-900/50 flex items-center justify-center rounded-full flex-shrink-0">
-                    <User className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div className="flex-1 overflow-hidden">
-                    <SidebarGroupLabel className="text-sm font-semibold text-foreground truncate">
-                        {user ? user.displayName : "Scribe"}
-                    </SidebarGroupLabel>
-                </div>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-8 h-8 bg-cyan-900/50 flex items-center justify-center rounded-full flex-shrink-0">
+              <User className="w-5 h-5 text-cyan-400" />
             </div>
-            
-            <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400/70 hover:text-cyan-400">
-                      <Link href="/rituals">
-                        <BookOpen className="w-5 h-5" />
-                        <span className="sr-only">Manage Rituals</span>
-                      </Link>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="center">
-                      <p>Manage Rituals</p>
-                  </TooltipContent>
-                </Tooltip>
+            <div className="flex-1 overflow-hidden">
+              <SidebarGroupLabel className="text-sm font-semibold text-foreground truncate">
+                {user ? user.displayName : "Scribe"}
+              </SidebarGroupLabel>
+            </div>
+          </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                        onClick={handleSignOut}
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span className="sr-only">Logout</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="center">
-                      <p>Logout</p>
-                  </TooltipContent>
-                </Tooltip>
-            </div>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400/70 hover:text-cyan-400">
+                  <Link href="/rituals">
+                    <BookOpen className="w-5 h-5" />
+                    <span className="sr-only">Manage Rituals</span>
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                <p>Manage Rituals</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleSignOut}
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="sr-only">Logout</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                <p>Logout</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </SidebarFooter>
     </div>

@@ -37,6 +37,7 @@ export function PtahManager() {
                 title: PTAH_CONFIG.releaseTitle,
                 details: PTAH_CONFIG.releaseNotes,
                 category: PTAH_CONFIG.targetCategory, // "Nun"
+                dueDate: new Date(),
                 completed: false,
                 createdAt: serverTimestamp(),
                 tags: ["System Update", "Gift of Ptah"]

@@ -4,21 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Task, Subtask } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc } from 'firebase/firestore';
+// 👇 Added deleteDoc to imports
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Trash2, Plus } from 'lucide-react';
 
 interface EditRitualDialogProps {
-  task: Task; // Changed from ritual to task to match usage
+  task: Task; 
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogProps) {
-  // Safety check - if task is undefined/null, don't render anything to prevent crashes
   if (!task) return null;
 
   const [title, setTitle] = useState(task.title);
@@ -27,7 +26,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
   const [importance, setImportance] = useState(task.importance);
   const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
   const [newSubtaskText, setNewSubtaskText] = useState('');
-  
+
   const { toast } = useToast();
 
   const handleAddSubtask = () => {
@@ -44,7 +43,9 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
 
   const handleSave = async () => {
     try {
-      const taskRef = doc(db, 'tasks', task.id);
+      // 👇 FIX: Changed 'tasks' to 'dailyRituals'
+      const taskRef = doc(db, 'dailyRituals', task.id);
+      
       await updateDoc(taskRef, {
         title,
         details,
@@ -52,7 +53,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
         importance,
         subtasks
       });
-      
+
       toast({
         title: "Ritual Updated",
         description: "Your changes have been saved to the archives.",
@@ -62,19 +63,35 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
       console.error("Error updating ritual:", error);
       toast({
         title: "Error",
-        description: "Failed to update ritual.",
+        description: "Failed to update ritual. Check console.",
         variant: "destructive",
       });
     }
   };
 
+  // 👇 NEW: Handle Delete Logic (Solves Issue #11)
+  const handleDeleteRitual = async () => {
+    if (!confirm("Are you sure you want to remove this Ritual forever?")) return;
+
+    try {
+        const taskRef = doc(db, 'dailyRituals', task.id);
+        await deleteDoc(taskRef);
+        
+        toast({ title: "Ritual Banished", description: "Removed from your daily templates." });
+        onOpenChange(false);
+    } catch (error) {
+        console.error("Error deleting ritual:", error);
+        toast({ title: "Error", description: "Could not delete.", variant: "destructive" });
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-slate-950 border-cyan-800 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-xl font-headline text-cyan-400 tracking-wide">Edit</DialogTitle>
+          <DialogTitle className="text-xl font-headline text-cyan-400 tracking-wide">Edit Ritual</DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="title" className="text-cyan-400">Ritual Name</Label>
@@ -85,7 +102,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
               className="bg-slate-900 border-cyan-900 focus:border-cyan-500"
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="time" className="text-cyan-400">Est. Time (min)</Label>
@@ -103,7 +120,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
                   id="importance"
                   value={importance}
                   onChange={(e) => setImportance(e.target.value as 'low' | 'medium' | 'high')}
-                  className="flex h-10 w-full rounded-md border border-cyan-900 bg-slate-900 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-cyan-900 bg-slate-900 px-3 py-2 text-sm text-white"
                >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -136,7 +153,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
                    <Plus className="h-4 w-4" />
                 </Button>
              </div>
-             
+
              <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1">
                 {subtasks.map((subtask, index) => (
                    <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30">
@@ -155,9 +172,21 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-cyan-800 text-cyan-400 hover:bg-cyan-950">Cancel</Button>
-          <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold">Save Changes</Button>
+        <DialogFooter className="flex justify-between sm:justify-between w-full">
+           {/* 👇 NEW: The Delete Button for Issue #11 */}
+          <Button 
+            variant="destructive" 
+            onClick={handleDeleteRitual}
+            className="bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-200 mr-auto"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="border-cyan-800 text-cyan-400 hover:bg-cyan-950">Cancel</Button>
+            <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold">Save Changes</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,229 +1,164 @@
-"use client";
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Task, Subtask } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Trash2, Plus } from 'lucide-react';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
+interface EditRitualDialogProps {
+  task: Task; // Changed from ritual to task to match usage
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Task, TaskImportance, Subtask } from "@/lib/types";
-import { Pencil, X } from "lucide-react";
+export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogProps) {
+  // Safety check - if task is undefined/null, don't render anything to prevent crashes
+  if (!task) return null;
 
-// THE FIX IS HERE: Added subtasks to the schema
-const subtaskSchema = z.object({
-  text: z.string(),
-  completed: z.boolean(),
-});
-
-const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters long."),
-  importance: z.enum(['low', 'medium', 'high']),
-  estimatedTime: z.coerce.number().min(1, "Estimated time must be at least 1 minute."),
-  details: z.string().optional(),
-  subtasks: z.array(subtaskSchema).optional(),
-});
-
-type EditRitualDialogProps = {
-  ritual: Task;
-};
-
-export function EditRitualDialog({ ritual }: EditRitualDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(task.title);
+  const [details, setDetails] = useState(task.details || '');
+  const [estimatedTime, setEstimatedTime] = useState(task.estimatedTime?.toString() || '');
+  const [importance, setImportance] = useState(task.importance);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
+  const [newSubtaskText, setNewSubtaskText] = useState('');
+  
   const { toast } = useToast();
-  // State to manage subtasks within the dialog
-  const [subtasks, setSubtasks] = useState<Subtask[]>(ritual.subtasks || []);
-  const [subtaskText, setSubtaskText] = useState("");
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: ritual.title,
-      importance: ritual.importance,
-      estimatedTime: ritual.estimatedTime,
-      details: ritual.details || "",
-      subtasks: ritual.subtasks || [],
-    },
-  });
-
-  // Reset form and subtask state when the dialog is opened/closed
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        title: ritual.title,
-        importance: ritual.importance,
-        estimatedTime: ritual.estimatedTime,
-        details: ritual.details || "",
-      });
-      setSubtasks(ritual.subtasks || []);
-    }
-  }, [open, ritual, form]);
 
   const handleAddSubtask = () => {
-    if (subtaskText.trim()) {
-      setSubtasks([...subtasks, { text: subtaskText, completed: false }]);
-      setSubtaskText("");
-    }
+    if (!newSubtaskText.trim()) return;
+    setSubtasks([...subtasks, { text: newSubtaskText, completed: false }]);
+    setNewSubtaskText('');
   };
 
-  const handleRemoveSubtask = (indexToRemove: number) => {
-    setSubtasks(subtasks.filter((_, index) => index !== indexToRemove));
+  const handleDeleteSubtask = (index: number) => {
+    const newSubtasks = [...subtasks];
+    newSubtasks.splice(index, 1);
+    setSubtasks(newSubtasks);
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const ritualDocRef = doc(db, "dailyRituals", ritual.id);
+  const handleSave = async () => {
     try {
-      // Include the updated subtasks array in the payload
-      await updateDoc(ritualDocRef, { ...values, subtasks });
-      toast({ title: "Success", description: "Ritual has been updated." });
-      setOpen(false);
+      const taskRef = doc(db, 'tasks', task.id);
+      await updateDoc(taskRef, {
+        title,
+        details,
+        estimatedTime: parseInt(estimatedTime) || 0,
+        importance,
+        subtasks
+      });
+      
+      toast({
+        title: "Ritual Updated",
+        description: "Your changes have been saved to the archives.",
+      });
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error updating ritual: ", error);
-      toast({ title: "Error", description: "Could not update ritual.", variant: 'destructive' });
+      console.error("Error updating ritual:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update ritual.",
+        variant: "destructive",
+      });
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-            <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-card border-border">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] bg-slate-950 border-cyan-800 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="font-headline text-primary">Edit Daily Ritual</DialogTitle>
-          <DialogDescription>
-            Update the template for this recurring task.
-          </DialogDescription>
+          <DialogTitle className="text-xl font-headline text-cyan-400 tracking-wide">Edit</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ritual Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title" className="text-cyan-400">Ritual Name</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="bg-slate-900 border-cyan-900 focus:border-cyan-500"
             />
-            <FormField
-              control={form.control}
-              name="details"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Details / Prayer Text</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add the text of a prayer or other notes..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* --- NEW SUBTASK MANAGEMENT SECTION --- */}
-            <div>
-              <FormLabel>Default Sub-tasks</FormLabel>
-              <div className="space-y-2 mt-2">
-                {subtasks.map((subtask, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-background/50 p-2 rounded-md">
-                    <p className="flex-1 text-sm">{subtask.text}</p>
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveSubtask(index)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  value={subtaskText}
-                  onChange={(e) => setSubtaskText(e.target.value)}
-                  placeholder="Add a new sub-task..."
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); }}}
-                />
-                <Button type="button" onClick={handleAddSubtask}>Add</Button>
-              </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="time" className="text-cyan-400">Est. Time (min)</Label>
+              <Input
+                id="time"
+                type="number"
+                value={estimatedTime}
+                onChange={(e) => setEstimatedTime(e.target.value)}
+                className="bg-slate-900 border-cyan-900 focus:border-cyan-500"
+              />
             </div>
+            <div className="grid gap-2">
+               <Label htmlFor="importance" className="text-cyan-400">Importance</Label>
+               <select 
+                  id="importance"
+                  value={importance}
+                  onChange={(e) => setImportance(e.target.value as 'low' | 'medium' | 'high')}
+                  className="flex h-10 w-full rounded-md border border-cyan-900 bg-slate-900 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+               </select>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="importance"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Importance</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
+          <div className="grid gap-2">
+            <Label htmlFor="details" className="text-cyan-400">Details / Notes</Label>
+            <Textarea
+              id="details"
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              className="bg-slate-900 border-cyan-900 focus:border-cyan-500 min-h-[100px]"
+            />
+          </div>
+
+          <div className="grid gap-2">
+             <Label className="text-cyan-400">Subtasks</Label>
+             <div className="flex gap-2">
+                <Input 
+                   value={newSubtaskText}
+                   onChange={(e) => setNewSubtaskText(e.target.value)}
+                   placeholder="Add a step..."
+                   className="bg-slate-900 border-cyan-900"
+                   onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
                 />
-                <FormField
-                control={form.control}
-                name="estimatedTime"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Est. Time (min)</FormLabel>
-                    <FormControl>
-                        <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Save Changes</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <Button onClick={handleAddSubtask} size="icon" variant="outline" className="border-cyan-700 text-cyan-400 hover:bg-cyan-950">
+                   <Plus className="h-4 w-4" />
+                </Button>
+             </div>
+             
+             <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1">
+                {subtasks.map((subtask, index) => (
+                   <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30">
+                      <span className="flex-1 text-sm truncate">{subtask.text}</span>
+                      <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         className="h-6 w-6 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                         onClick={() => handleDeleteSubtask(index)}
+                      >
+                         <Trash2 className="h-3 w-3" />
+                      </Button>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-cyan-800 text-cyan-400 hover:bg-cyan-950">Cancel</Button>
+          <Button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-black font-bold">Save Changes</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,5 +1,5 @@
 export const PTAH_CONFIG = {
-  version: "1.1.0", // Keep this the same! We are hijacking the current release.
+  version: "1.1.1", // Keep this the same! We are hijacking the current release.
   
   releaseTitle: "The Separation of Waters", 
   

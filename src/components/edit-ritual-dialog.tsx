@@ -41,10 +41,13 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
     setSubtasks(newSubtasks);
   };
 
-  const handleSave = async () => {
+   const handleSave = async () => {
     try {
-      // 👇 FIX: Changed 'tasks' to 'dailyRituals'
-      const taskRef = doc(db, 'dailyRituals', task.id);
+      // 👇 SMART FIX: Detects if this is an Active Task or a Template
+      // If it has a 'createdAt' date, it's a Task. If not, it's a Ritual Template.
+      const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
+      
+      const taskRef = doc(db, collectionName, task.id);
       
       await updateDoc(taskRef, {
         title,
@@ -53,6 +56,9 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
         importance,
         subtasks
       });
+      
+      // ... rest of the function stays the same ...
+
 
       toast({
         title: "Ritual Updated",
@@ -70,13 +76,17 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
   };
 
   // 👇 NEW: Handle Delete Logic (Solves Issue #11)
-  const handleDeleteRitual = async () => {
-    if (!confirm("Are you sure you want to remove this Ritual forever?")) return;
+    const handleDeleteRitual = async () => {
+    if (!confirm("Are you sure?")) return;
 
     try {
-        const taskRef = doc(db, 'dailyRituals', task.id);
+        // 👇 Same smart check for deletion
+        const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
+        const taskRef = doc(db, collectionName, task.id);
         await deleteDoc(taskRef);
         
+
+
         toast({ title: "Ritual Banished", description: "Removed from your daily templates." });
         onOpenChange(false);
     } catch (error) {

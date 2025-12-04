@@ -3,11 +3,12 @@ import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
+import { PtahManager } from '@/components/ptah-manager';
 
 export const metadata: Metadata = {
   title: "Thoth's Notebook",
   description: 'Manage your tasks with the wisdom of the ancients.',
-  
+
   // This line tells the browser where to find your app's manifest
   manifest: '/manifest.json',
 
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "Thoth's Notebook",
     images: [
       {
-        url: '/images/social-preview.png', 
+        url: '/images/social-preview.png',
         width: 1200,
         height: 630,
       },
@@ -59,6 +60,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
+          <PtahManager />
           <SidebarProvider>
             {children}
           </SidebarProvider>

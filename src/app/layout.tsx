@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
 import { PtahManager } from '@/components/ptah-manager';
+import { OathGate } from '@/components/oath-gate';
 
 export const metadata: Metadata = {
   title: "Thoth's Notebook",
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
           <PtahManager />
+          <OathGate />
           <SidebarProvider>
             {children}
           </SidebarProvider>

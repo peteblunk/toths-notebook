@@ -13,6 +13,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CyberJar } from '@/components/icons/cyber-jar';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
+import { CyberAnkh } from './icons/cyber-ankh';
 
 interface TaskCardProps {
   task: Task;
@@ -110,22 +111,40 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
         ]
     ],
     
-    // ⚖️ MA'AT (Complete / Order)
     task.completed && [
         "py-5 px-6", 
-        "bg-gradient-to-br from-amber-100 via-white to-amber-100", 
-        "border-amber-400 border-2",                         
-        "shadow-[0_0_30px_rgba(251,191,36,0.4)]",       
-        "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.6)]",
-        "flex flex-col items-center text-center justify-center"
+        "flex flex-col items-center text-center justify-center", // Move this up
+        
+        // STANDARD MA'AT (Everything that is NOT the Oath)
+        task.title !== "Oath of Commitment" && [
+            "bg-gradient-to-br from-amber-50 via-white to-amber-100", 
+            "border-amber-400 border-2",                         
+            "shadow-[0_0_30px_rgba(251,191,36,0.4)]",       
+            "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.6)]",
+        ],
+
+        // 🌟 SPECIAL: THE OATH (Foundation Stone)
+        task.title === "Oath of Commitment" && [
+            "bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200", // Solid Gold Bar
+            "border-amber-500 border-4", // Heavy Structural Border
+            "shadow-[0_0_60px_rgba(251,191,36,0.8)]", // Intense Holy Glow
+            "scale-[1.02]", // Physically larger
+            "mb-6", // Add space below it to show it supports the list
+            "z-20" // Lift it up
+        ]
     ]
   );
 
-  const titleClasses = cn(
-    "transition-all duration-500 font-display tracking-wider w-full",
-    !task.completed && "font-medium text-lg text-slate-100 text-left",
-    task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2"
-  );
+ 
+    const titleClasses = cn(
+        "transition-all duration-500 font-display tracking-wider w-full",
+        !task.completed && "font-medium text-lg text-slate-100 text-left",
+        task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2",
+        
+        // 👇 EXTRA HEAVY TEXT FOR OATH
+        task.completed && task.title === "Oath of Commitment" && "text-3xl tracking-[0.3em] font-black text-amber-950 drop-shadow-md"
+        
+);
 
   return (
     <>
@@ -158,8 +177,22 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                 />
                 
                 <div className={cn("flex-1 space-y-1 w-full", task.completed && "flex flex-col items-center")}>
-                    <h3 className={titleClasses}>
-                        {task.title}
+                <h3 className={titleClasses}>
+                        {/* 🌟 SPECIAL: If it's the Oath, flank it with Cyber Ankhs */}
+                        {task.completed && task.title === "Oath of Commitment" ? (
+                            <span className="flex items-center justify-center gap-4">
+                                {/* Left Ankh */}
+                                <CyberAnkh className="w-8 h-8 text-amber-900/80" />
+                                
+                                <span>{task.title}</span>
+                                
+                                {/* Right Ankh */}
+                                <CyberAnkh className="w-8 h-8 text-amber-900/80" />
+                            </span>
+                        ) : (
+                            // Standard Task Title
+                            task.title
+                        )}
                     </h3>
 
                     {!task.completed && (

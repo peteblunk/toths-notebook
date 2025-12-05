@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Task, Subtask } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-// 👇 Added deleteDoc to imports
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Trash2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { CyberJar } from '@/components/icons/cyber-jar';
+import { cn } from '@/lib/utils';
 
 interface EditRitualDialogProps {
   task: Task; 
@@ -41,12 +42,10 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
     setSubtasks(newSubtasks);
   };
 
-   const handleSave = async () => {
+  const handleSave = async () => {
     try {
-      // 👇 SMART FIX: Detects if this is an Active Task or a Template
-      // If it has a 'createdAt' date, it's a Task. If not, it's a Ritual Template.
+      // Smart check: active tasks vs templates
       const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
-      
       const taskRef = doc(db, collectionName, task.id);
       
       await updateDoc(taskRef, {
@@ -56,9 +55,6 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
         importance,
         subtasks
       });
-      
-      // ... rest of the function stays the same ...
-
 
       toast({
         title: "Ritual Updated",
@@ -75,19 +71,15 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
     }
   };
 
-  // 👇 NEW: Handle Delete Logic (Solves Issue #11)
-    const handleDeleteRitual = async () => {
-    if (!confirm("Are you sure?")) return;
+  const handleDeleteRitual = async () => {
+    if (!confirm("Are you sure you want to banish this ritual?")) return;
 
     try {
-        // 👇 Same smart check for deletion
         const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
         const taskRef = doc(db, collectionName, task.id);
         await deleteDoc(taskRef);
         
-
-
-        toast({ title: "Ritual Banished", description: "Removed from your daily templates." });
+        toast({ title: "Ritual Banished", description: "Removed from the scrolls." });
         onOpenChange(false);
     } catch (error) {
         console.error("Error deleting ritual:", error);
@@ -166,15 +158,16 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
 
              <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1">
                 {subtasks.map((subtask, index) => (
-                   <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30">
+                   <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30 group">
                       <span className="flex-1 text-sm truncate">{subtask.text}</span>
                       <Button 
                          variant="ghost" 
                          size="icon" 
-                         className="h-6 w-6 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                         className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
                          onClick={() => handleDeleteSubtask(index)}
                       >
-                         <Trash2 className="h-3 w-3" />
+                         {/* Subtask delete: Small Cyber Jar */}
+                         <CyberJar className="w-5 h-5" />
                       </Button>
                    </div>
                 ))}
@@ -182,16 +175,23 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between sm:justify-between w-full">
-           {/* 👇 NEW: The Delete Button for Issue #11 */}
-          <Button 
-            variant="destructive" 
+        <DialogFooter className="flex justify-between sm:justify-between w-full pt-4 border-t border-cyan-900/30">
+          {/* 👇 THE MASSIVE BANISH BUTTON */}
+          <div 
+            role="button"
             onClick={handleDeleteRitual}
-            className="bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-200 mr-auto"
+            className={cn(
+                "group/modal-jar cursor-pointer",
+                "flex items-center px-4 py-2 rounded-md", 
+                "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
+                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20"
+            )}
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
+            <CyberJar className="w-12 h-12 mr-3" /> 
+            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
+                Banish
+            </span>
+          </div>
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="border-cyan-800 text-cyan-400 hover:bg-cyan-950">Cancel</Button>

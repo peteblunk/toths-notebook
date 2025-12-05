@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, BookOpen, Pencil } from 'lucide-react'; // Added Pencil
+import { ArrowLeft, BookOpen } from 'lucide-react'; 
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
@@ -12,6 +12,10 @@ import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
 import { EditRitualDialog } from '@/components/edit-ritual-dialog';
+// 👇 NEW IMPORTS
+import { CyberJar } from '@/components/icons/cyber-jar';
+import { CyberStylus } from '@/components/icons/cyber-stylus';
+import { cn } from '@/lib/utils';
 
 export default function ManageRitualsPage() {
     const [rituals, setRituals] = useState<Task[]>([]);
@@ -44,7 +48,7 @@ export default function ManageRitualsPage() {
     }, [user]);
 
     const handleDeleteRitual = async (ritualId: string, ritualTitle: string) => {
-        if (!confirm(`Are you sure you want to delete the ritual "${ritualTitle}"? It will no longer be generated daily.`)) {
+        if (!confirm(`Are you sure you want to banish the ritual "${ritualTitle}"? It will no longer be generated daily.`)) {
             return;
         }
         
@@ -52,8 +56,8 @@ export default function ManageRitualsPage() {
         try {
             await deleteDoc(ritualDocRef);
             toast({
-                title: "Ritual Erased",
-                description: `"${ritualTitle}" has been removed from your daily rituals.`,
+                title: "Ritual Banished",
+                description: `"${ritualTitle}" has been removed from your daily templates.`,
             });
         } catch (error) {
             console.error("Error deleting ritual: ", error);
@@ -76,40 +80,53 @@ export default function ManageRitualsPage() {
             </Button>
             <div className="mb-6 border-b border-cyan-900/50 pb-4">
                 <h1 className="text-3xl font-headline text-primary tracking-wider">Manage Daily Rituals</h1>
-                <p className="text-muted-foreground">View, edit, or remove the tasks that are created for you each day.</p>
+                <p className="text-muted-foreground">View, edit, or banish the tasks that are created for you each day.</p>
             </div>
 
             {rituals.length > 0 ? (
                 <div className="space-y-4">
                     {rituals.map((ritual) => (
-                        <Card key={ritual.id} className="bg-slate-900/80 border-cyan-900/50 flex items-center justify-between p-4 hover:border-cyan-500/50 transition-colors">
+                        <Card key={ritual.id} className="bg-slate-900/80 border-cyan-900/50 flex items-center justify-between p-4 hover:border-cyan-500/50 transition-colors group">
                             <div>
-                                <CardTitle className="text-lg text-cyan-50">{ritual.title}</CardTitle>
+                                <CardTitle className="text-lg text-cyan-50 group-hover:text-cyan-400 transition-colors">{ritual.title}</CardTitle>
                                 <CardDescription className="text-slate-400">
                                     Importance: <span className="capitalize text-cyan-400">{ritual.importance}</span> | 
                                     Est. Time: <span className="text-cyan-400">{ritual.estimatedTime} min</span>
                                 </CardDescription>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {/* EDIT BUTTON */}
-                                <Button 
-                                    variant="outline" 
-                                    size="icon"
-                                    className="border-cyan-800 text-cyan-400 hover:bg-cyan-950/50"
+                            
+                            {/* ACTION BUTTONS (Cyber Style) */}
+                            <div className="flex items-center gap-3">
+                                
+                                {/* EDIT BUTTON (Cyber Stylus) */}
+                                <div 
+                                    role="button"
                                     onClick={() => handleEditClick(ritual)}
+                                    className={cn(
+                                        "group/stylus cursor-pointer",
+                                        "flex items-center justify-center p-2 rounded-md",
+                                        "text-cyan-500 hover:bg-cyan-950/30",
+                                        "transition-all duration-300 active:scale-95"
+                                    )}
+                                    title="Edit Ritual"
                                 >
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
+                                    <CyberStylus className="w-20 h-20" />
+                                </div>
 
-                                {/* DELETE BUTTON */}
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    className="text-red-500 hover:text-red-400 hover:bg-red-950/20"
+                                {/* DELETE BUTTON (Cyber Jar) */}
+                                <div 
+                                    role="button"
                                     onClick={() => handleDeleteRitual(ritual.id, ritual.title)}
+                                    className={cn(
+                                        "group/modal-jar cursor-pointer",
+                                        "flex items-center justify-center p-2 rounded-md",
+                                        "text-red-500 hover:bg-red-950/30",
+                                        "transition-all duration-300 active:scale-95"
+                                    )}
+                                    title="Banish Ritual"
                                 >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    <CyberJar className="w-10 h-10" />
+                                </div>
                             </div>
                         </Card>
                     ))}
@@ -123,7 +140,6 @@ export default function ManageRitualsPage() {
             )}
 
             {/* THE EDIT DIALOG */}
-            {/* We render it conditionally so it only mounts when we have a ritual selected */}
             {selectedRitual && (
                 <EditRitualDialog 
                     task={selectedRitual} 

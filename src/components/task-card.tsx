@@ -1,16 +1,18 @@
 import { useState, useRef } from 'react';
 import { type Task } from '@/lib/types';
 import { format } from 'date-fns';
-import { Calendar, Clock, Tag, Trash2, Pencil, ExternalLink } from 'lucide-react';
+// 👇 REMOVED: Calendar, Clock, Tag
+import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { EditRitualDialog } from './edit-ritual-dialog';
-// 👇 NEW IMPORTS for updating subtasks
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { CyberJar } from '@/components/icons/cyber-jar';
+import { CyberStylus } from '@/components/icons/cyber-stylus';
 
 interface TaskCardProps {
   task: Task;
@@ -22,6 +24,10 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // --- COLOR LOGIC ---
+  const isPtah = task.tags?.includes('Gift of Ptah');
+  const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
 
   const handleCheckboxChange = (checked: boolean) => {
     if (onTaskCompletionChange) {
@@ -48,20 +54,16 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
       setIsDialogOpen(true);
   }
 
-  // 👇 NEW: Handle Subtask Toggling directly in the View Dialog
   const handleSubtaskToggle = async (index: number) => {
     if (!task.subtasks) return;
     
-    // Create a copy of the subtasks array
     const newSubtasks = [...task.subtasks];
-    // Toggle the specific subtask
     newSubtasks[index] = { 
         ...newSubtasks[index], 
         completed: !newSubtasks[index].completed 
     };
 
     try {
-        // Update Firestore immediately
         const taskRef = doc(db, 'tasks', task.id);
         await updateDoc(taskRef, { subtasks: newSubtasks });
     } catch (error) {
@@ -71,21 +73,50 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
 
   // --- STYLING LOGIC ---
   const containerClasses = cn(
-    "rounded-lg border transition-all duration-500 cursor-pointer group relative overflow-hidden",
+    "rounded-xl border transition-all duration-500 cursor-pointer group relative overflow-hidden backdrop-blur-md",
     
-    // NUN (Incomplete)
+    // 🌊 NUN (Incomplete / Chaos)
     !task.completed && [
-        "p-4",
-        "bg-slate-900/80 border-cyan-800/50 hover:border-cyan-500/80 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+        "p-5",
+        "bg-gradient-to-br from-slate-950 via-[#0a0f1e] to-[#0f0518]", 
+        "border-l-4", 
+        "hover:scale-[1.01]",
+        
+        // VARIANT 1: PTAH (Green)
+        isPtah && [
+            "border-l-emerald-500",
+            "border-y border-y-emerald-500/50 border-r border-r-emerald-500/50",
+            "shadow-[0_0_20px_rgba(16,185,129,0.25)]",
+            "hover:border-l-emerald-400 hover:border-y-emerald-500 hover:border-r-emerald-500",
+            "hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
+        ],
+
+        // VARIANT 2: PURPLE
+        !isPtah && !isPink && [
+            "border-l-purple-500",
+            "border-y border-y-purple-500/50 border-r border-r-purple-500/50",
+            "shadow-[0_0_20px_rgba(168,85,247,0.25)]",
+            "hover:border-l-purple-400 hover:border-y-purple-500 hover:border-r-purple-500",
+            "hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
+        ],
+
+        // VARIANT 3: PINK
+        !isPtah && isPink && [
+            "border-l-fuchsia-500",
+            "border-y border-y-fuchsia-500/50 border-r border-r-fuchsia-500/50",
+            "shadow-[0_0_20px_rgba(217,70,239,0.25)]",
+            "hover:border-l-fuchsia-400 hover:border-y-fuchsia-500 hover:border-r-fuchsia-500",
+            "hover:shadow-[0_0_30px_rgba(217,70,239,0.5)]"
+        ]
     ],
     
-    // MA'AT (Complete)
+    // ⚖️ MA'AT (Complete / Order)
     task.completed && [
         "py-5 px-6", 
-        "bg-gradient-to-br from-amber-100 via-white to-amber-200", 
+        "bg-gradient-to-br from-amber-100 via-white to-amber-100", 
         "border-amber-400 border-2",                         
-        "shadow-[0_0_30px_rgba(251,191,36,0.5)]",       
-        "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.7)]",
+        "shadow-[0_0_30px_rgba(251,191,36,0.4)]",       
+        "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.6)]",
         "flex flex-col items-center text-center justify-center"
     ]
   );
@@ -115,7 +146,13 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                     onClick={(e) => e.stopPropagation()}
                     className={cn(
                         "transition-all duration-500 border-2 mt-1",
-                        !task.completed && "data-[state=checked]:bg-cyan-500 border-cyan-700",
+                        // Ptah
+                        !task.completed && isPtah && "data-[state=checked]:bg-emerald-500 border-emerald-500",
+                        // Purple
+                        !task.completed && !isPtah && !isPink && "data-[state=checked]:bg-purple-500 border-purple-500",
+                        // Pink
+                        !task.completed && !isPtah && isPink && "data-[state=checked]:bg-fuchsia-500 border-fuchsia-500",
+                        // Ma'at
                         task.completed && "data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-600 border-amber-600 data-[state=checked]:text-white w-8 h-8 rounded-full shadow-sm mb-2"
                     )}
                 />
@@ -127,43 +164,62 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
 
                     {!task.completed && (
                         <div className="flex flex-wrap items-center gap-3 justify-start">
+                            
+                            {/* 1. CATEGORY BADGE (Color Matched) */}
+                            <Badge 
+                                variant="outline" 
+                                className={cn(
+                                    "bg-opacity-30 border", 
+                                    isPtah && "border-emerald-800 text-emerald-400 bg-emerald-950",
+                                    !isPtah && !isPink && "border-purple-800 text-purple-400 bg-purple-950",
+                                    !isPtah && isPink && "border-fuchsia-800 text-fuchsia-400 bg-fuchsia-950"
+                                )}
+                            >
+                                {task.category}
+                            </Badge>
+
+                            {/* 2. DATE (Now Brighter: text-slate-200) */}
                             {task.dueDate && (
-                                <div className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4 text-cyan-500" />
-                                    <span className="text-xs font-mono text-slate-400">{format(task.dueDate, 'MMM d')}</span>
-                                </div>
+                                <span className="text-xs font-mono text-slate-200 font-medium">
+                                    {format(task.dueDate, 'MMM d')}
+                                </span>
                             )}
+
+                            {/* 3. TIME (Now Brighter: text-slate-200) */}
                             {task.estimatedTime && (
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4 text-cyan-500" />
-                                    <span className="text-xs font-mono text-slate-400">{task.estimatedTime}m</span>
-                                </div>
+                                <span className="text-xs font-mono text-slate-200 font-medium">
+                                    {task.estimatedTime}m
+                                </span>
                             )}
-                            <div className="flex items-center gap-1">
-                                <Tag className="w-4 h-4 text-cyan-500" />
-                                <Badge variant="outline" className="border-cyan-800 text-cyan-400 bg-cyan-950/30">
-                                    {task.category}
-                                </Badge>
-                            </div>
                         </div>
                     )}
                 </div>
            </div>
 
-           {!task.completed && (
-               <div className="flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={handleDetailsClick} 
-                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50 hidden sm:flex"
-                    >
-                        <ExternalLink className="w-4 h-4 mr-2" /> Details
-                    </Button>
-
-                    <Button variant="ghost" size="icon" onClick={handleDeleteClick} className="text-red-400 hover:text-red-300 hover:bg-red-950/50">
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+           {/* ACTION FOOTER */}
+     {/* ACTION FOOTER */}
+     {!task.completed && (
+               <div className="mt-2 flex items-center justify-start relative z-10">
+                   <Button 
+                       variant="ghost" 
+                       size="sm" 
+                       onClick={handleDetailsClick} 
+                       className={cn(
+                           "pl-0 transition-colors duration-300",
+                           
+                           // VARIANT 1: PTAH (Green)
+                           isPtah && "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/50",
+                           
+                           // VARIANT 2: PURPLE
+                           !isPtah && !isPink && "text-purple-400 hover:text-purple-300 hover:bg-purple-950/50",
+                           
+                           // VARIANT 3: PINK
+                           !isPtah && isPink && "text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-950/50"
+                       )}
+                   >
+                       <ExternalLink className="w-3 h-3 mr-2" /> 
+                       <span className="font-mono text-xs tracking-wider font-bold">DETAILS</span>
+                   </Button>
                </div>
            )}
         </div>
@@ -181,8 +237,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                     </h2>
                  </div>
                  
-                  <div className="grid gap-6">
-                    {/* Details/Notes Section */}
+                 <div className="grid gap-6">
                     <div className="space-y-2">
                         <h4 className="text-xs font-bold text-cyan-600 uppercase tracking-widest">Scribe Notes</h4>
                         <div className="bg-slate-900/50 p-4 rounded-md border border-cyan-900/30 min-h-[80px]">
@@ -194,7 +249,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                         </div>
                     </div>
 
-                    {/* 👇 NEW: INTERACTIVE SUBTASKS SECTION */}
+                    {/* INTERACTIVE SUBTASKS SECTION */}
                     {task.subtasks && task.subtasks.length > 0 && (
                         <div className="space-y-2">
                              <h4 className="text-xs font-bold text-cyan-600 uppercase tracking-widest">Ritual Steps</h4>
@@ -203,22 +258,33 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                                     <div 
                                         key={idx} 
                                         className={cn(
-                                            "flex items-center gap-3 p-3 rounded border transition-all",
+                                            "flex items-center gap-3 p-3 rounded border transition-all duration-500",
                                             st.completed 
-                                                ? "bg-slate-900/30 border-slate-800" 
+                                                // 🌟 MA'AT STYLE (Complete): Light Gold BG + Gold Border
+                                                ? "bg-gradient-to-r from-amber-50 to-amber-100 border-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)]" 
+                                                // 🌊 NUN STYLE (Incomplete): Dark + Cyan Border
                                                 : "bg-slate-900/50 border-cyan-900/30 hover:border-cyan-500/50"
                                         )}
                                     >
-                                        {/* Interactive Radio/Checkbox */}
                                         <Checkbox 
                                             checked={st.completed} 
                                             onCheckedChange={() => handleSubtaskToggle(idx)}
-                                            className="rounded-full w-5 h-5 border-cyan-500 data-[state=checked]:bg-cyan-500 data-[state=checked]:text-black"
+                                            className={cn(
+                                                "rounded-full w-5 h-5 transition-all duration-300",
+                                                st.completed
+                                                    // Darker Gold Checkbox for contrast on light BG
+                                                    ? "border-amber-600 data-[state=checked]:bg-amber-600 data-[state=checked]:text-white"
+                                                    // Cyan Checkbox for dark BG
+                                                    : "border-cyan-500 data-[state=checked]:bg-cyan-500 data-[state=checked]:text-black"
+                                            )}
                                         />
                                         
                                         <span className={cn(
-                                            "text-sm transition-all",
-                                            st.completed ? 'line-through text-slate-600' : 'text-slate-200'
+                                            "text-sm transition-all duration-300 flex-1", // flex-1 pushes text to fill space
+                                            st.completed 
+                                                // Dark Gold Text + Right Justified
+                                                ? "text-amber-900 font-bold text-right tracking-wide" 
+                                                : "text-slate-200"
                                         )}>
                                             {st.text}
                                         </span>
@@ -228,17 +294,40 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                         </div>
                     )}
 
-                    {/* Action Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-cyan-900/30">
-                         <Button variant="outline" onClick={handleEditClick} className="border-cyan-700 text-cyan-400 hover:bg-cyan-950">
-                            <Pencil className="w-4 h-4 mr-2" /> Edit Task
-                         </Button>
+                    <div className="flex items-center justify-between pt-6 border-t border-cyan-900/30 mt-4">
+                         <div 
+                            role="button"
+                            onClick={handleEditClick}
+                            className={cn(
+                                "group/stylus cursor-pointer",
+                                "flex items-center px-4 py-2 rounded-md",
+                                "text-cyan-500 hover:text-cyan-300 hover:bg-cyan-950/30", 
+                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-cyan-500/20"
+                            )}
+                         >
+                            <CyberStylus className="w-22 h-22 mr-4" /> 
+                            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/stylus:opacity-100 font-bold">
+                                Edit
+                            </span>
+                         </div>
 
-                         <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 hover:bg-red-950/30" onClick={handleDeleteClick}>
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                        </Button>
+                         <div 
+                            role="button"
+                            onClick={handleDeleteClick}
+                            className={cn(
+                                "group/modal-jar cursor-pointer",
+                                "flex items-center px-4 py-2 rounded-md", 
+                                "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
+                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20"
+                            )}
+                         >
+                            <CyberJar className="w-12 h-12 mr-3" /> 
+                            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
+                                Banish
+                            </span>
+                        </div>
                     </div>
-                  </div>
+                 </div>
             </div>
         </DialogContent>
       </Dialog>

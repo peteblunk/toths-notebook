@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
 import { PtahManager } from '@/components/ptah-manager';
 import { OathGate } from '@/components/oath-gate';
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 
 export const metadata: Metadata = {
   title: "Thoth's Notebook",
@@ -45,6 +46,15 @@ export const metadata: Metadata = {
   },
 };
 
+// 👇 THE NEW VIEWPORT EXPORT
+// This replaces the old <meta name="viewport"> tag
+export const viewport: Viewport = {
+  themeColor: "#111827", // Matches your manifest background
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // 👈 CRITICAL: This stops the app from "zooming" like a website
+};
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,7 +64,6 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         {/* The manifest link is now handled by the metadata object above! */}
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -63,6 +72,7 @@ export default function RootLayout({
         <AuthProvider>
           <PtahManager />
           <OathGate />
+          <PwaInstallPrompt />
           <SidebarProvider>
             {children}
           </SidebarProvider>

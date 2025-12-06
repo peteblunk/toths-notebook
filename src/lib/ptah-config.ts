@@ -1,17 +1,17 @@
 export const PTAH_CONFIG = {
   // 1. New Version Trigger
-  version: "1.2.0", 
+  version: "1.3.0", 
   
   // 2. The Title
-  releaseTitle: "Artifacts of the Scribe", 
+  releaseTitle: "Rise with Ra", 
   
   // 3. The Release Notes
   releaseNotes: `
-    - **Visual Restoration:** The tasks of Nun (Incomplete) have regained their neon resonance and deep void aesthetics.
-    - **Artifacts of Power:** The standard tools have been replaced. Wield the **Feather of Ma'at** (Stylus) to edit reality, and the **Canopic Jar** to banish unwanted tasks.
-    - **Golden Steps:** Subtasks no longer fade into obscurity; upon completion, they are transmuted into **Gold**, honoring your progress toward Ma'at.
-    - **Mobile Attunement:** Touch interfaces have been optimized for the traveling scribe.
-    - **Daily Rituals:** The management interface has been harmonized with the new design language.
+    - **The Morning Gate:** The temple now demands intention before action. You must seal your commitment to Ma'at before entering the workspace.
+    - **The Oath of Commitment:** A new, golden Foundation Stone task is laid daily to support your accomplishments in the Ma'at section.
+    - **Night Owl Protocol:** The day officially resets at 3:05 AM, allowing late-night scribes to finish their battles in the Duat before the new sun rises.
+    - **Visual Polish:** Enhanced clarity for mobile interfaces and text rendering.
+    - **Bespoke Artifacts:** Includes the new CyberAnkh icon, hand-rendered in Inkscape (after an utterance from Ptah, of course!)
   `,
   
   // 4. Target

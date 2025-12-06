@@ -5,6 +5,8 @@ import { X, Share, PlusSquare, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CyberAnkh } from "@/components/icons/cyber-ankh";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/auth-provider";
+
 
 export function PwaInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);

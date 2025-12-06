@@ -5,17 +5,14 @@ const withPWA = withPWAInit({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // Critical: disables caching while you code!
+  disable: process.env.NODE_ENV === 'development',
 });
 
 const nextConfig: NextConfig = {
-  // Your existing config
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // 👇 REMOVED the 'eslint' block (deprecated in Next.js 16)
   images: {
     remotePatterns: [
       {

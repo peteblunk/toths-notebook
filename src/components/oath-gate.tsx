@@ -13,6 +13,9 @@ export function OathGate() {
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!user) return null;
+
 // --- THE 3:05 AM RULE ---
   // We calculate the "Effective Date" by subtracting 3 hours and 5 minutes.
   // This means the "New Day" doesn't technically start until 03:05 AM.

@@ -12,6 +12,9 @@ export function PtahManager() {
     const { user } = useAuth();
     const [updateAvailable, setUpdateAvailable] = useState(false);
 
+    // If no user is logged in, do not check version, do not render anything.
+    if (!user) return null;
+
     // 1. LISTENER: Only CHECK for update, don't act yet
     useEffect(() => {
         // If we are already showing the banner, stop checking

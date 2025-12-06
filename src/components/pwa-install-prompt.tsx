@@ -10,6 +10,10 @@ export function PwaInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const { user } = useAuth();
+
+
+  if (!user) return null;
 
   useEffect(() => {
     // 1. Check if already installed

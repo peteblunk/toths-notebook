@@ -40,5 +40,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // This is a custom hook that makes it easy for other components
 // to access the authentication state without having to import useContext and AuthContext every time.
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  
+  // 👇 SAFETY NET: If context is missing (e.g. 404 page or build time), return null user
+  if (!context) {
+    return { 
+      user: null, 
+      loading: true, // Keep it "loading" so UI doesn't flash content
+      signInWithGoogle: async () => {}, 
+      signOut: async () => {} 
+    };
+  }
+  
+  return context;
 };

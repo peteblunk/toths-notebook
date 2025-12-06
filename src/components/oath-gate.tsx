@@ -14,7 +14,7 @@ export function OathGate() {
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!user) return null;
+  
 
 // --- THE 3:05 AM RULE ---
   // We calculate the "Effective Date" by subtracting 3 hours and 5 minutes.
@@ -107,6 +107,7 @@ export function OathGate() {
   };
 
   // If we aren't visible, render nothing so we don't block interactions
+  if (!user) return null;
   if (!isVisible) return null;
 
   return (

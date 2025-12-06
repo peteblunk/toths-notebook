@@ -128,7 +128,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
             "bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200", // Solid Gold Bar
             "border-amber-500 border-4", // Heavy Structural Border
             "shadow-[0_0_60px_rgba(251,191,36,0.8)]", // Intense Holy Glow
-            "scale-[1.02]", // Physically larger
+            "scale-[1.0]", // Physically larger
             "mb-6", // Add space below it to show it supports the list
             "z-20" // Lift it up
         ]
@@ -142,7 +142,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
         task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2",
         
         // 👇 EXTRA HEAVY TEXT FOR OATH
-        task.completed && task.title === "Oath of Commitment" && "text-3xl tracking-[0.3em] font-black text-amber-950 drop-shadow-md"
+        task.completed && task.title === "Oath of Commitment" && "font-black text-amber-950 drop-shadow-md"
         
 );
 
@@ -180,7 +180,11 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                 <h3 className={titleClasses}>
                         {/* 🌟 SPECIAL: If it's the Oath, flank it with Cyber Ankhs */}
                         {task.completed && task.title === "Oath of Commitment" ? (
-                            <span className="flex items-center justify-center gap-4">
+                           <span className={cn(
+                            "flex items-center justify-center gap-4",
+                            "pl-2" // 👈 ADDED: Extra breathing room from the checkbox
+                        )}>
+                                
                                 {/* Left Ankh */}
                                 <CyberAnkh className="w-8 h-8 text-amber-900/80" />
                                 

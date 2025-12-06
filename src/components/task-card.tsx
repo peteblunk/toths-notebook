@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { type Task } from '@/lib/types';
 import { format } from 'date-fns';
-// 👇 REMOVED: Calendar, Clock, Tag
 import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -13,7 +12,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CyberJar } from '@/components/icons/cyber-jar';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
-import { CyberAnkh } from './icons/cyber-ankh';
+import { CyberAnkh } from '@/components/icons/cyber-ankh';
 
 interface TaskCardProps {
   task: Task;
@@ -54,6 +53,12 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
       e.stopPropagation();
       setIsDialogOpen(true);
   }
+
+  // Toggle Status + Close Dialog
+  const handleToggleStatus = () => {
+    handleCheckboxChange(!task.completed);
+    setIsDialogOpen(false);
+  };
 
   const handleSubtaskToggle = async (index: number) => {
     if (!task.subtasks) return;
@@ -111,11 +116,12 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
         ]
     ],
     
+    // ⚖️ MA'AT (Complete / Order)
     task.completed && [
         "py-5 px-6", 
-        "flex flex-col items-center text-center justify-center", // Move this up
+        "flex flex-col items-center text-center justify-center", 
         
-        // STANDARD MA'AT (Everything that is NOT the Oath)
+        // STANDARD MA'AT
         task.title !== "Oath of Commitment" && [
             "bg-gradient-to-br from-amber-50 via-white to-amber-100", 
             "border-amber-400 border-2",                         
@@ -123,28 +129,24 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
             "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.6)]",
         ],
 
-        // 🌟 SPECIAL: THE OATH (Foundation Stone)
+        // 🌟 SPECIAL: THE OATH
         task.title === "Oath of Commitment" && [
-            "bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200", // Solid Gold Bar
-            "border-amber-500 border-4", // Heavy Structural Border
-            "shadow-[0_0_60px_rgba(251,191,36,0.8)]", // Intense Holy Glow
-            "scale-[1.0]", // Physically larger
-            "mb-6", // Add space below it to show it supports the list
-            "z-20" // Lift it up
+            "bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200", 
+            "border-amber-500 border-4", 
+            "shadow-[0_0_60px_rgba(251,191,36,0.8)]", 
+            "scale-[1.0]", 
+            "mb-6", 
+            "z-20" 
         ]
     ]
   );
 
- 
-    const titleClasses = cn(
-        "transition-all duration-500 font-display tracking-wider w-full",
-        !task.completed && "font-medium text-lg text-slate-100 text-left",
-        task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2",
-        
-        // 👇 EXTRA HEAVY TEXT FOR OATH
-        task.completed && task.title === "Oath of Commitment" && "font-black text-amber-950 drop-shadow-md"
-        
-);
+  const titleClasses = cn(
+    "transition-all duration-500 font-display tracking-wider w-full",
+    !task.completed && "font-medium text-lg text-slate-100 text-left",
+    task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2",
+    task.completed && task.title === "Oath of Commitment" && "font-black text-amber-950 drop-shadow-md"
+  );
 
   return (
     <>
@@ -165,44 +167,28 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                     onClick={(e) => e.stopPropagation()}
                     className={cn(
                         "transition-all duration-500 border-2 mt-1",
-                        // Ptah
                         !task.completed && isPtah && "data-[state=checked]:bg-emerald-500 border-emerald-500",
-                        // Purple
                         !task.completed && !isPtah && !isPink && "data-[state=checked]:bg-purple-500 border-purple-500",
-                        // Pink
                         !task.completed && !isPtah && isPink && "data-[state=checked]:bg-fuchsia-500 border-fuchsia-500",
-                        // Ma'at
                         task.completed && "data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-600 border-amber-600 data-[state=checked]:text-white w-8 h-8 rounded-full shadow-sm mb-2"
                     )}
                 />
                 
                 <div className={cn("flex-1 space-y-1 w-full", task.completed && "flex flex-col items-center")}>
-                <h3 className={titleClasses}>
-                        {/* 🌟 SPECIAL: If it's the Oath, flank it with Cyber Ankhs */}
+                    <h3 className={titleClasses}>
                         {task.completed && task.title === "Oath of Commitment" ? (
-                           <span className={cn(
-                            "flex items-center justify-center gap-4",
-                            "pl-2" // 👈 ADDED: Extra breathing room from the checkbox
-                        )}>
-                                
-                                {/* Left Ankh */}
+                            <span className={cn("flex items-center justify-center gap-4", "pl-2")}>
                                 <CyberAnkh className="w-8 h-8 text-amber-900/80" />
-                                
                                 <span>{task.title}</span>
-                                
-                                {/* Right Ankh */}
                                 <CyberAnkh className="w-8 h-8 text-amber-900/80" />
                             </span>
                         ) : (
-                            // Standard Task Title
                             task.title
                         )}
                     </h3>
 
                     {!task.completed && (
                         <div className="flex flex-wrap items-center gap-3 justify-start">
-                            
-                            {/* 1. CATEGORY BADGE (Color Matched) */}
                             <Badge 
                                 variant="outline" 
                                 className={cn(
@@ -215,14 +201,12 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                                 {task.category}
                             </Badge>
 
-                            {/* 2. DATE (Now Brighter: text-slate-200) */}
                             {task.dueDate && (
                                 <span className="text-xs font-mono text-slate-200 font-medium">
                                     {format(task.dueDate, 'MMM d')}
                                 </span>
                             )}
 
-                            {/* 3. TIME (Now Brighter: text-slate-200) */}
                             {task.estimatedTime && (
                                 <span className="text-xs font-mono text-slate-200 font-medium">
                                     {task.estimatedTime}m
@@ -233,9 +217,8 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                 </div>
            </div>
 
-           {/* ACTION FOOTER */}
-     {/* ACTION FOOTER */}
-     {!task.completed && (
+           {/* ACTION FOOTER (Dashboard View) */}
+           {!task.completed && (
                <div className="mt-2 flex items-center justify-start relative z-10">
                    <Button 
                        variant="ghost" 
@@ -243,14 +226,8 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                        onClick={handleDetailsClick} 
                        className={cn(
                            "pl-0 transition-colors duration-300",
-                           
-                           // VARIANT 1: PTAH (Green)
                            isPtah && "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/50",
-                           
-                           // VARIANT 2: PURPLE
                            !isPtah && !isPink && "text-purple-400 hover:text-purple-300 hover:bg-purple-950/50",
-                           
-                           // VARIANT 3: PINK
                            !isPtah && isPink && "text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-950/50"
                        )}
                    >
@@ -297,9 +274,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                                         className={cn(
                                             "flex items-center gap-3 p-3 rounded border transition-all duration-500",
                                             st.completed 
-                                                // 🌟 MA'AT STYLE (Complete): Light Gold BG + Gold Border
                                                 ? "bg-gradient-to-r from-amber-50 to-amber-100 border-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)]" 
-                                                // 🌊 NUN STYLE (Incomplete): Dark + Cyan Border
                                                 : "bg-slate-900/50 border-cyan-900/30 hover:border-cyan-500/50"
                                         )}
                                     >
@@ -309,17 +284,14 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                                             className={cn(
                                                 "rounded-full w-5 h-5 transition-all duration-300",
                                                 st.completed
-                                                    // Darker Gold Checkbox for contrast on light BG
                                                     ? "border-amber-600 data-[state=checked]:bg-amber-600 data-[state=checked]:text-white"
-                                                    // Cyan Checkbox for dark BG
                                                     : "border-cyan-500 data-[state=checked]:bg-cyan-500 data-[state=checked]:text-black"
                                             )}
                                         />
                                         
                                         <span className={cn(
-                                            "text-sm transition-all duration-300 flex-1", // flex-1 pushes text to fill space
+                                            "text-sm transition-all duration-300 flex-1", 
                                             st.completed 
-                                                // Dark Gold Text + Right Justified
                                                 ? "text-amber-900 font-bold text-right tracking-wide" 
                                                 : "text-slate-200"
                                         )}>
@@ -331,35 +303,70 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-6 border-t border-cyan-900/30 mt-4">
+                    {/* ACTION FOOTER (Stacked Layout) */}
+                    <div className="flex items-center justify-between pt-6 border-t border-cyan-900/30 mt-4 gap-2">
+                         
+                         {/* LEFT: EDIT */}
                          <div 
                             role="button"
                             onClick={handleEditClick}
                             className={cn(
                                 "group/stylus cursor-pointer",
-                                "flex items-center px-4 py-2 rounded-md",
+                                "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
                                 "text-cyan-500 hover:text-cyan-300 hover:bg-cyan-950/30", 
-                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-cyan-500/20"
+                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-cyan-500/20",
+                                "w-24 h-20"
                             )}
+                            title="Edit Ritual"
                          >
-                            <CyberStylus className="w-22 h-22 mr-4" /> 
-                            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/stylus:opacity-100 font-bold">
+                            <CyberStylus className="w-10 h-10 mb-1" /> 
+                            <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/stylus:opacity-100 font-bold">
                                 Edit
                             </span>
                          </div>
 
+                         {/* CENTER: SANCTIFY */}
+                         <div
+                            role="button"
+                            onClick={handleToggleStatus}
+                            className={cn(
+                                "group/complete cursor-pointer",
+                                "flex flex-col items-center justify-center px-6 py-2 rounded-md border", 
+                                "transition-all duration-500 active:scale-95",
+                                "w-32 h-24 -mt-2", 
+                                task.completed
+                                    ? "border-slate-700 text-slate-500 hover:text-cyan-400 hover:border-cyan-500/50 hover:bg-cyan-950/30" 
+                                    : "border-amber-500/50 text-amber-500 bg-amber-500/5 hover:bg-amber-500/20 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
+                            )}
+                         >
+                            <CyberAnkh className={cn(
+                                "w-12 h-12 mb-1 transition-transform duration-500",
+                                !task.completed && "group-hover/complete:scale-110"
+                            )} />
+                            
+                            <span className={cn(
+                                "tracking-[0.15em] font-display text-xs uppercase font-bold",
+                                task.completed ? "group-hover/complete:text-cyan-300" : "group-hover/complete:text-amber-300"
+                            )}>
+                                {task.completed ? "Restore" : "Sanctify"}
+                            </span>
+                         </div>
+
+                         {/* RIGHT: BANISH */}
                          <div 
                             role="button"
                             onClick={handleDeleteClick}
                             className={cn(
                                 "group/modal-jar cursor-pointer",
-                                "flex items-center px-4 py-2 rounded-md", 
+                                "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
                                 "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
-                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20"
+                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20",
+                                "w-24 h-20"
                             )}
+                            title="Banish Ritual"
                          >
-                            <CyberJar className="w-12 h-12 mr-3" /> 
-                            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
+                            <CyberJar className="w-10 h-10 mb-1" /> 
+                            <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
                                 Banish
                             </span>
                         </div>

@@ -5,19 +5,18 @@ import { X, Share, PlusSquare, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CyberAnkh } from "@/components/icons/cyber-ankh";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/components/auth-provider";
-
+import { useAuth } from "@/components/auth-provider"; // Ensure this import is present
 
 export function PwaInstallPrompt() {
+  const { user } = useAuth(); // Get user authentication status
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const { user } = useAuth();
-
-
-  if (!user) return null;
 
   useEffect(() => {
+    // Guard clause: Don't show if user is not logged in
+    if (!user) return;
+
     // 1. Check if already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone) return; 
@@ -43,7 +42,7 @@ export function PwaInstallPrompt() {
     }
 
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [user]); // Add user to dependency array
 
   const handleAndroidInstall = async () => {
     if (!deferredPrompt) return;
@@ -54,6 +53,9 @@ export function PwaInstallPrompt() {
     }
     setDeferredPrompt(null);
   };
+
+  // Don't render anything if user is not logged in (double check)
+  if (!user) return null;
 
   return (
     <AnimatePresence>

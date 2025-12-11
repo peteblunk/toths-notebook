@@ -28,6 +28,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
   // --- COLOR LOGIC ---
   const isPtah = task.tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
+  const isChronicle = task.category ==="Chronicle"
 
   const handleCheckboxChange = (checked: boolean) => {
     if (onTaskCompletionChange) {
@@ -137,6 +138,15 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
             "scale-[1.0]", 
             "mb-6", 
             "z-20" 
+        ],
+        // 💎 THE CHRONICLE (Neon Azure Artifact)
+        isChronicle && [
+            "bg-slate-950", // Dark core
+            "border-2 border-cyan-500", // Neon border
+            "shadow-[0_0_30px_rgba(34,211,238,0.4)]", // Blue glow
+            "hover:shadow-[0_0_50px_rgba(34,211,238,0.6)]",
+            "hover:scale-[1.01]",
+            "mb-4"
         ]
     ]
   );
@@ -145,7 +155,8 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
     "transition-all duration-500 font-display tracking-wider w-full",
     !task.completed && "font-medium text-lg text-slate-100 text-left",
     task.completed && "text-2xl font-black text-amber-800 uppercase tracking-[0.1em] drop-shadow-sm text-center mb-2",
-    task.completed && task.title === "Oath of Commitment" && "font-black text-amber-950 drop-shadow-md"
+    task.completed && task.title === "Oath of Commitment" && "font-black text-amber-950 drop-shadow-md",
+    task.completed && isChronicle && "text-cyan-400 font-display tracking-[0.2em]"
   );
 
   return (

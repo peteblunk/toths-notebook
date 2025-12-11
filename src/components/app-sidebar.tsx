@@ -8,7 +8,7 @@ import {
   SidebarFooter,
   SidebarMenuButton,
   SidebarGroupLabel,
-  useSidebar, // THE FIX IS HERE: Added the missing import
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ import {
   BookOpen,
   Flame,
   Eclipse,
+  Moon, // <--- Added Moon Icon
 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from "@/components/auth-provider";
@@ -106,6 +107,19 @@ export function AppSidebar({ activeCategory, setActiveCategory }) {
       </SidebarContent>
 
       <SidebarFooter>
+        {/* --- Evening Chronicle Anchor --- */}
+<div className="mt-auto border-t border-cyan-900/30 pt-2">
+  <SidebarMenuButton 
+    asChild 
+    className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50 group w-full justify-start pl-2"
+  >
+    <Link href="/evening-chronicle">
+      <Moon className="w-4 h-4 mr-2 group-hover:animate-spin-slow transition-all duration-700" />
+      <span className="font-bold tracking-wide">Evening Chronicle</span>
+    </Link>
+  </SidebarMenuButton>
+</div>
+
         <div className="flex items-center justify-between gap-2 border-t border-border p-2">
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-8 h-8 bg-cyan-900/50 flex items-center justify-center rounded-full flex-shrink-0">

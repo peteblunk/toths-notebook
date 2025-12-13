@@ -1,4 +1,4 @@
-export const latestUpdate = {
+export const PTAH_CONFIG = {
   version: "1.4.0",
   title: "The Evening Chronicle & Temple Wards",
   date: new Date().toLocaleDateString(),

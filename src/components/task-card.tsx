@@ -26,9 +26,10 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
   const cardRef = useRef<HTMLDivElement>(null);
 
   // --- COLOR LOGIC ---
-  const isPtah = task.tags?.includes('Gift of Ptah');
+  const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
-  const isChronicle = task.category ==="Chronicle"
+  // 🛡️ Cast to 'any' so TypeScript doesn't complain about the "Chronicle" value
+const isChronicle = (task as any).category === "Chronicle";
 
   const handleCheckboxChange = (checked: boolean) => {
     if (onTaskCompletionChange) {

@@ -1,56 +1,76 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { 
+  User, 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut as firebaseSignOut 
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
-// Define the shape of the context data
+// 1. The Interface (The Menu)
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
+  loading: boolean; // ✅ We stick with 'loading' here
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
-// Create the context with a default value
-const AuthContext = createContext<AuthContextType>({ user: null, isLoading: true });
+// 2. The Default Context (The Appetizer)
+// ✅ FIX: Changed isLoading to loading here to match the interface
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  loading: true, 
+  signInWithGoogle: async () => {},
+  signOut: async () => {}
+});
 
-// This is our provider component. It will wrap our application.
+export const useAuth = () => useContext(AuthContext);
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // ✅ FIX: Changed state name from isLoading to loading
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged is the core of our authentication listener.
-    // It's a Firebase function that listens for any changes to the user's login state.
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsLoading(false); // We're done loading once we have the user status
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
     });
 
-    // Cleanup function: It's important to unsubscribe from the listener
-    // when the component is unmounted to prevent memory leaks.
     return () => unsubscribe();
-  }, []); // The empty dependency array ensures this effect runs only once.
+  }, []);
 
-  const value = { user, isLoading };
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Error signing in with Google", error);
+    }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
+  };
 
-// This is a custom hook that makes it easy for other components
-// to access the authentication state without having to import useContext and AuthContext every time.
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  // 👇 SAFETY NET: If context is missing (e.g. 404 page or build time), return null user
-  if (!context) {
-    return { 
-      user: null, 
-      loading: true, // Keep it "loading" so UI doesn't flash content
-      signInWithGoogle: async () => {}, 
-      signOut: async () => {} 
-    };
-  }
-  
-  return context;
+  // ✅ FIX: The value object now perfectly matches the interface
+  const value = {
+    user,
+    loading,
+    signInWithGoogle,
+    signOut
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };

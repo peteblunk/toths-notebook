@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef } from 'react';
 import { type Task } from '@/lib/types';
 import { format } from 'date-fns';
@@ -16,11 +18,14 @@ import { CyberAnkh } from '@/components/icons/cyber-ankh';
 
 interface TaskCardProps {
   task: Task;
+  // We keep the old props just in case
   onTaskCompletionChange?: (taskId: string, completed: boolean) => void;
   onTaskDelete?: (taskId: string) => void;
+  // ✅ FIX: Add onToggle to match what TaskList is sending
+  onToggle?: () => void;
 }
 
-export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCardProps) {
+export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle }: TaskCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -30,9 +35,15 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
   const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
   const isChronicle = (task as any).category === "Chronicle";
+
   const handleCheckboxChange = (checked: boolean) => {
+    // 1. Support the detailed change handler
     if (onTaskCompletionChange) {
       onTaskCompletionChange(task.id, checked);
+    }
+    // 2. ✅ FIX: Support the simple toggle from TaskList
+    if (onToggle) {
+        onToggle();
     }
   };
 
@@ -319,16 +330,16 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
                          
                          {/* LEFT: EDIT */}
                          <div 
-                            role="button"
-                            onClick={handleEditClick}
-                            className={cn(
-                                "group/stylus cursor-pointer",
-                                "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
-                                "text-cyan-500 hover:text-cyan-300 hover:bg-cyan-950/30", 
-                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-cyan-500/20",
-                                "w-24 h-20"
-                            )}
-                            title="Edit Ritual"
+                           role="button"
+                           onClick={handleEditClick}
+                           className={cn(
+                               "group/stylus cursor-pointer",
+                               "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
+                               "text-cyan-500 hover:text-cyan-300 hover:bg-cyan-950/30", 
+                               "transition-all duration-300 active:scale-95 border border-transparent hover:border-cyan-500/20",
+                               "w-24 h-20"
+                           )}
+                           title="Edit Ritual"
                          >
                             <CyberStylus className="w-10 h-10 mb-1" /> 
                             <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/stylus:opacity-100 font-bold">
@@ -338,17 +349,17 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
 
                          {/* CENTER: SANCTIFY */}
                          <div
-                            role="button"
-                            onClick={handleToggleStatus}
-                            className={cn(
-                                "group/complete cursor-pointer",
-                                "flex flex-col items-center justify-center px-6 py-2 rounded-md border", 
-                                "transition-all duration-500 active:scale-95",
-                                "w-32 h-24 -mt-2", 
-                                task.completed
-                                    ? "border-slate-700 text-slate-500 hover:text-cyan-400 hover:border-cyan-500/50 hover:bg-cyan-950/30" 
-                                    : "border-amber-500/50 text-amber-500 bg-amber-500/5 hover:bg-amber-500/20 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
-                            )}
+                           role="button"
+                           onClick={handleToggleStatus}
+                           className={cn(
+                               "group/complete cursor-pointer",
+                               "flex flex-col items-center justify-center px-6 py-2 rounded-md border", 
+                               "transition-all duration-500 active:scale-95",
+                               "w-32 h-24 -mt-2", 
+                               task.completed
+                                   ? "border-slate-700 text-slate-500 hover:text-cyan-400 hover:border-cyan-500/50 hover:bg-cyan-950/30" 
+                                   : "border-amber-500/50 text-amber-500 bg-amber-500/5 hover:bg-amber-500/20 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
+                           )}
                          >
                             <CyberAnkh className={cn(
                                 "w-12 h-12 mb-1 transition-transform duration-500",
@@ -365,16 +376,16 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
 
                          {/* RIGHT: BANISH */}
                          <div 
-                            role="button"
-                            onClick={handleDeleteClick}
-                            className={cn(
-                                "group/modal-jar cursor-pointer",
-                                "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
-                                "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
-                                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20",
-                                "w-24 h-20"
-                            )}
-                            title="Banish Ritual"
+                           role="button"
+                           onClick={handleDeleteClick}
+                           className={cn(
+                               "group/modal-jar cursor-pointer",
+                               "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
+                               "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
+                               "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20",
+                               "w-24 h-20"
+                           )}
+                           title="Banish Ritual"
                          >
                             <CyberJar className="w-10 h-10 mb-1" /> 
                             <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">

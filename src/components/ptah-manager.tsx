@@ -28,33 +28,60 @@ export function PtahManager() {
         }
     }, [updateAvailable]); // Removed 'user' dependency to avoid loop, simple check is fine
 
-    // 2. THE RITUAL ACTION
+   // 2. THE RITUAL ACTION (FIXED & DEBUGGED)
     const handleEmbrace = async () => {
-        if (!user) return; // Safety check
+        console.log("🔨 Embrace clicked. Checking systems...");
+
+        // Diagnostic 1: Check User
+        if (!user) {
+            console.error("❌ No user found.");
+            alert("Error: User not found. Please refresh.");
+            return;
+        }
 
         try {
-            // A. Scribe the new task into the database
+            // STEP 1: PREPARE THE DATA
+            // We need to format your complex Config object into a string for the 'details' field
+            const formattedDetails = `
+VERSION: ${PTAH_CONFIG.version}
+DATE: ${PTAH_CONFIG.date}
+
+${PTAH_CONFIG.intro}
+
+CHANGES:
+${PTAH_CONFIG.changes.map(c => `• ${c.title}: ${c.description}`).join("\n")}
+            `.trim();
+
+            console.log("📝 Payload prepared. Scribing to DB...");
+
+            // STEP 2: SCRIBE TO FIRESTORE
             await addDoc(collection(db, "tasks"), {
                 userId: user.uid,
-                title: PTAH_CONFIG.releaseTitle,
-                details: PTAH_CONFIG.releaseNotes,
-                category: PTAH_CONFIG.targetCategory, // "Nun"
+                // 👇 FIX: Use 'title' instead of 'releaseTitle'
+                title: PTAH_CONFIG.title, 
+                // 👇 FIX: Use our formatted string instead of 'releaseNotes'
+                details: formattedDetails,
+                // 👇 FIX: Default to "Nun" since 'targetCategory' is missing in config
+                category: "Nun", 
                 dueDate: new Date(),
                 completed: false,
                 createdAt: serverTimestamp(),
                 tags: ["System Update", "Gift of Ptah"]
             });
 
-            // B. Save the new version to Local Storage (so banner doesn't show again)
+            console.log("✅ Scribe successful. Saving version...");
+
+            // STEP 3: UPDATE LOCAL STORAGE
             localStorage.setItem("thoth_app_version", PTAH_CONFIG.version);
 
-            // C. Reload the page to "Scrub the Interface"
+            // STEP 4: RELOAD
+            alert("The Gift of Ptah has been accepted. The system will now reboot.");
             window.location.reload();
 
         } catch (error) {
-            console.error("Failed to scribe the Gift of Ptah:", error);
-            // Even if DB fails, maybe save version to avoid infinite loop? 
-            // For now, let's leave it so you can try again.
+            console.error("❌ Failed to scribe the Gift of Ptah:", error);
+            // This alert ensures you know if it fails!
+            alert(`The Ritual Failed: ${error}`); 
         }
     };
 

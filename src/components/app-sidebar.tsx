@@ -34,6 +34,10 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/
 import { KhonsuTimer } from "@/components/khonsu-timer";
 
 // This is the main sidebar component.
+interface AppSidebarProps {
+  activeCategory: string;
+  setActiveCategory: (category: string) => void;
+}
 export function AppSidebar({ activeCategory, setActiveCategory }) {
   const { user } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();

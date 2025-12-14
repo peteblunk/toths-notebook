@@ -13,7 +13,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('Today');
   
   // Get the user and loading state from our AuthProvider
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth(); // ✅ Matches the type definition
   const router = useRouter();
 
   // This useEffect hook runs whenever the user, loading state, or router changes.
@@ -21,14 +21,14 @@ export default function Home() {
   useEffect(() => {
     // If we are done loading and there is no user, it means they are not logged in.
     // We redirect them to the login page.
-    if (!isLoading && !user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, isLoading, router]); // The effect depends on these values
+  }, [user, loading, router]); // The effect depends on these values
 
   // While Firebase is checking the auth state, we show a loading screen.
   // This prevents a "flash" of the main app before the redirect can happen.
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-cyan-400 font-display">
         <svg className="animate-spin h-10 w-10 text-cyan-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

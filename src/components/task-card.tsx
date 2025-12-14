@@ -25,12 +25,11 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete }: TaskCar
   const [isEditOpen, setIsEditOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // --- COLOR LOGIC ---
+ // --- COLOR LOGIC ---
+  // 🛡️ Cast to 'any' to safely check 'tags' and 'Chronicle'
   const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
-  // 🛡️ Cast to 'any' so TypeScript doesn't complain about the "Chronicle" value
-const isChronicle = (task as any).category === "Chronicle";
-
+  const isChronicle = (task as any).category === "Chronicle";
   const handleCheckboxChange = (checked: boolean) => {
     if (onTaskCompletionChange) {
       onTaskCompletionChange(task.id, checked);

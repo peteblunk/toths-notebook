@@ -26,45 +26,52 @@ export function TaskList({ filter }: TaskListProps) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
+ useEffect(() => {
     if (!user) return;
 
     setLoading(true);
 
     try {
-      const tasksRef = collection(db, "tasks");
+      // 🔮 LOGIC UPDATE: Switch collections based on the filter
+      // If the filter is "Daily Rituals" (or whatever you call it in your sidebar), 
+      // we switch to that collection.
+      const isRitualMode = filter === "Daily Rituals" || filter === "Rituals";
+      const collectionName = isRitualMode ? "dailyRituals" : "tasks";
+      
+      const tasksRef = collection(db, collectionName);
+      
+      // Start with the basic User ID query
       let q = query(tasksRef, where("userId", "==", user.uid));
 
-      // Apply filters based on the category
-      if (filter === "completed") {
-        q = query(q, where("completed", "==", true));
-      } else if (filter !== "all") {
-        // For specific categories, we usually want active tasks
-        q = query(q, 
-            where("category", "==", filter),
-            where("completed", "==", false)
-        );
-      } else {
-        // "all" usually implies active tasks across all categories
-         q = query(q, where("completed", "==", false));
+      // Apply filters ONLY if we are in the 'tasks' collection
+      if (!isRitualMode) {
+          if (filter === "completed") {
+            q = query(q, where("completed", "==", true));
+          } else if (filter !== "all" && filter !== "Inbox") {
+            q = query(q, 
+                where("category", "==", filter),
+                where("completed", "==", false)
+            );
+          } else {
+             // For "all" or "Inbox", show active tasks
+             q = query(q, where("completed", "==", false));
+          }
       }
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const tasksData: Task[] = [];
         querySnapshot.forEach((docSnap) => {
-            // 🛡️ Cast data to 'any' to avoid type errors
             const data = docSnap.data() as any;
 
             tasksData.push({
               id: docSnap.id,
               ...data,
-              // Safe date conversions
               dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
               createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
-            } as unknown as Task); // 🛡️ Double Cast
+            } as unknown as Task);
         });
         
-        // simple client-side sort by creation/date
+        // Sort: Newest first (handles missing dates safely)
         tasksData.sort((a: any, b: any) => {
             const dateA = a.createdAt?.getTime() || 0;
             const dateB = b.createdAt?.getTime() || 0;
@@ -81,7 +88,6 @@ export function TaskList({ filter }: TaskListProps) {
       setLoading(false);
     }
   }, [user, filter]);
-
   const handleToggle = async (task: Task) => {
     try {
         const taskRef = doc(db, "tasks", task.id);

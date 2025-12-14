@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/components/auth-provider"; // Import our custom auth hook
-import { Sidebar, SidebarInset } from "@/components/ui/sidebar";
+import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TaskList } from "@/components/task-list";
 import { FilterCategory } from "@/lib/types";
+import { Separator } from "@/components/ui/separator"
 
 // This is the main page of our application. It's now a "protected route".
 export default function Home() {
@@ -51,6 +52,11 @@ export default function Home() {
 />
         </Sidebar>
         <SidebarInset className="flex-1 bg-background">
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <span className="font-display font-bold text-lg">{activeCategory}</span>
+        </header>
           <main className="p-4 sm:p-6 lg:p-8 h-full">
             <TaskList filter={activeCategory} />
           </main>

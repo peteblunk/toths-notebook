@@ -45,7 +45,10 @@ export default function Home() {
     return (
       <div className="flex min-h-screen w-full flex-col md:flex-row">
         <Sidebar>
-          <AppSidebar activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+          <AppSidebar 
+  activeCategory={activeCategory} 
+  setActiveCategory={(category: string) => setActiveCategory(category as any)} 
+/>
         </Sidebar>
         <SidebarInset className="flex-1 bg-background">
           <main className="p-4 sm:p-6 lg:p-8 h-full">

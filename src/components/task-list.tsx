@@ -38,16 +38,17 @@ export function TaskList({ activeCategory }: TaskListProps) {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const tasksData: Task[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        // 1. Cast data to 'any' so we can access properties freely
+        const data = doc.data() as any;
+        
         tasksData.push({
           id: doc.id,
           ...data,
-          dueDate: data.dueDate?.toDate(),
-          createdAt: data.createdAt?.toDate(),
-        } as Task);
+          // 2. Safe date conversion
+          dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+        } as unknown as Task); // 3. The "Double Cast" to force TypeScript to accept it
       });
-      setTasks(tasksData);
-    });
 
     return () => unsubscribe();
   }, [user]);

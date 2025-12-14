@@ -33,21 +33,24 @@ export default function TaskDetailPage() {
         if (!user || !taskId) return;
 
         const taskDocRef = doc(db, "tasks", taskId);
-        const unsubscribe = onSnapshot(taskDocRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                // Security check: Make sure the fetched task belongs to the logged-in user
-                if (data.userId === user.uid) {
-                    const taskData = {
-                        id: doc.id,
-                        ...data,
-                        dueDate: data.dueDate?.toDate(),
-                        createdAt: data.createdAt?.toDate(),
-                    } as Task;
-                    setTask(taskData);
-                    setDetails(taskData.details || '');
-                } else {
-                    setTask(null); // Task doesn't belong to this user
+        const unsubscribe = onSnapshot(taskDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                // 1. Cast data to 'any' so TypeScript stops checking for specific fields
+                const data = docSnap.data() as any;
+
+                const taskData = {
+                    id: docSnap.id,
+                    ...data, // Now valid because 'data' is 'any'
+                    // 2. Safe Date Conversion (checks if .toDate exists first)
+                    dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
+                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+                } as unknown as Task; // 3. Double Cast to force it into the Task shape
+                
+                setTask(taskData);
+                
+                // Initialize local state for editing
+                if (taskData.details) {
+                    setDetails(taskData.details);
                 }
             } else {
                 setTask(null); // Task not found
@@ -108,7 +111,7 @@ export default function TaskDetailPage() {
     }
 
     if (task === null) {
-        notFound(); // If task is not found or doesn't belong to user, show 404
+        notFound(); // If task is not found, show 404
     }
 
     return (

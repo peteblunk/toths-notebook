@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 // Define the shape of the context data
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  loading: boolean;
 }
 
 // Create the context with a default value

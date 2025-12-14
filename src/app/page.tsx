@@ -52,7 +52,7 @@ export default function Home() {
         </Sidebar>
         <SidebarInset className="flex-1 bg-background">
           <main className="p-4 sm:p-6 lg:p-8 h-full">
-            <TaskList activeCategory={activeCategory} />
+            <TaskList filter={activeCategory} />
           </main>
         </SidebarInset>
       </div>

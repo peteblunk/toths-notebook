@@ -45,7 +45,8 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
   const handleSave = async () => {
     try {
       // Smart check: active tasks vs templates
-      const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
+      // 🛡️ Cast to 'any' to bypass the strict type check
+const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
       const taskRef = doc(db, collectionName, task.id);
       
       await updateDoc(taskRef, {
@@ -75,7 +76,9 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
     if (!confirm("Are you sure you want to banish this ritual?")) return;
 
     try {
-        const collectionName = task.createdAt ? 'tasks' : 'dailyRituals';
+        // 👇 ADD (task as any) HERE TOO
+        const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
+        
         const taskRef = doc(db, collectionName, task.id);
         await deleteDoc(taskRef);
         

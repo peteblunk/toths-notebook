@@ -2,33 +2,69 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { useAuth } from "@/components/auth-provider"; // Import our custom auth hook
+import { useAuth } from "@/components/auth-provider"; 
 import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TaskList } from "@/components/task-list";
 import { FilterCategory } from "@/lib/types";
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui/separator";
+import { AddTaskDialog } from "@/components/add-task-dialog";
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; 
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
-// This is the main page of our application. It's now a "protected route".
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('Today');
   
   // Get the user and loading state from our AuthProvider
-  const { user, loading } = useAuth(); // ✅ Matches the type definition
+  const { user, loading } = useAuth(); 
   const router = useRouter();
+  const { toast } = useToast(); // Initialize the toast hook
 
-  // This useEffect hook runs whenever the user, loading state, or router changes.
-  // Its job is to protect the route.
+  // This useEffect hook protects the route
   useEffect(() => {
-    // If we are done loading and there is no user, it means they are not logged in.
-    // We redirect them to the login page.
     if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]); // The effect depends on these values
+  }, [user, loading, router]); 
 
-  // While Firebase is checking the auth state, we show a loading screen.
-  // This prevents a "flash" of the main app before the redirect can happen.
+  // ------------------------------------------------------------------
+  // 1. THE MISSING HANDLER FUNCTION
+  // ------------------------------------------------------------------
+  const handleAddTask = async (taskData: any) => {
+    if (!user) {
+        console.error("No user found!");
+        return;
+    }
+
+    try {
+        // Decide where the scroll goes: 'dailyRituals' or 'tasks'
+        const isRitual = taskData.category === "Daily Rituals" || taskData.category === "Sacred Duties";
+        const targetCollection = isRitual ? "dailyRituals" : "tasks";
+
+        console.log(`Adding task to ${targetCollection}...`, taskData);
+
+        await addDoc(collection(db, targetCollection), {
+            ...taskData,
+            userId: user.uid,
+            completed: false,
+            createdAt: serverTimestamp(),
+            // Ensure we save a valid date object
+            dueDate: taskData.dueDate || new Date(), 
+        });
+
+        // (Toast is handled in the Dialog component, so we don't need one here)
+    } catch (error) {
+        console.error("Error adding task in Home:", error);
+        toast({ 
+            title: "Error", 
+            description: "The Scribe could not record this task.", 
+            variant: "destructive" 
+        });
+    }
+  };
+
+  // Loading State
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-cyan-400 font-display">
@@ -41,22 +77,29 @@ export default function Home() {
     );
   }
 
-  // If we are done loading AND there is a user, we render the main application.
+  // Main App State
   if (user) {
     return (
       <div className="flex min-h-screen w-full flex-col md:flex-row">
         <Sidebar>
           <AppSidebar 
-  activeCategory={activeCategory} 
-  setActiveCategory={(category: string) => setActiveCategory(category as any)} 
-/>
+             activeCategory={activeCategory} 
+             setActiveCategory={(category: string) => setActiveCategory(category as any)} 
+          />
         </Sidebar>
         <SidebarInset className="flex-1 bg-background">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <span className="font-display font-bold text-lg">{activeCategory}</span>
+          
+          <div className="ml-auto">
+             {/* 👇 2. PASS THE FUNCTION TO THE COMPONENT */}
+             <AddTaskDialog onTaskAdd={handleAddTask} />
+          </div>
         </header>
+
           <main className="p-4 sm:p-6 lg:p-8 h-full">
             <TaskList filter={activeCategory} />
           </main>
@@ -65,7 +108,5 @@ export default function Home() {
     );
   }
 
-  // If none of the above conditions are met (which shouldn't happen, but is good for safety),
-  // we return null to render nothing.
   return null;
 }

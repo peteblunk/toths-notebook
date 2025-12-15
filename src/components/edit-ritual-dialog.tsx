@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,9 +18,12 @@ interface EditRitualDialogProps {
   task: Task; 
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // 👇 NEW PROP
+  collectionName?: string;
 }
 
-export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogProps) {
+// 👇 DEFAULT TO 'tasks' IF NOT PROVIDED
+export function EditRitualDialog({ task, open, onOpenChange, collectionName = "tasks" }: EditRitualDialogProps) {
   if (!task) return null;
 
   const [title, setTitle] = useState(task.title);
@@ -44,9 +49,7 @@ export function EditRitualDialog({ task, open, onOpenChange }: EditRitualDialogP
 
   const handleSave = async () => {
     try {
-      // Smart check: active tasks vs templates
-      // 🛡️ Cast to 'any' to bypass the strict type check
-const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
+      // ✅ USE THE PROP (No more guessing)
       const taskRef = doc(db, collectionName, task.id);
       
       await updateDoc(taskRef, {
@@ -76,9 +79,7 @@ const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
     if (!confirm("Are you sure you want to banish this ritual?")) return;
 
     try {
-        // 👇 ADD (task as any) HERE TOO
-        const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
-        
+        // ✅ USE THE PROP
         const taskRef = doc(db, collectionName, task.id);
         await deleteDoc(taskRef);
         
@@ -164,13 +165,12 @@ const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
                    <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30 group">
                       <span className="flex-1 text-sm truncate">{subtask.text}</span>
                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
-                         onClick={() => handleDeleteSubtask(index)}
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                          onClick={() => handleDeleteSubtask(index)}
                       >
-                         {/* Subtask delete: Small Cyber Jar */}
-                         <CyberJar className="w-5 h-5" />
+                          <CyberJar className="w-5 h-5" />
                       </Button>
                    </div>
                 ))}
@@ -179,7 +179,6 @@ const collectionName = (task as any).createdAt ? 'tasks' : 'dailyRituals';
         </div>
 
         <DialogFooter className="flex justify-between sm:justify-between w-full pt-4 border-t border-cyan-900/30">
-          {/* 👇 THE MASSIVE BANISH BUTTON */}
           <div 
             role="button"
             onClick={handleDeleteRitual}

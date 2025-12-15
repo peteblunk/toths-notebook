@@ -18,30 +18,32 @@ import { CyberAnkh } from '@/components/icons/cyber-ankh';
 
 interface TaskCardProps {
   task: Task;
-  // We keep the old props just in case
   onTaskCompletionChange?: (taskId: string, completed: boolean) => void;
   onTaskDelete?: (taskId: string) => void;
-  // ✅ FIX: Add onToggle to match what TaskList is sending
   onToggle?: () => void;
+  collectionName?: string; // 👈 NEW PROP
 }
 
-export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle }: TaskCardProps) {
+export function TaskCard({ 
+  task, 
+  onTaskCompletionChange, 
+  onTaskDelete, 
+  onToggle, 
+  collectionName = "tasks" // Default to 'tasks' if not provided
+}: TaskCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
- // --- COLOR LOGIC ---
-  // 🛡️ Cast to 'any' to safely check 'tags' and 'Chronicle'
+  // ... (Color Logic remains the same)
   const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
   const isChronicle = (task as any).category === "Chronicle";
 
   const handleCheckboxChange = (checked: boolean) => {
-    // 1. Support the detailed change handler
     if (onTaskCompletionChange) {
       onTaskCompletionChange(task.id, checked);
     }
-    // 2. ✅ FIX: Support the simple toggle from TaskList
     if (onToggle) {
         onToggle();
     }
@@ -66,12 +68,12 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
       setIsDialogOpen(true);
   }
 
-  // Toggle Status + Close Dialog
   const handleToggleStatus = () => {
     handleCheckboxChange(!task.completed);
     setIsDialogOpen(false);
   };
 
+  // ✅ FIX: Use collectionName for subtasks
   const handleSubtaskToggle = async (index: number) => {
     if (!task.subtasks) return;
     
@@ -82,25 +84,25 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
     };
 
     try {
-        const taskRef = doc(db, 'tasks', task.id);
+        // Use the passed collectionName instead of hardcoding 'tasks'
+        const taskRef = doc(db, collectionName, task.id);
         await updateDoc(taskRef, { subtasks: newSubtasks });
     } catch (error) {
         console.error("Error toggling subtask:", error);
     }
   };
 
-  // --- STYLING LOGIC ---
+  // ... (Styling Logic remains the same - copy from your previous file or trust me to preserve it)
+  // I will abbreviate the styling here for clarity, but in your file, KEEP THE STYLING LOGIC.
+  // ⚠️ TO BE SAFE: I will paste the FULL styling logic below so you can copy-paste the whole file.
+  
   const containerClasses = cn(
     "rounded-xl border transition-all duration-500 cursor-pointer group relative overflow-hidden backdrop-blur-md",
-    
-    // 🌊 NUN (Incomplete / Chaos)
     !task.completed && [
         "p-5",
         "bg-gradient-to-br from-slate-950 via-[#0a0f1e] to-[#0f0518]", 
         "border-l-4", 
         "hover:scale-[1.01]",
-        
-        // VARIANT 1: PTAH (Green)
         isPtah && [
             "border-l-emerald-500",
             "border-y border-y-emerald-500/50 border-r border-r-emerald-500/50",
@@ -108,8 +110,6 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
             "hover:border-l-emerald-400 hover:border-y-emerald-500 hover:border-r-emerald-500",
             "hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
         ],
-
-        // VARIANT 2: PURPLE
         !isPtah && !isPink && [
             "border-l-purple-500",
             "border-y border-y-purple-500/50 border-r border-r-purple-500/50",
@@ -117,8 +117,6 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
             "hover:border-l-purple-400 hover:border-y-purple-500 hover:border-r-purple-500",
             "hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]"
         ],
-
-        // VARIANT 3: PINK
         !isPtah && isPink && [
             "border-l-fuchsia-500",
             "border-y border-y-fuchsia-500/50 border-r border-r-fuchsia-500/50",
@@ -127,21 +125,15 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
             "hover:shadow-[0_0_30px_rgba(217,70,239,0.5)]"
         ]
     ],
-    
-    // ⚖️ MA'AT (Complete / Order)
     task.completed && [
         "py-5 px-6", 
         "flex flex-col items-center text-center justify-center", 
-        
-        // STANDARD MA'AT
         task.title !== "Oath of Commitment" && [
             "bg-gradient-to-br from-amber-50 via-white to-amber-100", 
             "border-amber-400 border-2",                         
             "shadow-[0_0_30px_rgba(251,191,36,0.4)]",       
             "hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(251,191,36,0.6)]",
         ],
-
-        // 🌟 SPECIAL: THE OATH
         task.title === "Oath of Commitment" && [
             "bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200", 
             "border-amber-500 border-4", 
@@ -150,11 +142,10 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
             "mb-6", 
             "z-20" 
         ],
-        // 💎 THE CHRONICLE (Neon Azure Artifact)
         isChronicle && [
-            "bg-slate-950", // Dark core
-            "border-2 border-cyan-500", // Neon border
-            "shadow-[0_0_30px_rgba(34,211,238,0.4)]", // Blue glow
+            "bg-slate-950", 
+            "border-2 border-cyan-500", 
+            "shadow-[0_0_30px_rgba(34,211,238,0.4)]", 
             "hover:shadow-[0_0_50px_rgba(34,211,238,0.6)]",
             "hover:scale-[1.01]",
             "mb-4"
@@ -239,7 +230,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
                 </div>
            </div>
 
-           {/* ACTION FOOTER (Dashboard View) */}
+           {/* ACTION FOOTER */}
            {!task.completed && (
                <div className="mt-2 flex items-center justify-start relative z-10">
                    <Button 
@@ -325,10 +316,9 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
                         </div>
                     )}
 
-                    {/* ACTION FOOTER (Stacked Layout) */}
+                    {/* ACTION FOOTER */}
                     <div className="flex items-center justify-between pt-6 border-t border-cyan-900/30 mt-4 gap-2">
                          
-                         {/* LEFT: EDIT */}
                          <div 
                            role="button"
                            onClick={handleEditClick}
@@ -347,7 +337,6 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
                             </span>
                          </div>
 
-                         {/* CENTER: SANCTIFY */}
                          <div
                            role="button"
                            onClick={handleToggleStatus}
@@ -374,7 +363,6 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
                             </span>
                          </div>
 
-                         {/* RIGHT: BANISH */}
                          <div 
                            role="button"
                            onClick={handleDeleteClick}
@@ -402,6 +390,7 @@ export function TaskCard({ task, onTaskCompletionChange, onTaskDelete, onToggle 
         task={task}
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
+        collectionName={collectionName}
       />
     </>
   );

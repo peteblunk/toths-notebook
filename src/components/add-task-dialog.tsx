@@ -50,7 +50,10 @@ const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
   category: z.enum(['Today', 'Daily Rituals', 'Sacred Duties', 'Special Missions', 'Grand Expeditions']),
   importance: z.enum(['low', 'medium', 'high']),
-  dueDate: z.date(),
+  dueDate: z.date({
+    required_error: "A due date is required.",
+  }),
+  // Use coerce to handle string-to-number conversion safely
   estimatedTime: z.coerce.number().min(1, "Estimated time must be at least 1 minute."),
   details: z.string().optional(),
   subtasks: z.array(subtaskSchema).optional(),
@@ -63,6 +66,18 @@ const categoryDescriptions: Record<TaskCategory, string> = {
   'Special Missions': 'Unique, one-off objectives with specific goals.',
   'Grand Expeditions': 'Large, long-term projects with multiple phases.',
 };
+
+// --- THE CYBER STYLE CONSTANT ---
+// Defining this here ensures all buttons match perfectly
+const CYBER_BUTTON_STYLE = `
+  font-headline font-bold uppercase tracking-widest 
+  bg-black hover:bg-black 
+  text-cyan-400 hover:text-cyan-300 
+  border-2 border-cyan-400 hover:border-cyan-300 
+  shadow-[0_0_10px_rgba(34,211,238,0.5)] 
+  hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] 
+  transition-all duration-300
+`;
 
 type AddTaskDialogProps = {
   onTaskAdd: (task: Omit<Task, 'id' | 'completed'>) => void;
@@ -87,6 +102,9 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
     },
   });
 
+  // Debug: Log errors if submission fails silently
+  // console.log("Current Form Errors:", form.formState.errors);
+
   const handleAddSubtask = () => {
     if (subtaskText.trim()) {
       setSubtasks([...subtasks, { text: subtaskText, completed: false }]);
@@ -99,37 +117,49 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
   };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const newTaskData = {
-      ...values,
-      subtasks, // Make sure the local subtasks state is included
-    };
-    onTaskAdd(newTaskData);
-    toast({
-        title: "Task Scribed",
-        description: `"${newTaskData.title}" has been added to your list.`,
-    });
-    form.reset();
-    setSubtasks([]);
-    setOpen(false);
+    console.log("Submitting task...", values);
+    
+    try {
+        const newTaskData = {
+          ...values,
+          subtasks, 
+        };
+        
+        onTaskAdd(newTaskData);
+        
+        toast({
+            title: "Task Scribed",
+            description: `"${newTaskData.title}" has been added to your list.`,
+        });
+        
+        form.reset();
+        setSubtasks([]);
+        setOpen(false);
+    } catch (error) {
+        console.error("Error in onSubmit:", error);
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Task
+        <Button variant="outline" className={CYBER_BUTTON_STYLE}>
+          + Add Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-headline text-primary">Scribe a New Task</DialogTitle>
           <DialogDescription>
             Record your next objective. Fill in the details below.
           </DialogDescription>
         </DialogHeader>
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
+            {/* TITLE */}
             <FormField
               control={form.control}
               name="title"
@@ -143,6 +173,8 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* CATEGORY */}
             <FormField
               control={form.control}
               name="category"
@@ -170,6 +202,8 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* DETAILS */}
              <FormField
               control={form.control}
               name="details"
@@ -188,29 +222,38 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
               )}
             />
 
+            {/* SUBTASKS */}
             <div>
               <FormLabel>Sub-tasks</FormLabel>
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-2 mb-2">
                 {subtasks.map((subtask, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-background/50 p-2 rounded-md">
+                  <div key={index} className="flex items-center gap-2 bg-background/50 p-2 rounded-md border border-zinc-800">
                     <p className="flex-1 text-sm">{subtask.text}</p>
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveSubtask(index)}>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-300" onClick={() => handleRemoveSubtask(index)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2">
                 <Input
                   value={subtaskText}
                   onChange={(e) => setSubtaskText(e.target.value)}
                   placeholder="Add a new sub-task..."
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); }}}
                 />
-                <Button type="button" onClick={handleAddSubtask}>Add</Button>
+                {/* CYBER STYLE FOR SUBTASK ADD BUTTON */}
+                <Button 
+                    type="button" 
+                    onClick={handleAddSubtask}
+                    className={CYBER_BUTTON_STYLE}
+                >
+                    Add
+                </Button>
               </div>
             </div>
             
+            {/* META: IMPORTANCE & TIME */}
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
@@ -241,6 +284,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                     <FormItem>
                     <FormLabel>Est. Time (min)</FormLabel>
                     <FormControl>
+                        {/* Note: type="number" ensures mobile keyboards show numbers */}
                         <Input type="number" placeholder="e.g., 60" {...field} />
                     </FormControl>
                     <FormMessage />
@@ -248,6 +292,8 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                 )}
                 />
             </div>
+
+            {/* DUE DATE */}
             <FormField
               control={form.control}
               name="dueDate"
@@ -282,8 +328,15 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
+            
             <DialogFooter>
-              <Button type="submit">Add Task</Button>
+              {/* CYBER STYLE FOR SUBMIT BUTTON */}
+              <Button 
+                type="submit" 
+                className={`w-full ${CYBER_BUTTON_STYLE}`}
+              >
+                Add Task
+              </Button>
             </DialogFooter>
           </form>
         </Form>

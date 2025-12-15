@@ -80,14 +80,14 @@ export default function Home() {
   // Main App State
   if (user) {
     return (
-      <div className="flex min-h-screen w-full flex-col md:flex-row">
+      <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden">
         <Sidebar>
           <AppSidebar 
              activeCategory={activeCategory} 
              setActiveCategory={(category: string) => setActiveCategory(category as any)} 
           />
         </Sidebar>
-        <SidebarInset className="flex-1 bg-background">
+        <SidebarInset className="flex flex-col flex-1 bg-background h-full overflow-hidden">
         
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -100,7 +100,7 @@ export default function Home() {
           </div>
         </header>
 
-          <main className="p-4 sm:p-6 lg:p-8 h-full">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             <TaskList filter={activeCategory} />
           </main>
         </SidebarInset>

@@ -93,7 +93,7 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-slate-950 border-cyan-800 text-slate-100">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-headline text-cyan-400 tracking-wide">Edit Ritual</DialogTitle>
         </DialogHeader>

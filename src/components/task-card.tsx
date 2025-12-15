@@ -254,7 +254,7 @@ export function TaskCard({
 
       {/* VIEW DETAILS DIALOG */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-slate-950 border-cyan-800 text-slate-100">
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
              <DialogTitle className="sr-only">Task Details: {task.title}</DialogTitle>
 
              <div className="grid gap-4 py-4">

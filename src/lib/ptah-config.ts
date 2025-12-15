@@ -1,5 +1,5 @@
 export const PTAH_CONFIG = {
-  version: "1.4.1",
+  version: "1.2.1",
   title: "The Evening Chronicle & Temple Wards - Redux",
   date: new Date().toLocaleDateString(),
   type: "MAJOR_EXPANSION", // Feature | Polish | Major_Expansion

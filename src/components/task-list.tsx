@@ -4,7 +4,8 @@ import React from 'react';
 import { TaskCard } from '@/components/task-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Scroll } from 'lucide-react'; 
-import { useTasks, Task } from '@/hooks/use-tasks'; // Import the new Scribe Hook
+import { useTasks} from '@/hooks/use-tasks'; // Import the new Scribe Hook
+import { type Task } from '@/lib/types';
 
 interface TaskListProps {
   filter: string;

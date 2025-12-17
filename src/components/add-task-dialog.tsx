@@ -120,24 +120,26 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
   // --- THE NEW LOGIC ---
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("Submitting task...", values);
+
+    // SAFETY CHECK: Ensure user exists before proceeding
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to scribe tasks.", variant: "destructive" });
+      return;
+    }
     
     try {
+        // FIX: Add 'userId' here so it satisfies the Task type definition
         const newTaskData = {
           ...values,
-          subtasks, 
+          subtasks,
+          userId: user.uid, // <--- The missing key!
         };
 
         // BRANCH 1: DAILY RITUALS (The Double Strike)
         if (values.category === 'Daily Rituals') {
-            if (!user) {
-                toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
-                return;
-            }
-
             // 1. The Decree (Save Template)
             const templateRef = await addDoc(collection(db, "dailyRituals"), {
                 ...newTaskData,
-                userId: user.uid,
                 isRitual: true, // Mark as Template
                 createdAt: serverTimestamp(),
             });
@@ -145,7 +147,6 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
             // 2. The Avatar (First Breath Clone)
             await addDoc(collection(db, "tasks"), {
                 ...newTaskData,
-                userId: user.uid,
                 isRitual: true,              // Mark as Ritual Instance
                 originRitualId: templateRef.id, // Link to Parent
                 dueDate: new Date(),         // Due Today!
@@ -162,6 +163,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
 
         } else {
             // BRANCH 2: STANDARD TASKS (Business as Usual)
+            // Now newTaskData includes userId, so TypeScript will be happy!
             onTaskAdd(newTaskData);
             
             toast({

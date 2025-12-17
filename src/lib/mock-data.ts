@@ -9,12 +9,12 @@ const createLocalDate = (dateString: string) => {
 };
 
 let tasksStore: Task[] = [
-    { id: '1', title: 'Morning meditation ritual', dueDate: new Date(), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
-    { id: '2', title: 'Prepare weekly project report', dueDate: createLocalDate('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Sacred Duties', completed: false },
-    { id: '3', title: 'Explore the hidden sector of Cy-Giza', dueDate: new Date(), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
-    { id: '4', title: 'Update firewall and security protocols', dueDate: createLocalDate('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Sacred Duties', completed: false },
-    { id: '5', title: 'Launch the Sun-Ra solar probe', dueDate: createLocalDate('2024-09-01'), importance: 'high', estimatedTime: 480, category: 'Grand Expeditions', completed: false },
-    { id: '6', title: 'Daily physical training', dueDate: new Date(), importance: 'low', estimatedTime: 60, category: 'Daily Rituals', completed: false },
+    { id: '1', userId: 'mock-user-id', title: 'Morning meditation ritual', dueDate: new Date(), importance: 'medium', estimatedTime: 15, category: 'Daily Rituals', completed: true },
+    { id: '2', userId: 'mock-user-id', title: 'Prepare weekly project report', dueDate: createLocalDate('2024-08-16'), importance: 'high', estimatedTime: 120, category: 'Sacred Duties', completed: false },
+    { id: '3', userId: 'mock-user-id', title: 'Explore the hidden sector of Cy-Giza', dueDate: new Date(), importance: 'high', estimatedTime: 240, category: 'Special Missions', completed: false },
+    { id: '4', userId: 'mock-user-id', title: 'Update firewall and security protocols', dueDate: createLocalDate('2024-08-17'), importance: 'medium', estimatedTime: 45, category: 'Sacred Duties', completed: false },
+    { id: '5', userId: 'mock-user-id', title: 'Launch the Sun-Ra solar probe', dueDate: createLocalDate('2024-09-01'), importance: 'high', estimatedTime: 480, category: 'Grand Expeditions', completed: false },
+    { id: '6', userId: 'mock-user-id', title: 'Daily physical training', dueDate: new Date(), importance: 'low', estimatedTime: 60, category: 'Daily Rituals', completed: false },
 ];
 
 // This is a simple in-memory store for our mock data.

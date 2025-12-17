@@ -21,7 +21,7 @@ interface TaskCardProps {
   onTaskCompletionChange?: (taskId: string, completed: boolean) => void;
   onTaskDelete?: (taskId: string) => void;
   onToggle?: () => void;
-  collectionName?: string; // 👈 NEW PROP
+  collectionName?: string; 
 }
 
 export function TaskCard({ 
@@ -29,13 +29,13 @@ export function TaskCard({
   onTaskCompletionChange, 
   onTaskDelete, 
   onToggle, 
-  collectionName = "tasks" // Default to 'tasks' if not provided
+  collectionName = "tasks" 
 }: TaskCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // ... (Color Logic remains the same)
+  // --- LOGIC ---
   const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
   const isChronicle = (task as any).category === "Chronicle";
@@ -73,7 +73,6 @@ export function TaskCard({
     setIsDialogOpen(false);
   };
 
-  // ✅ FIX: Use collectionName for subtasks
   const handleSubtaskToggle = async (index: number) => {
     if (!task.subtasks) return;
     
@@ -84,7 +83,6 @@ export function TaskCard({
     };
 
     try {
-        // Use the passed collectionName instead of hardcoding 'tasks'
         const taskRef = doc(db, collectionName, task.id);
         await updateDoc(taskRef, { subtasks: newSubtasks });
     } catch (error) {
@@ -92,10 +90,7 @@ export function TaskCard({
     }
   };
 
-  // ... (Styling Logic remains the same - copy from your previous file or trust me to preserve it)
-  // I will abbreviate the styling here for clarity, but in your file, KEEP THE STYLING LOGIC.
-  // ⚠️ TO BE SAFE: I will paste the FULL styling logic below so you can copy-paste the whole file.
-  
+  // --- STYLING ---
   const containerClasses = cn(
     "rounded-xl border transition-all duration-500 cursor-pointer group relative overflow-hidden backdrop-blur-md",
     !task.completed && [
@@ -214,11 +209,15 @@ export function TaskCard({
                                 {task.category}
                             </Badge>
 
-                            {task.dueDate && (
-                                <span className="text-xs font-mono text-slate-200 font-medium">
-                                    {format(task.dueDate, 'MMM d')}
-                                </span>
-                            )}
+                            {/* SAFETY FIX: Wrap task.dueDate in 'new Date()' 
+   This ensures that whether it's a string, number, or Date object,
+   date-fns receives a valid object it can understand.
+*/}
+{task.dueDate && !isNaN(new Date(task.dueDate).getTime()) && (
+    <span className="text-xs font-mono text-slate-200 font-medium">
+        {format(new Date(task.dueDate), 'MMM d')}
+    </span>
+)}
 
                             {task.estimatedTime && (
                                 <span className="text-xs font-mono text-slate-200 font-medium">
@@ -363,23 +362,27 @@ export function TaskCard({
                             </span>
                          </div>
 
-                         <div 
-                           role="button"
-                           onClick={handleDeleteClick}
-                           className={cn(
-                               "group/modal-jar cursor-pointer",
-                               "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
-                               "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
-                               "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20",
-                               "w-24 h-20"
-                           )}
-                           title="Banish Ritual"
-                         >
-                            <CyberJar className="w-10 h-10 mb-1" /> 
-                            <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
-                                Banish
-                            </span>
-                        </div>
+                         {/* SAFETY LOCK: ONLY RENDER BANISH IF IT IS NOT A RITUAL */}
+                         {!task.isRitual && (
+                             <div 
+                               role="button"
+                               onClick={handleDeleteClick}
+                               className={cn(
+                                   "group/modal-jar cursor-pointer",
+                                   "flex flex-col items-center justify-center px-4 py-2 rounded-md", 
+                                   "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
+                                   "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20",
+                                   "w-24 h-20"
+                               )}
+                               title="Banish Ritual"
+                             >
+                                <CyberJar className="w-10 h-10 mb-1" /> 
+                                <span className="tracking-[0.1em] font-display text-[10px] uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
+                                    Banish
+                                </span>
+                             </div>
+                         )}
+
                     </div>
                  </div>
             </div>

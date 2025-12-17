@@ -7,6 +7,12 @@ import * as z from "zod";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 
+// --- NEW IMPORTS FOR THE FIRST BREATH ---
+import { useAuth } from "@/components/auth-provider";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+// ----------------------------------------
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,7 +59,6 @@ const formSchema = z.object({
   dueDate: z.date({
     required_error: "A due date is required.",
   }),
-  // Use coerce to handle string-to-number conversion safely
   estimatedTime: z.coerce.number().min(1, "Estimated time must be at least 1 minute."),
   details: z.string().optional(),
   subtasks: z.array(subtaskSchema).optional(),
@@ -67,8 +72,6 @@ const categoryDescriptions: Record<TaskCategory, string> = {
   'Grand Expeditions': 'Large, long-term projects with multiple phases.',
 };
 
-// --- THE CYBER STYLE CONSTANT ---
-// Defining this here ensures all buttons match perfectly
 const CYBER_BUTTON_STYLE = `
   font-headline font-bold uppercase tracking-widest 
   bg-black hover:bg-black 
@@ -86,6 +89,7 @@ type AddTaskDialogProps = {
 export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth(); // Need User ID for direct database writes
   const [subtaskText, setSubtaskText] = useState("");
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
 
@@ -102,9 +106,6 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
     },
   });
 
-  // Debug: Log errors if submission fails silently
-  // console.log("Current Form Errors:", form.formState.errors);
-
   const handleAddSubtask = () => {
     if (subtaskText.trim()) {
       setSubtasks([...subtasks, { text: subtaskText, completed: false }]);
@@ -116,7 +117,8 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
     setSubtasks(subtasks.filter((_, index) => index !== indexToRemove));
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  // --- THE NEW LOGIC ---
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("Submitting task...", values);
     
     try {
@@ -124,19 +126,56 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
           ...values,
           subtasks, 
         };
-        
-        onTaskAdd(newTaskData);
-        
-        toast({
-            title: "Task Scribed",
-            description: `"${newTaskData.title}" has been added to your list.`,
-        });
+
+        // BRANCH 1: DAILY RITUALS (The Double Strike)
+        if (values.category === 'Daily Rituals') {
+            if (!user) {
+                toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+                return;
+            }
+
+            // 1. The Decree (Save Template)
+            const templateRef = await addDoc(collection(db, "dailyRituals"), {
+                ...newTaskData,
+                userId: user.uid,
+                isRitual: true, // Mark as Template
+                createdAt: serverTimestamp(),
+            });
+
+            // 2. The Avatar (First Breath Clone)
+            await addDoc(collection(db, "tasks"), {
+                ...newTaskData,
+                userId: user.uid,
+                isRitual: true,              // Mark as Ritual Instance
+                originRitualId: templateRef.id, // Link to Parent
+                dueDate: new Date(),         // Due Today!
+                completed: false,
+                createdAt: serverTimestamp(),
+            });
+
+            // 3. The Proclamation
+            toast({
+                title: "The First Breath",
+                description: "Your Ritual is established. The Midnight Scribe will renew it daily. The first instance awaits you now.",
+                className: "border-cyan-500 bg-black text-cyan-400"
+            });
+
+        } else {
+            // BRANCH 2: STANDARD TASKS (Business as Usual)
+            onTaskAdd(newTaskData);
+            
+            toast({
+                title: "Task Scribed",
+                description: `"${newTaskData.title}" has been added to your list.`,
+            });
+        }
         
         form.reset();
         setSubtasks([]);
         setOpen(false);
     } catch (error) {
         console.error("Error in onSubmit:", error);
+        toast({ title: "Error", description: "Could not scribe task.", variant: "destructive" });
     }
   }
 
@@ -148,7 +187,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-headline text-primary">Scribe a New Task</DialogTitle>
           <DialogDescription>

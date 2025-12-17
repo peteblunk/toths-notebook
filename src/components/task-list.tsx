@@ -1,122 +1,45 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  doc, 
-  updateDoc,
-  deleteDoc 
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/components/auth-provider';
+import React from 'react';
 import { TaskCard } from '@/components/task-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Task } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
 import { Scroll } from 'lucide-react'; 
+import { useTasks, Task } from '@/hooks/use-tasks'; // Import the new Scribe Hook
 
 interface TaskListProps {
   filter: string;
 }
 
 export function TaskList({ filter }: TaskListProps) {
-  const { user } = useAuth();
-  
-  // SEPARATE STATE BUCKETS
-  const [regularTasks, setRegularTasks] = useState<Task[]>([]);
-  const [ritualTasks, setRitualTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  // ------------------------------------------------------------------
+  // 1. USE THE SCRIBE HOOK
+  // We get the data and the "Safe Actions" directly from our new brain.
+  // We alias them to 'regularTasks'/'ritualTasks' to match your existing logic.
+  // ------------------------------------------------------------------
+  const { 
+    tasks: regularTasks, 
+    rituals: ritualTasks, 
+    loading, 
+    toggleTask, 
+    deleteTask 
+  } = useTasks(filter);
 
+  // Helper flags
   const isRitualView = filter === "Daily Rituals" || filter === "Rituals";
   const isMaatView = filter === "Today"; 
 
   // ------------------------------------------------------------------
-  // EFFECT 1: Fetch Regular Tasks
-  // ------------------------------------------------------------------
-  useEffect(() => {
-    if (!user) return;
-    
-    if (isRitualView) {
-        setRegularTasks([]);
-        return;
-    }
-
-    setLoading(true);
-    
-    const tasksRef = collection(db, "tasks");
-    let q = query(tasksRef, where("userId", "==", user.uid));
-
-    // For Ma'at (Today) view, we fetch everything so we can filter for overdue + today client-side
-    // For specific category filters, we apply them here to save bandwidth
-    if (!isMaatView && filter !== "all" && filter !== "Inbox" && filter !== "completed" && filter !== "Upcoming") {
-         q = query(q, where("category", "==", filter));
-    }
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const results: Task[] = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            results.push({
-                id: doc.id,
-                ...data,
-                dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
-            } as Task);
-        });
-        setRegularTasks(results);
-        if (!isMaatView) setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, filter, isRitualView, isMaatView]);
-
-
-  // ------------------------------------------------------------------
-  // EFFECT 2: Fetch Daily Rituals
-  // ------------------------------------------------------------------
-  useEffect(() => {
-    if (!user) return;
-
-    if (!isRitualView && !isMaatView) {
-        setRitualTasks([]);
-        return;
-    }
-
-    const ritualsRef = collection(db, "dailyRituals");
-    let q = query(ritualsRef, where("userId", "==", user.uid));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const results: Task[] = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            results.push({
-                id: doc.id,
-                ...data,
-                dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
-                isRitual: true, 
-            } as unknown as Task);
-        });
-        setRitualTasks(results);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, filter, isRitualView, isMaatView]);
-
-
-  // ------------------------------------------------------------------
-  // LOGIC: Merge & Split into NUN (Active) vs MA'AT (Done)
+  // 2. LOGIC: Merge & Split into NUN (Active) vs MA'AT (Done)
   // ------------------------------------------------------------------
   const getCategorizedTasks = () => {
-    let combined = [];
+    let combined: Task[] = [];
 
     if (isRitualView) {
+        // VIEW: Daily Rituals (Show only templates)
         combined = [...ritualTasks];
     } else if (isMaatView) {
-        // --- MA'AT LOGIC UPDATE ---
+        // VIEW: Today (Show active tasks + overdue + rituals)
+        
         const todayStart = new Date();
         todayStart.setHours(0,0,0,0);
         
@@ -128,31 +51,39 @@ export function TaskList({ filter }: TaskListProps) {
             const d = new Date(t.dueDate);
             
             // 1. ACTIVE TASKS: Include Today OR Past (Overdue)
-            // Logic: Is the due date BEFORE tomorrow?
             if (!t.completed) {
                 return d < nextDayStart; 
             }
             
             // 2. COMPLETED TASKS: Only include if due Today
-            // (We don't want to see tasks completed 2 years ago in today's view)
             return d >= todayStart && d < nextDayStart;
         });
 
-        // Rituals: Always include all of them in Ma'at/Ritual view
-        combined = [...relevantTasks, ...ritualTasks];
+        // The Templates (ritualTasks) are hidden from this view.
+combined = [...relevantTasks];
+
     } else {
-        // Standard view filters
+        // VIEW: Categories (Inbox, Sacred Duties, etc.)
+        // Since the Hook now fetches ALL tasks, we must filter by category here.
+        
+        let filtered = regularTasks;
+
+        // Apply Category Filter if it's not a generic view
+        if (filter !== "all" && filter !== "Inbox" && filter !== "completed" && filter !== "Upcoming") {
+             filtered = filtered.filter(t => t.category === filter);
+        }
+
         if (filter === "completed") {
-            combined = regularTasks.filter(t => t.completed);
+            combined = filtered.filter(t => t.completed);
         } else {
-            combined = regularTasks;
+            combined = filtered;
         }
     }
 
     // Sort Logic
     combined.sort((a, b) => {
-        const aIsSacred = a.category === "Sacred Duties" || (a as any).isRitual;
-        const bIsSacred = b.category === "Sacred Duties" || (b as any).isRitual;
+        const aIsSacred = a.category === "Sacred Duties" || a.isRitual;
+        const bIsSacred = b.category === "Sacred Duties" || b.isRitual;
         
         // Sacred/Rituals always float to top
         if (aIsSacred && !bIsSacred) return -1;
@@ -173,29 +104,28 @@ export function TaskList({ filter }: TaskListProps) {
 
   const { nun, maat } = getCategorizedTasks();
 
-  const handleToggle = async (task: Task) => {
-    const collectionName = (task as any).isRitual || isRitualView ? "dailyRituals" : "tasks";
-    try {
-        const taskRef = doc(db, collectionName, task.id);
-        await updateDoc(taskRef, { completed: !task.completed });
-        toast({ title: "Updated", description: "The balance shifts." });
-    } catch (error) {
-        console.error("Error toggling:", error);
-    }
+  // ------------------------------------------------------------------
+  // 3. ACTION HANDLERS
+  // Now we just delegate to the Hook's safe functions
+  // ------------------------------------------------------------------
+  
+  const handleToggle = (task: Task) => {
+    toggleTask(task);
   };
 
-  const handleDelete = async (taskId: string) => {
-      const allTasks = [...nun, ...maat];
+  const handleDelete = (taskId: string) => {
+      // Find the full task object so the Hook can check 'isRitual'
+      const allTasks = [...regularTasks, ...ritualTasks];
       const taskObj = allTasks.find(t => t.id === taskId);
-      const collectionName = (taskObj as any)?.isRitual || isRitualView ? "dailyRituals" : "tasks";
-
-      try {
-          await deleteDoc(doc(db, collectionName, taskId));
-          toast({ title: "Banished", description: "Task removed." });
-      } catch (error) {
-          console.error("Error deleting:", error);
+      
+      if (taskObj) {
+        deleteTask(taskObj); // This triggers the safety lock if needed
       }
   };
+
+  // ------------------------------------------------------------------
+  // 4. RENDER UI
+  // ------------------------------------------------------------------
 
   if (loading && nun.length === 0 && maat.length === 0) {
     return <div className="space-y-4"><Skeleton className="h-24"/><Skeleton className="h-24"/></div>;
@@ -214,7 +144,6 @@ export function TaskList({ filter }: TaskListProps) {
       
       {/* 1. NUN (Active/Pending) */}
       <div className="space-y-4">
-        {/* Header: Only show if there are completed items, or just always show for structure */}
         {maat.length > 0 && (
              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] pl-1 mb-4 flex items-center gap-2">
                <Scroll className="w-4 h-4" />
@@ -230,7 +159,8 @@ export function TaskList({ filter }: TaskListProps) {
             <TaskCard 
                 key={task.id} 
                 task={task}
-                collectionName={(task as any).isRitual ? "dailyRituals" : "tasks"}
+                // We pass the collection name for the UI styling (locking the trash icon)
+                collectionName={task.isRitual ? "dailyRituals" : "tasks"}
                 onToggle={() => handleToggle(task)}
                 onTaskDelete={handleDelete}
             />
@@ -252,7 +182,7 @@ export function TaskList({ filter }: TaskListProps) {
                     <TaskCard 
                         key={task.id} 
                         task={task}
-                        collectionName={(task as any).isRitual ? "dailyRituals" : "tasks"}
+                        collectionName={task.isRitual ? "dailyRituals" : "tasks"}
                         onToggle={() => handleToggle(task)}
                         onTaskDelete={handleDelete}
                     />

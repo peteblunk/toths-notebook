@@ -86,7 +86,6 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
               onClick={() => handleCategoryClick(item.name)}
               className="text-sidebar-foreground"
             >
-              {/* 👇 FIXED: Added the icon back here! */}
               {item.icon}
               <span>{item.name}</span>
             </SidebarMenuButton>
@@ -102,9 +101,7 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
                 </SidebarMenuButton>
               </DialogTrigger>
               <DialogContent className="p-0 border-none bg-transparent max-w-md shadow-none sm:max-w-lg">
-                {/* 👇 This title is invisible to the eye, but satisfies the error! */}
                 <DialogTitle className="sr-only">Invoke Khonsu Timer</DialogTitle>
-
                 <KhonsuTimer />
               </DialogContent>
             </Dialog>
@@ -113,17 +110,30 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
       </SidebarContent>
 
       <SidebarFooter>
-        {/* --- Evening Chronicle Anchor --- */}
-        <div className="mt-auto border-t border-cyan-900/30 pt-2">
-          <SidebarMenuButton 
-            asChild 
-            className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50 group w-full justify-start pl-2"
-          >
-            <Link href="/evening-chronicle">
-              <Moon className="w-4 h-4 mr-2 group-hover:animate-spin-slow transition-all duration-700" />
-              <span className="font-bold tracking-wide">Evening Chronicle</span>
-            </Link>
-          </SidebarMenuButton>
+        {/* --- Footer Navigation Actions --- */}
+        <div className="mt-auto border-t border-cyan-900/30 pt-2 flex flex-col gap-1">
+            
+            {/* NEW: Manage Daily Rituals (The Template Library) */}
+            <SidebarMenuButton 
+                asChild 
+                className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/50 group w-full justify-start pl-2"
+            >
+                <Link href="/rituals">
+                <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                <span className="font-bold tracking-wide">Manage Rituals</span>
+                </Link>
+            </SidebarMenuButton>
+
+            {/* Evening Chronicle Anchor */}
+            <SidebarMenuButton 
+                asChild 
+                className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50 group w-full justify-start pl-2"
+            >
+                <Link href="/evening-chronicle">
+                <Moon className="w-4 h-4 mr-2 group-hover:animate-spin-slow transition-all duration-700" />
+                <span className="font-bold tracking-wide">Evening Chronicle</span>
+                </Link>
+            </SidebarMenuButton>
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-border p-2">

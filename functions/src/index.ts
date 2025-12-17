@@ -14,49 +14,50 @@ const db = admin.firestore();
 export const midnightScribe = onSchedule({
   schedule: "every day 03:00",
   timeZone: "America/Los_Angeles",
-}, async (event) => {
+}, async () => { // Changed 'event' to empty () to silence warning
   console.log("The Midnight Scribe awakens to create the day's rituals.");
 
   const ritualsSnapshot = await db.collection("dailyRituals").get();
 
   if (ritualsSnapshot.empty) {
     console.log("No daily rituals found. The scribe rests.");
-    // THE FIX IS HERE: Changed `return null;` to `return;`
     return;
   }
 
-  // Use a batch to perform all writes at once for efficiency
   const batch = db.batch();
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set to the beginning of the day
+  today.setHours(0, 0, 0, 0);
 
   ritualsSnapshot.forEach((doc) => {
-    const ritual = doc.data();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ritual = doc.data() as any;
 
     const newTask = {
       userId: ritual.userId,
       title: ritual.title,
-      category: ritual.category,
-      importance: ritual.importance,
-      estimatedTime: ritual.estimatedTime,
+      category: ritual.category || "Daily Rituals",
+      importance: ritual.importance || "medium",
+      estimatedTime: ritual.estimatedTime || 15,
       details: ritual.details || "",
       subtasks: ritual.subtasks || [],
       isComplete: false,
-      createdAt: Timestamp.now(), // Use server timestamp
-      dueDate: Timestamp.fromDate(today), // Set due date to today
+      createdAt: Timestamp.now(),
+      dueDate: Timestamp.fromDate(today),
+
+      // THE NEW FIELDS:
+      isRitual: true, // Flags this as a Ritual Instance
+      originRitualId: doc.id, // Links it back to the Template
     };
 
-    // Add the new task creation to the batch
-    const newTaskRef = db.collection("tasks").doc(); // Create a new doc
+    const newTaskRef = db.collection("tasks").doc();
     batch.set(newTaskRef, newTask);
   });
 
-  // Commit the batch to write all new tasks to the database
   await batch.commit();
 
+  // Split long log line to satisfy linter
   console.log(
     `The Midnight Scribe has inscribed ${ritualsSnapshot.size} new tasks.`
   );
-  // THE FIX IS HERE: Changed `return null;` to `return;`
   return;
 });

@@ -175,7 +175,7 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
   const isMoonInteractive = (mode === 'setup' && isInputValid) || mode === 'burning';
   
   const getMoonLabel = () => {
-      if (mode === 'setup') return "IGNITE";
+      if (mode === 'setup') return "INITIATE";
       if (mode === 'burning') return isActive ? "SUSPEND" : "RESUME";
       return "";
   };

@@ -2,62 +2,64 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import {Timestamp} from "firebase-admin/firestore";
 
-// Initialize the Firebase Admin SDK
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
-/**
- * A scheduled Cloud Function that runs at a specific time.
- * It finds all "dailyRitual" templates and creates new, uncompleted tasks
- * for each one in the main "tasks" collection.
- */
 export const midnightScribe = onSchedule({
   schedule: "every day 03:00",
   timeZone: "America/Los_Angeles",
-}, async () => { // Changed 'event' to empty () to silence warning
-  console.log("The Midnight Scribe awakens to create the day's rituals.");
-
+}, async () => {
+  console.log("The Midnight Scribe awakens.");
   const ritualsSnapshot = await db.collection("dailyRituals").get();
-
-  if (ritualsSnapshot.empty) {
-    console.log("No daily rituals found. The scribe rests.");
-    return;
-  }
+  if (ritualsSnapshot.empty) return;
 
   const batch = db.batch();
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(23, 59, 59, 999);
 
   ritualsSnapshot.forEach((doc) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ritual = doc.data() as any;
-
-    const newTask = {
+    const ritual = doc.data();
+    const newTaskRef = db.collection("tasks").doc();
+    batch.set(newTaskRef, {
       userId: ritual.userId,
       title: ritual.title,
-      category: ritual.category || "Daily Rituals",
+      category: ritual.category || "Daily Ritual",
       importance: ritual.importance || "medium",
       estimatedTime: ritual.estimatedTime || 15,
       details: ritual.details || "",
-      subtasks: ritual.subtasks || [],
-      isComplete: false,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      subtasks: (ritual.subtasks || []).map((st: any) => ({
+        ...st,
+        completed: false,
+      })),
+      completed: false,
       createdAt: Timestamp.now(),
       dueDate: Timestamp.fromDate(today),
-
-      // THE NEW FIELDS:
-      isRitual: true, // Flags this as a Ritual Instance
-      originRitualId: doc.id, // Links it back to the Template
-    };
-
-    const newTaskRef = db.collection("tasks").doc();
-    batch.set(newTaskRef, newTask);
+      isRitual: true,
+      originRitualId: doc.id,
+    });
   });
-
   await batch.commit();
+});
 
-  // Split long log line to satisfy linter
-  console.log(
-    `The Midnight Scribe has inscribed ${ritualsSnapshot.size} new tasks.`
-  );
-  return;
+export const automatedChronicle = onSchedule({
+  schedule: "every day 02:30",
+  timeZone: "America/Los_Angeles",
+}, async () => {
+  console.log("The Evening Chronicle begins.");
+  const tasksRef = db.collection("tasks");
+  try {
+    const oldSnapshot = await tasksRef
+      .where("isRitual", "==", true)
+      .where("completed", "==", false)
+      .get();
+    if (oldSnapshot.empty) return;
+    const batch = db.batch();
+    oldSnapshot.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  } catch (error) {
+    console.error("Chronicle error:", error);
+  }
 });

@@ -18,11 +18,9 @@ interface EditRitualDialogProps {
   task: Task; 
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // 👇 NEW PROP
   collectionName?: string;
 }
 
-// 👇 DEFAULT TO 'tasks' IF NOT PROVIDED
 export function EditRitualDialog({ task, open, onOpenChange, collectionName = "tasks" }: EditRitualDialogProps) {
   if (!task) return null;
 
@@ -32,6 +30,9 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
   const [importance, setImportance] = useState(task.importance);
   const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
   const [newSubtaskText, setNewSubtaskText] = useState('');
+  
+  // Logic to hide the Banish button for instances in the task list
+  const isSacredInstance = collectionName === "tasks" && (task.isRitual || !!(task as any).originRitualId);
 
   const { toast } = useToast();
 
@@ -49,7 +50,6 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
   const handleSave = async () => {
     try {
-      // ✅ USE THE PROP (No more guessing)
       const taskRef = doc(db, collectionName, task.id);
       
       await updateDoc(taskRef, {
@@ -69,7 +69,7 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
       console.error("Error updating ritual:", error);
       toast({
         title: "Error",
-        description: "Failed to update ritual. Check console.",
+        description: "Failed to update ritual.",
         variant: "destructive",
       });
     }
@@ -79,7 +79,6 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
     if (!confirm("Are you sure you want to banish this ritual?")) return;
 
     try {
-        // ✅ USE THE PROP
         const taskRef = doc(db, collectionName, task.id);
         await deleteDoc(taskRef);
         
@@ -89,7 +88,7 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
         console.error("Error deleting ritual:", error);
         toast({ title: "Error", description: "Could not delete.", variant: "destructive" });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,21 +178,25 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
         </div>
 
         <DialogFooter className="flex justify-between sm:justify-between w-full pt-4 border-t border-cyan-900/30">
-          <div 
-            role="button"
-            onClick={handleDeleteRitual}
-            className={cn(
-                "group/modal-jar cursor-pointer",
-                "flex items-center px-4 py-2 rounded-md", 
-                "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
-                "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20"
-            )}
-          >
-            <CyberJar className="w-12 h-12 mr-3" /> 
-            <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
-                Banish
-            </span>
-          </div>
+          {!isSacredInstance ? (
+            <div 
+              role="button"
+              onClick={handleDeleteRitual}
+              className={cn(
+                  "group/modal-jar cursor-pointer",
+                  "flex items-center px-4 py-2 rounded-md", 
+                  "text-red-500 hover:text-red-400 hover:bg-red-950/30", 
+                  "transition-all duration-300 active:scale-95 border border-transparent hover:border-red-500/20"
+              )}
+            >
+              <CyberJar className="w-12 h-12 mr-3" /> 
+              <span className="tracking-[0.2em] font-display text-sm uppercase opacity-80 group-hover/modal-jar:opacity-100 font-bold">
+                  Banish
+              </span>
+            </div>
+          ) : (
+            <div />
+          )}
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="border-cyan-800 text-cyan-400 hover:bg-cyan-950">Cancel</Button>

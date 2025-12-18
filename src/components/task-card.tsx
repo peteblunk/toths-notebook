@@ -39,6 +39,12 @@ export function TaskCard({
   const isPtah = (task as any).tags?.includes('Gift of Ptah');
   const isPink = task.id.charCodeAt(task.id.length - 1) % 2 !== 0;
   const isChronicle = (task as any).category === "Chronicle";
+  
+  // A task is sacred if it's a template (isRitual) or a clone (originRitualId)
+  const isSacred = task.isRitual || !!(task as any).originRitualId;
+
+  // Determine the true home of the data
+  const actualCollection = (task as any).originRitualId ? "tasks" : collectionName;
 
   const handleCheckboxChange = (checked: boolean) => {
     if (onTaskCompletionChange) {
@@ -73,22 +79,35 @@ export function TaskCard({
     setIsDialogOpen(false);
   };
 
-  const handleSubtaskToggle = async (index: number) => {
-    if (!task.subtasks) return;
-    
-    const newSubtasks = [...task.subtasks];
-    newSubtasks[index] = { 
-        ...newSubtasks[index], 
-        completed: !newSubtasks[index].completed 
-    };
-
-    try {
-        const taskRef = doc(db, collectionName, task.id);
-        await updateDoc(taskRef, { subtasks: newSubtasks });
-    } catch (error) {
-        console.error("Error toggling subtask:", error);
-    }
+ const handleSubtaskToggle = async (index: number) => {
+  if (!task.subtasks) return;
+  
+  const newSubtasks = [...task.subtasks];
+  newSubtasks[index] = { 
+    ...newSubtasks[index], 
+    completed: !newSubtasks[index].completed 
   };
+
+  // DEBUG LOG - Open your browser console (F12) to see this!
+  console.log("Subtask Toggle Triggered!");
+  console.log("Task ID:", task.id);
+  console.log("Is it a Clone?", !!(task as any).originRitualId);
+
+  try {
+    // We determine the collection based on the presence of the origin ID
+    const targetCollection = (task as any).originRitualId ? "tasks" : collectionName;
+    
+    console.log("Targeting Collection:", targetCollection);
+
+    const taskRef = doc(db, targetCollection, task.id);
+    await updateDoc(taskRef, { subtasks: newSubtasks });
+    
+    // We need to manually update the local state if the watcher isn't fast enough
+    // (Optional, but helps with UI snappiness)
+  } catch (error) {
+    console.error("Error toggling subtask:", error);
+  }
+};
 
   // --- STYLING ---
   const containerClasses = cn(
@@ -363,7 +382,7 @@ export function TaskCard({
                          </div>
 
                          {/* SAFETY LOCK: ONLY RENDER BANISH IF IT IS NOT A RITUAL */}
-                         {!task.isRitual && (
+                         {!isSacred && (
                              <div 
                                role="button"
                                onClick={handleDeleteClick}
@@ -393,7 +412,7 @@ export function TaskCard({
         task={task}
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
-        collectionName={collectionName}
+        collectionName={actualCollection} // Use the smart variable
       />
     </>
   );

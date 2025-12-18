@@ -89,19 +89,58 @@ export function useTasks(filter?: string) {
   const addTask = async (title: string, category: string, dueDate?: Date) => {
     if (!user) return;
     
-    // We need to cast the importance to match the strict type or provide a default
-    const newTask = {
-      title,
-      category,
-      completed: false,
-      userId: user.uid,
-      createdAt: serverTimestamp(),
-      dueDate: dueDate || null,
-      importance: 'medium', // Default value required by new Type
-      estimatedTime: 15     // Default value required by new Type
-    };
+    // 1. Check if the user is trying to create a Daily Ritual
+    const isDailyRitual = category.toLowerCase() === "daily ritual";
 
-    await addDoc(collection(db, "tasks"), newTask);
+    if (isDailyRitual) {
+      // --- THE FIRST BREATH LOGIC ---
+      
+      // A. Create the DIVINE BLUEPRINT (The Template)
+      const ritualTemplate = {
+        title,
+        category,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        importance: 'medium',
+        isRitual: true // Hardcoded for the template
+      };
+
+      const templateRef = await addDoc(collection(db, "dailyRituals"), ritualTemplate);
+
+      // B. Create the INITIAL INSTANCE (The Clone)
+      const firstInstance = {
+        title,
+        category,
+        completed: false,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        dueDate: dueDate || new Date(), // Defaults to today
+        importance: 'medium',
+        estimatedTime: 15,
+        isRitual: true,           // It is a ritual...
+        originRitualId: templateRef.id // ...linked to the template we just made!
+      };
+
+      await addDoc(collection(db, "tasks"), firstInstance);
+      toast({ title: "Ritual Established", description: "The blueprint is saved and today's task is born." });
+
+    } else {
+      // --- STANDARD TASK CREATION ---
+      const newTask = {
+        title,
+        category,
+        completed: false,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        dueDate: dueDate || null,
+        importance: 'medium',
+        estimatedTime: 15,
+        isRitual: false,
+        originRitualId: null
+      };
+
+      await addDoc(collection(db, "tasks"), newTask);
+    }
   };
 
   const toggleTask = async (task: Task) => {
@@ -128,8 +167,8 @@ export function useTasks(filter?: string) {
     if (task.isRitual) {
       // STOP! Do not delete ritual instances or templates from the main view.
       toast({
-        title: "Forbidden Action",
-        description: "Rituals cannot be banished. They must be fulfilled.",
+        title: "The Scales Demand Order",
+        description: "RA Daily Ritual is a sacred commitment. It cannot be banished from this view.",
         variant: "destructive"
       });
       return; 

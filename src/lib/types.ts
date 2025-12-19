@@ -4,8 +4,16 @@ export type Subtask = {
   completed: boolean;
 };
 
+export const CATEGORY_LABELS = {
+  GENERAL: 'Khet',
+  RITUAL: 'Daily Rituals',
+  DUTY: 'Sacred Duties',
+  MISSION: 'Special Missions',
+  EXPEDITION: 'Grand Expeditions'
+} as const;
+
 // Harmonized 'Responsibilities' to 'Sacred Duties'
-export type TaskCategory = 'Today' | 'Daily Rituals' | 'Sacred Duties' | 'Special Missions' | 'Grand Expeditions' | string;
+export type TaskCategory = typeof CATEGORY_LABELS[keyof typeof CATEGORY_LABELS] | string;
 
 export type TaskImportance = 'low' | 'medium' | 'high';
 

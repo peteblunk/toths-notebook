@@ -12,6 +12,8 @@ import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 // ----------------------------------------
+// --- NEW IMPORT FOR TASK CATEGORY LABELS
+import { CATEGORY_LABELS } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -126,58 +128,58 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
       toast({ title: "Error", description: "You must be logged in to scribe tasks.", variant: "destructive" });
       return;
     }
-    
+
     try {
-        // FIX: Add 'userId' here so it satisfies the Task type definition
-        const newTaskData = {
-          ...values,
-          subtasks,
-          userId: user.uid, // <--- The missing key!
-        };
+      // FIX: Add 'userId' here so it satisfies the Task type definition
+      const newTaskData = {
+        ...values,
+        subtasks,
+        userId: user.uid, // <--- The missing key!
+      };
 
-        // BRANCH 1: DAILY RITUALS (The Double Strike)
-        if (values.category === 'Daily Rituals') {
-            // 1. The Decree (Save Template)
-            const templateRef = await addDoc(collection(db, "dailyRituals"), {
-                ...newTaskData,
-                isRitual: true, // Mark as Template
-                createdAt: serverTimestamp(),
-            });
+      // BRANCH 1: DAILY RITUALS (The Double Strike)
+      if (values.category === 'Daily Rituals') {
+        // 1. The Decree (Save Template)
+        const templateRef = await addDoc(collection(db, "dailyRituals"), {
+          ...newTaskData,
+          isRitual: true, // Mark as Template
+          createdAt: serverTimestamp(),
+        });
 
-            // 2. The Avatar (First Breath Clone)
-            await addDoc(collection(db, "tasks"), {
-                ...newTaskData,
-                isRitual: true,              // Mark as Ritual Instance
-                originRitualId: templateRef.id, // Link to Parent
-                dueDate: new Date(),         // Due Today!
-                completed: false,
-                createdAt: serverTimestamp(),
-            });
+        // 2. The Avatar (First Breath Clone)
+        await addDoc(collection(db, "tasks"), {
+          ...newTaskData,
+          isRitual: true,              // Mark as Ritual Instance
+          originRitualId: templateRef.id, // Link to Parent
+          dueDate: new Date(),         // Due Today!
+          completed: false,
+          createdAt: serverTimestamp(),
+        });
 
-            // 3. The Proclamation
-            toast({
-                title: "The First Breath",
-                description: "Your Ritual is established. The Midnight Scribe will renew it daily. The first instance awaits you now.",
-                className: "border-cyan-500 bg-black text-cyan-400"
-            });
+        // 3. The Proclamation
+        toast({
+          title: "The First Breath",
+          description: "Your Ritual is established. The Midnight Scribe will renew it daily. The first instance awaits you now.",
+          className: "border-cyan-500 bg-black text-cyan-400"
+        });
 
-        } else {
-            // BRANCH 2: STANDARD TASKS (Business as Usual)
-            // Now newTaskData includes userId, so TypeScript will be happy!
-            onTaskAdd(newTaskData);
-            
-            toast({
-                title: "Task Scribed",
-                description: `"${newTaskData.title}" has been added to your list.`,
-            });
-        }
-        
-        form.reset();
-        setSubtasks([]);
-        setOpen(false);
+      } else {
+        // BRANCH 2: STANDARD TASKS (Business as Usual)
+        // Now newTaskData includes userId, so TypeScript will be happy!
+        onTaskAdd(newTaskData);
+
+        toast({
+          title: "Task Scribed",
+          description: `"${newTaskData.title}" has been added to your list.`,
+        });
+      }
+
+      form.reset();
+      setSubtasks([]);
+      setOpen(false);
     } catch (error) {
-        console.error("Error in onSubmit:", error);
-        toast({ title: "Error", description: "Could not scribe task.", variant: "destructive" });
+      console.error("Error in onSubmit:", error);
+      toast({ title: "Error", description: "Could not scribe task.", variant: "destructive" });
     }
   }
 
@@ -188,7 +190,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
           + Add Task
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-md bg-card border-border max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-headline text-primary">Scribe a New Task</DialogTitle>
@@ -196,10 +198,10 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
             Record your next objective. Fill in the details below.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
+
             {/* TITLE */}
             <FormField
               control={form.control}
@@ -229,11 +231,11 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Today">Today</SelectItem>
-                      <SelectItem value="Daily Rituals">Daily Rituals</SelectItem>
-                      <SelectItem value="Sacred Duties">Sacred Duties</SelectItem>
-                      <SelectItem value="Special Missions">Special Missions</SelectItem>
-                      <SelectItem value="Grand Expeditions">Grand Expeditions</SelectItem>
+                      {Object.values(CATEGORY_LABELS).map((label) => (
+                        <SelectItem key={label} value={label}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -245,7 +247,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
             />
 
             {/* DETAILS */}
-             <FormField
+            <FormField
               control={form.control}
               name="details"
               render={({ field }) => (
@@ -281,57 +283,57 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                   value={subtaskText}
                   onChange={(e) => setSubtaskText(e.target.value)}
                   placeholder="Add a new sub-task..."
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); }}}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask(); } }}
                 />
                 {/* CYBER STYLE FOR SUBTASK ADD BUTTON */}
-                <Button 
-                    type="button" 
-                    onClick={handleAddSubtask}
-                    className={CYBER_BUTTON_STYLE}
+                <Button
+                  type="button"
+                  onClick={handleAddSubtask}
+                  className={CYBER_BUTTON_STYLE}
                 >
-                    Add
+                  Add
                 </Button>
               </div>
             </div>
-            
+
             {/* META: IMPORTANCE & TIME */}
             <div className="grid grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="importance"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Importance</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
+                      <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select level" />
+                          <SelectValue placeholder="Select level" />
                         </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
+                      </FormControl>
+                      <SelectContent>
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
+                      </SelectContent>
                     </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="estimatedTime"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Est. Time (min)</FormLabel>
                     <FormControl>
-                        {/* Note: type="number" ensures mobile keyboards show numbers */}
-                        <Input type="number" placeholder="e.g., 60" {...field} />
+                      {/* Note: type="number" ensures mobile keyboards show numbers */}
+                      <Input type="number" placeholder="e.g., 60" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
             </div>
 
             {/* DUE DATE */}
@@ -369,11 +371,11 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter>
               {/* CYBER STYLE FOR SUBMIT BUTTON */}
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className={`w-full ${CYBER_BUTTON_STYLE}`}
               >
                 Add Task

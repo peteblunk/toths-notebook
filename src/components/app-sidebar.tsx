@@ -5,9 +5,12 @@ import {
   SidebarHeader,
   SidebarContent,
   SidebarMenu,
+  SidebarMenuItem,
   SidebarFooter,
   SidebarMenuButton,
+  SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -22,7 +25,10 @@ import {
   User,
   BookOpen,
   Eclipse,
-  Moon, 
+  Moon,
+  Landmark,
+  Calendar,
+  Package
 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from "@/components/auth-provider";
@@ -31,8 +37,8 @@ import { signOut } from 'firebase/auth';
 import { MoonPhaseIcon } from "./moon-phase-icon";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { KhonsuTimer } from "@/components/khonsu-timer";
+import { CATEGORY_LABELS } from "@/lib/types";
 
-// This is the main sidebar component.
 interface AppSidebarProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
@@ -45,7 +51,6 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      console.log("User signed out successfully.");
     } catch (error) {
       console.error("Error signing out: ", error);
     }
@@ -58,12 +63,18 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
     }
   };
 
-  const mainNavItems = [
-    { name: "Today", icon: <Home /> },
-    { name: "Daily Rituals", icon: <Sunrise /> },
-    { name: "Sacred Duties", icon: <Eye /> },
-    { name: "Special Missions", icon: <Scroll /> },
-    { name: "Grand Expeditions", icon: <Mountain /> },
+  const temporalFilters = [
+    { name: "Today", icon: <Home className="w-4 h-4" /> },
+    { name: "7 Days", icon: <Calendar className="w-4 h-4" /> },
+    { name: "30 Days", icon: <Landmark className="w-4 h-4" /> },
+  ];
+
+  const essenceFilters = [
+    { name: CATEGORY_LABELS.GENERAL, icon: <Package className="w-4 h-4" /> },
+    { name: CATEGORY_LABELS.RITUAL, icon: <Sunrise className="w-4 h-4" /> },
+    { name: CATEGORY_LABELS.DUTY, icon: <Eye className="w-4 h-4" /> },
+    { name: CATEGORY_LABELS.MISSION, icon: <Scroll className="w-4 h-4" /> },
+    { name: CATEGORY_LABELS.EXPEDITION, icon: <Mountain className="w-4 h-4" /> },
   ];
 
   return (
@@ -77,63 +88,110 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex-grow overflow-y-auto">
-        <SidebarMenu>
-          {mainNavItems.map((item) => (
-            <SidebarMenuButton
-              key={item.name}
-              isActive={activeCategory === item.name}
-              onClick={() => handleCategoryClick(item.name)}
-              className="text-sidebar-foreground"
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </SidebarMenuButton>
-          ))}
-          
-          <div className="pt-4 mt-4 border-t border-cyan-900/30">
-            <Dialog>
-              <DialogTrigger asChild>
-                <SidebarMenuButton className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50 group">
-                  {/* The Eclipse icon spins slowly on hover for that "Charging Up" effect */}
-                  <Eclipse className="group-hover:animate-spin-slow transition-all duration-700" />
-                  <span className="font-bold tracking-wide">Invoke Khonsu</span>
-                </SidebarMenuButton>
-              </DialogTrigger>
-              <DialogContent className="p-0 border-none bg-transparent max-w-md shadow-none sm:max-w-lg">
-                <DialogTitle className="sr-only">Invoke Khonsu Timer</DialogTitle>
-                <KhonsuTimer />
-              </DialogContent>
-            </Dialog>
+      <SidebarContent className="flex-grow overflow-visible px-2 space-y-12 mt-8">
+
+        {/* TEMPORAL GATEWAY - AZURE OVERLAY */}
+        <div className="group/temporal relative flex items-center h-12">
+          {/* Trigger Area */}
+          <div className="cursor-pointer py-2 pl-3 border-l-2 border-cyan-500/50 hover:border-cyan-400 hover:bg-cyan-950/20 transition-all duration-300 w-full z-10">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-cyan-400/40 group-hover/temporal:text-cyan-300 font-display">
+              Temporal
+            </h3>
           </div>
-        </SidebarMenu>
+
+          {/* THE SUPERIMPOSED ARRAY */}
+
+          <div className="absolute 
+  /* Using a pixel value ensures it doesn't 'revert' to the left */
+  left-[140px] 
+  top-0 
+  flex flex-col space-y-2 
+  opacity-0 -translate-x-8 pointer-events-none 
+  /* The transition moves it into place on hover */
+  group-hover/temporal:opacity-100 
+  group-hover/temporal:translate-x-4 
+  group-hover/temporal:pointer-events-auto 
+  transition-all duration-300 ease-out 
+  /* Higher Z-index to float over the main list */
+  z-[100] 
+  min-w-[140px]
+">
+            {temporalFilters.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => handleCategoryClick(item.name)}
+                className={`
+          h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all
+          ${activeCategory === item.name
+                    ? "border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.5)]"
+                    : "border-cyan-900 text-cyan-900 hover:border-cyan-500 hover:text-cyan-400"}
+        `}
+              >
+                <span className="w-4 h-4">{item.icon}</span>
+                {item.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* THE UNDONE (ESSENCE) - EMERALD OVERLAY */}
+        <div className="group/undone relative flex items-center h-12">
+          {/* Trigger Area */}
+          <div className="cursor-pointer py-2 pl-3 border-l-2 border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-950/20 transition-all duration-300 w-full z-10">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-emerald-400/40 group-hover/undone:text-emerald-300 font-display">
+              The Undone
+            </h3>
+          </div>
+
+          {/* SUPERIMPOSED DATA ARRAY (EMERALD) */}
+          <div className="absolute 
+    left-[140px] 
+    top-0 
+    flex flex-col space-y-2 
+    opacity-0 -translate-x-8 pointer-events-none 
+    /* CHANGE THESE THREE FROM /temporal TO /undone */
+    group-hover/undone:opacity-100 
+    group-hover/undone:translate-x-4 
+    group-hover/undone:pointer-events-auto 
+    transition-all duration-300 ease-out 
+    z-[100] 
+    min-w-[160px]
+  ">
+            {essenceFilters.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => handleCategoryClick(item.name)}
+                className={`
+          h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all
+          ${activeCategory === item.name
+                    ? "border-emerald-400 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                    : "border-emerald-900/50 text-emerald-900 hover:border-emerald-500 hover:text-emerald-400"}
+        `}
+              >
+                <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
+                {item.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </SidebarContent>
 
       <SidebarFooter>
-        {/* --- Footer Navigation Actions --- */}
         <div className="mt-auto border-t border-cyan-900/30 pt-2 flex flex-col gap-1">
-            
-            {/* NEW: Manage Daily Rituals (The Template Library) */}
-            <SidebarMenuButton 
-                asChild 
-                className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/50 group w-full justify-start pl-2"
-            >
-                <Link href="/rituals">
-                <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                <span className="font-bold tracking-wide">Manage Rituals</span>
-                </Link>
-            </SidebarMenuButton>
+          <SidebarMenuButton asChild className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/50 group w-full justify-start pl-2">
+            <Link href="/rituals">
+              <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+              <span className="font-bold tracking-wide">Manage Rituals</span>
+            </Link>
+          </SidebarMenuButton>
 
-            {/* Evening Chronicle Anchor */}
-            <SidebarMenuButton 
-                asChild 
-                className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50 group w-full justify-start pl-2"
-            >
-                <Link href="/evening-chronicle">
-                <Moon className="w-4 h-4 mr-2 group-hover:animate-spin-slow transition-all duration-700" />
-                <span className="font-bold tracking-wide">Evening Chronicle</span>
-                </Link>
-            </SidebarMenuButton>
+          <SidebarMenuButton asChild className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50 group w-full justify-start pl-2">
+            <Link href="/evening-chronicle">
+              <Moon className="w-4 h-4 mr-2 group-hover:animate-spin-slow transition-all duration-700" />
+              <span className="font-bold tracking-wide">Evening Chronicle</span>
+            </Link>
+          </SidebarMenuButton>
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-border p-2">
@@ -154,30 +212,19 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
                 <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full text-cyan-400/70 hover:text-cyan-400">
                   <Link href="/rituals">
                     <BookOpen className="w-5 h-5" />
-                    <span className="sr-only">Manage Rituals</span>
                   </Link>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                <p>Manage Rituals</p>
-              </TooltipContent>
+              <TooltipContent side="right">Manage Rituals</TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  onClick={handleSignOut}
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
-                >
+                <Button onClick={handleSignOut} variant="ghost" size="icon" className="h-8 w-8 rounded-full border border-pink-500 text-pink-500 hover:bg-pink-500/10">
                   <LogOut className="w-5 h-5" />
-                  <span className="sr-only">Logout</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                <p>Logout</p>
-              </TooltipContent>
+              <TooltipContent side="right">Logout</TooltipContent>
             </Tooltip>
           </div>
         </div>

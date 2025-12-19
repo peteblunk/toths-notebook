@@ -9,63 +9,29 @@ import { TaskList } from "@/components/task-list";
 import { FilterCategory } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { AddTaskDialog } from "@/components/add-task-dialog";
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; 
-import { db } from '@/lib/firebase';
+import { useTasks } from "@/hooks/use-tasks"; // 👈 Make sure this is here
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('Today');
   
-  // Get the user and loading state from our AuthProvider
   const { user, loading } = useAuth(); 
   const router = useRouter();
-  const { toast } = useToast(); // Initialize the toast hook
+  const { toast } = useToast();
 
-  // This useEffect hook protects the route
+  // --- 1. THE CRITICAL FIX ---
+  // We pull addTask directly from your useTasks hook
+  const { addTask } = useTasks(activeCategory); 
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]); 
 
-  // ------------------------------------------------------------------
-  // 1. THE MISSING HANDLER FUNCTION
-  // ------------------------------------------------------------------
- const handleAddTask = async (taskData: any) => {
-    if (!user) {
-        console.error("No user found!");
-        return;
-    }
+  // --- 2. OLD handleAddTask REMOVED ---
+  // We don't need the local function anymore because the hook handles the logic now.
 
-    try {
-        // ✅ PURIFIED LOGIC: Only "Daily Rituals" go to the ritual collection
-        const isRitual = taskData.category === "Daily Rituals";
-        const targetCollection = isRitual ? "dailyRituals" : "tasks";
-
-        console.log(`Adding task to ${targetCollection}...`, taskData);
-
-        await addDoc(collection(db, targetCollection), {
-            ...taskData,
-            userId: user.uid,
-            completed: false,
-            createdAt: serverTimestamp(),
-            // Ensure we save a valid date object
-            dueDate: taskData.dueDate || new Date(), 
-            // Force the DNA tag to match the collection
-            isRitual: isRitual 
-        });
-
-    } catch (error) {
-        console.error("Error adding task in Home:", error);
-        toast({ 
-            title: "Error", 
-            description: "The Scribe could not record this task.", 
-            variant: "destructive" 
-        });
-    }
-  };
-
-  // Loading State
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-cyan-400 font-display">
@@ -78,7 +44,6 @@ export default function Home() {
     );
   }
 
-  // Main App State
   if (user) {
     return (
       <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden">
@@ -96,8 +61,13 @@ export default function Home() {
           <span className="font-display font-bold text-lg">{activeCategory}</span>
           
           <div className="ml-auto">
-             {/* 👇 2. PASS THE FUNCTION TO THE COMPONENT */}
-             <AddTaskDialog onTaskAdd={handleAddTask} />
+             {/* --- 3. THE CONNECTED DIALOG --- */}
+             <AddTaskDialog 
+                onTaskAdd={(data) => {
+                  // This calls the hook function directly
+                  addTask(data.title, data.category, data.dueDate);
+                }} 
+             />
           </div>
         </header>
 

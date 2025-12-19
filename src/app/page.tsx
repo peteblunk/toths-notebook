@@ -31,15 +31,15 @@ export default function Home() {
   // ------------------------------------------------------------------
   // 1. THE MISSING HANDLER FUNCTION
   // ------------------------------------------------------------------
-  const handleAddTask = async (taskData: any) => {
+ const handleAddTask = async (taskData: any) => {
     if (!user) {
         console.error("No user found!");
         return;
     }
 
     try {
-        // Decide where the scroll goes: 'dailyRituals' or 'tasks'
-        const isRitual = taskData.category === "Daily Rituals" || taskData.category === "Sacred Duties";
+        // ✅ PURIFIED LOGIC: Only "Daily Rituals" go to the ritual collection
+        const isRitual = taskData.category === "Daily Rituals";
         const targetCollection = isRitual ? "dailyRituals" : "tasks";
 
         console.log(`Adding task to ${targetCollection}...`, taskData);
@@ -51,9 +51,10 @@ export default function Home() {
             createdAt: serverTimestamp(),
             // Ensure we save a valid date object
             dueDate: taskData.dueDate || new Date(), 
+            // Force the DNA tag to match the collection
+            isRitual: isRitual 
         });
 
-        // (Toast is handled in the Dialog component, so we don't need one here)
     } catch (error) {
         console.error("Error adding task in Home:", error);
         toast({ 

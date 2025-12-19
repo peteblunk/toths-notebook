@@ -1,5 +1,8 @@
 "use client";
 
+import Image from "next/image";
+// This import ensures the bundler treats the PNG as a static asset
+import khonsuNeon from "../../public/khonsu-neon.png"; // Adjust path if needed to reach your public folder
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Wind } from "lucide-react";
@@ -189,8 +192,14 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
 
   return (
     <div className="relative w-full h-[100dvh] md:h-[min(650px,85vh)] rounded-xl overflow-hidden flex flex-col justify-end bg-black border border-cyan-500/50 shadow-[0_0_50px_rgba(0,255,255,0.2)] text-white font-sans">
-      <div className="absolute inset-0 z-0 bg-contain bg-center bg-no-repeat opacity-50 pointer-events-none" style={{ backgroundImage: "url('/images/khonsu-neon.png')" }} />
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+      {/* THE LUNAR BACKGROUND (Khonsu Spirit) */}
+<div 
+  className="absolute inset-0 z-0 bg-contain bg-center bg-no-repeat opacity-50 pointer-events-none" 
+  style={{ 
+    backgroundImage: "url('/images/khonsu-neon.png')", // Ensure this path is 100% correct
+    backgroundBlendMode: "screen" // Optional: makes neon pop more against black
+  }} 
+/>
       {onClose && <button onClick={onClose} className="absolute top-4 right-4 z-50 text-cyan-500 hover:text-white"><X /></button>}
 
       <div className="relative z-10 flex flex-row items-end justify-between p-8 w-full mt-auto bg-gradient-to-t from-black to-transparent">

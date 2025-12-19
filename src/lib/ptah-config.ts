@@ -1,53 +1,43 @@
 export const PTAH_CONFIG = {
-  version: "1.2.1",
-  title: "The Evening Chronicle & Temple Wards - Redux",
-  date: new Date().toLocaleDateString(),
-  type: "MAJOR_EXPANSION", // Feature | Polish | Major_Expansion
-  
-  intro: "The sun sets, but the record remains. We have constructed the Evening Chronicle to balance the Morning's Rise, while simultaneously reinforcing the temple walls against external chaos.",
+  version: "1.2.2",
+  title: "The Manifest of Khet & The Temporal Gateways",
+  date: "December 18, 2025",
+  type: "MAJOR_EXPANSION",
+
+  intro: "The Great Work evolves. We have moved beyond simple 'tasks' into the classification of 'Khet' (Mortal Matter). This update harmonizes the physical labor of the Scribe with the eternal flow of the Temple Gateways.",
 
   // The "What's New" Section
   changes: [
     {
-      icon: "ShieldAlert", 
-      title: "Temple Wards (Security Protocol)",
-      description: "CRITICAL INFRASTRUCTURE: Re-aligned the Temple foundation to Next.js 14 to patch a vulnerability (CVE-2025-55182) while preserving harmony with our UI relics."
+      icon: "Atom", 
+      title: "The Introduction of Khet",
+      description: "Replaced the 'Today' task type with 'Khet.' In Cyber-Egyptian philosophy, Khet represents the physical body and mortal matter. It is the general labor required to sustain the Temple—distinct from specific Missions or Sacred Duties. Use it for your day-to-day tasks... which in no wise diminishes their importance."
     },
     {
-      icon: "Moon", 
-      title: "The Evening Chronicle",
-      description: "A new 4-step closing ritual to review your deeds. Enter 'Void Mode' to reflect without distraction."
+      icon: "PanelRightClose", 
+      title: "Temporal Gateways (Sidebar Refactor)",
+      description: "Refactored the sidebar into twin holographic gateways. Scribes may now choose from: 'Temporal View' for upcoming deadlines across all types, and 'The Undone' - helpful in finding that next item for our life force to act on to churn into Ma'at. In this view Ma'at is hidden to focus the mind."
     },
     {
-      icon: "Ghost", 
-      title: "The Forgiveness Protocol",
-      description: "Incomplete Daily Rituals are now identified as 'Retained Nun.' The system acknowledges them without guilt, then clears them to allow the Midnight Scribe to create a fresh start."
+      icon: "CalendarRange", 
+      title: "The Malleable Timeline",
+      description: "FEATURE RESTORED: All Khet-class tasks (General Khet, Duties, Missions, Expeditions) now feature a massive 'Capture Zone' date picker for effortless scheduling. Thanks be to the nameless scribe who drew this unfortunate loss of function to the attention of the Temple. Ra be with you. Always."
     },
     {
-      icon: "Cpu", 
-      title: "The Obsidian Seal",
-      description: "The final seal is now a monolithic interface housing the Thoth Chip. Press it to house completed tasks in the Archives and reset your board for the morrow."
-    },
-    {
-      icon: "Sparkles", 
-      title: "Holographic Aesthetics",
-      description: "Implemented 'Orbitron' placeholders and vector-based pulsing energy signatures for a true Cyber-Egyptian experience."
+      icon: "ShieldCheck", 
+      title: "The Sacred Guard",
+      description: "Reinforced the boundary between Mortal Khet and Divine Rituals. Daily Rituals are now protected from accidental 'Banishment' to preserve the timeline's heartbeat."
     }
   ],
 
   // The "How to Use" Section
   instructions: [
-    "1. INITIATE: Locate the 'Evening Chronicle' anchor at the bottom of the Sidebar.",
-    "2. REVIEW: Witness your 'Ma'at Created' (Gold) and your 'Retained Nun' (Blue).",
-    "3. SCRIBE: Answer the three prompts. Speak your victories and your Tomorrow Quest into existence.",
-    "4. SEAL: Press the pulsing Thoth Chip. Watch as the day is archived and the board is cleansed.",
-    "5. VISIT: The Archives are open to revist your deeds and reflections.",
-    "6. RESTORATION: Many iniquities tortured users for days on end. You have sustained in this calibration of your faith. You are truly worthy. Update 1.2.1 Protocols",
-    " - Ma'at Restored: Daily Rituals and Tasks now coexist in harmony.",
-    " - The Void Sealed: The Archives navigation link has been re-established. However, more work before you will be able to access scrolls.",
-    " - Creation Engine: The 'Add Task' capability is fully operational."
-
+    "1. UNDERSTAND KHET: When adding a general task, select 'Khet.' It is the 'Mortal Matter' of your day—the essential building blocks of your physical reality.",
+    "2. PRESERVE DISTINCTION: Use 'Sacred Duties' for high-honor labor and 'Grand Expeditions' for long-term voyages. They are distinct manifestations of your effort.",
+    "3. TOGGLE GATEWAYS: Use the new Sidebar to switch between 'Temporal' (Deadlines) and 'Essence' (Category-based) views.",
+    "4. CAPTURE THE DATE: Touch anywhere in the wide 'Due Date' area to shift your deadlines. This 'Gift of Ptah' honors the user who reported the temporal lock.",
+    "5. RESPECT THE RITUAL: Note that Rituals cannot be banished; they are the constants around which your Khet revolves."
   ],
 
-  devNote: "Balance is the key to power. The Day (Ra) is for action; the Night (Thoth) is for reflection. The system now handles both... and the security update ensures our sanctuary remains inviolate."
+  devNote: "The system now recognizes that the Scribe is both a physical being (Khet) and a spiritual one (Ritual). By allowing Khet tasks to be malleable while Rituals remain fixed, we achieve true Ma'at."
 };

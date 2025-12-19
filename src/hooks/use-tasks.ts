@@ -16,7 +16,8 @@ import {
 import { db } from "@/lib/firebase"; 
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast"; 
-import { Task } from "@/lib/types"; 
+import { Task } from "@/lib/types";
+import { CATEGORY_LABELS } from "@/lib/types";
 
 export function useTasks(filter?: string) {
   const { user } = useAuth();
@@ -85,63 +86,57 @@ export function useTasks(filter?: string) {
   }, [user]);
 
   // 3. SAFE ACTIONS
+const addTask = async (title: string, category: string, dueDate?: Date) => {
+  if (!user) return;
+  
+  // 1. STRICT CHECK: Only use the official Ritual label
+  const isDailyRitual = category === CATEGORY_LABELS.RITUAL;
 
-  const addTask = async (title: string, category: string, dueDate?: Date) => {
-    if (!user) return;
-    
-    // 1. Check if the user is trying to create a Daily Ritual
-    const isDailyRitual = category.toLowerCase() === "daily ritual";
+  if (isDailyRitual) {
+    // --- RITUAL LOGIC ---
+    const ritualTemplate = {
+      title,
+      category,
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+      importance: 'medium',
+      isRitual: true 
+    };
 
-    if (isDailyRitual) {
-      // --- THE FIRST BREATH LOGIC ---
-      
-      // A. Create the DIVINE BLUEPRINT (The Template)
-      const ritualTemplate = {
-        title,
-        category,
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        importance: 'medium',
-        isRitual: true // Hardcoded for the template
-      };
+    const templateRef = await addDoc(collection(db, "dailyRituals"), ritualTemplate);
 
-      const templateRef = await addDoc(collection(db, "dailyRituals"), ritualTemplate);
+    const firstInstance = {
+      title,
+      category,
+      completed: false,
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+      dueDate: dueDate || new Date(),
+      importance: 'medium',
+      estimatedTime: 15,
+      isRitual: true, // THE DNA TAG
+      originRitualId: templateRef.id 
+    };
 
-      // B. Create the INITIAL INSTANCE (The Clone)
-      const firstInstance = {
-        title,
-        category,
-        completed: false,
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        dueDate: dueDate || new Date(), // Defaults to today
-        importance: 'medium',
-        estimatedTime: 15,
-        isRitual: true,           // It is a ritual...
-        originRitualId: templateRef.id // ...linked to the template we just made!
-      };
+    await addDoc(collection(db, "tasks"), firstInstance);
+  } else {
+    // --- STANDARD TASK (Duty, Mission, Khet, Expedition) ---
+    const newTask = {
+      title,
+      category, // This will correctly be "Sacred Duties"
+      completed: false,
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+      dueDate: dueDate || null,
+      importance: 'medium',
+      estimatedTime: 15,
+      isRitual: false, // ENSURE THIS IS FALSE FOR DUTIES
+      originRitualId: null
+    };
 
-      await addDoc(collection(db, "tasks"), firstInstance);
-      toast({ title: "Ritual Established", description: "The blueprint is saved and today's task is born." });
-
-    } else {
-      // --- STANDARD TASK CREATION ---
-      const newTask = {
-        title,
-        category,
-        completed: false,
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        dueDate: dueDate || null,
-        importance: 'medium',
-        estimatedTime: 15,
-        isRitual: false,
-        originRitualId: null
-      };
-
-      await addDoc(collection(db, "tasks"), newTask);
-    }
-  };
+    await addDoc(collection(db, "tasks"), newTask);
+  }
+};
 
   const toggleTask = async (task: Task) => {
     // Determine which collection this task belongs to

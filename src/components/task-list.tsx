@@ -28,11 +28,9 @@ export function TaskList({ filter }: TaskListProps) {
     const now = new Date();
     const end = new Date(now);
 
-    // If current time is before 2:30 AM, we are still in "yesterday's" session
     if (now.getHours() < 2 || (now.getHours() === 2 && now.getMinutes() < 30)) {
       end.setHours(2, 30, 0, 0);
     } else {
-      // Otherwise, the current session ends at 2:30 AM tomorrow
       end.setDate(now.getDate() + 1);
       end.setHours(2, 30, 0, 0);
     }
@@ -40,6 +38,7 @@ export function TaskList({ filter }: TaskListProps) {
   };
 
   const isTemporal = ["Today", "7 Days", "30 Days"].includes(filter);
+
   // ------------------------------------------------------------------
   // 2. THE DUAL-GATEWAY FILTERING
   // ------------------------------------------------------------------
@@ -47,15 +46,17 @@ export function TaskList({ filter }: TaskListProps) {
     let combined: Task[] = [];
     const scribesEnd = getScribesEndOfDay();
 
-    // Determine the Gateway
+    // 1. RITUAL GATEWAY (ONLY for the Daily Rituals collection)
+    const isRitualSource = filter === CATEGORY_LABELS.RITUAL || filter === "Rituals";
 
-    const isRitualTemplateView = filter === "Daily Rituals" || filter === "Rituals";
-
-    if (isRitualTemplateView) {
-      combined = [...ritualTasks];
+    if (isRitualSource) {
+      combined = ritualTasks.filter(t => {
+        if (filter === "Rituals") return true;
+        return t.category === filter; 
+      });
     }
     else if (isTemporal) {
-      // GATEWAY 1: TEMPORAL (Today, 7, 30)
+      // 2. TEMPORAL GATEWAY (Today, 7, 30)
       const timeHorizon = new Date(scribesEnd);
       if (filter === "7 Days") timeHorizon.setDate(timeHorizon.getDate() + 7);
       if (filter === "30 Days") timeHorizon.setDate(timeHorizon.getDate() + 30);
@@ -63,39 +64,42 @@ export function TaskList({ filter }: TaskListProps) {
       combined = regularTasks.filter(t => {
         if (!t.dueDate) return false;
         const d = new Date(t.dueDate);
-        // Show everything within the window (Persistence Fix is here)
         return d < timeHorizon;
       });
     }
     else {
-      // GATEWAY 2: ESSENCE (Khet, Missions, Duties, etc.)
+      // 3. THE UNDONE / CATEGORY GATEWAY
+      // Sacred Duties live in regularTasks, so they fall here.
       let filtered = regularTasks;
 
       if (filter !== "all" && filter !== "completed") {
-        // If the filter is Khet, it matches the CATEGORY_LABELS.GENERAL
-        const targetCategory = filter === CATEGORY_LABELS.GENERAL ? "Today" : filter;
-        filtered = filtered.filter(t => t.category === targetCategory);
+        filtered = filtered.filter(t => {
+          return t.category === filter || t.category === CATEGORY_LABELS[filter as keyof typeof CATEGORY_LABELS];
+        });
       }
 
-      // RULE: Essence views show ONLY incomplete (Nun) tasks
       combined = filtered.filter(t => !t.completed);
     }
-
-    // --- SORT LOGIC ---
+  
+    // --- THE PURIFIED TIERED SORT ---
     combined.sort((a, b) => {
-      const aIsSacred = a.category === "Sacred Duties" || a.isRitual;
-      const bIsSacred = b.category === "Sacred Duties" || b.isRitual;
-      if (aIsSacred && !bIsSacred) return -1;
-      if (!aIsSacred && bIsSacred) return 1;
+      const getTier = (task: Task) => {
+        if (task.category === CATEGORY_LABELS.RITUAL) return 1; 
+        if (task.category === CATEGORY_LABELS.DUTY) return 2;   
+        return 3;                                               
+      };
+
+      const tierA = getTier(a);
+      const tierB = getTier(b);
+
+      if (tierA !== tierB) return tierA - tierB;
 
       const da = a.dueDate ? new Date(a.dueDate).getTime() : 0;
       const db = b.dueDate ? new Date(b.dueDate).getTime() : 0;
       return da - db;
     });
 
-    // --- SPLIT THE WATERS ---
     const nun = combined.filter(t => !t.completed);
-    // Ma'at is only populated for Temporal views per the new law
     const maat = isTemporal ? combined.filter(t => t.completed) : [];
 
     return { nun, maat };
@@ -124,7 +128,6 @@ export function TaskList({ filter }: TaskListProps) {
 
   return (
     <div className="space-y-12 pb-20">
-      {/* NUN: ACTIVE */}
       <div className="space-y-4">
         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] pl-1 mb-4 flex items-center gap-2">
           <Scroll className="w-4 h-4" />
@@ -141,7 +144,6 @@ export function TaskList({ filter }: TaskListProps) {
         ))}
       </div>
 
-      {/* MA'AT: COMPLETED (Only in Temporal Views) */}
       {isTemporal && maat.length > 0 && (
         <div className="space-y-4 pt-4 relative">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />

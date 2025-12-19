@@ -56,7 +56,8 @@ const subtaskSchema = z.object({
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long."),
-  category: z.enum(['Today', 'Daily Rituals', 'Sacred Duties', 'Special Missions', 'Grand Expeditions']),
+  // --- THE ALIGNMENT FIX ---
+  category: z.enum(Object.values(CATEGORY_LABELS) as [string, ...string[]]),
   importance: z.enum(['low', 'medium', 'high']),
   dueDate: z.date({
     required_error: "A due date is required.",
@@ -66,12 +67,12 @@ const formSchema = z.object({
   subtasks: z.array(subtaskSchema).optional(),
 });
 
-const categoryDescriptions: Record<TaskCategory, string> = {
-  'Today': 'Tasks to be done today.',
-  'Daily Rituals': 'Tasks that repeat every day.',
-  'Sacred Duties': 'Core duties and recurring obligations.',
-  'Special Missions': 'Unique, one-off objectives with specific goals.',
-  'Grand Expeditions': 'Large, long-term projects with multiple phases.',
+const categoryDescriptions: Record<string, string> = {
+  [CATEGORY_LABELS.GENERAL]: 'Mortal matter to be processed today.', // Khet
+  [CATEGORY_LABELS.RITUAL]: 'Sacred patterns that repeat daily.',
+  [CATEGORY_LABELS.DUTY]: 'Core duties and recurring obligations.',
+  [CATEGORY_LABELS.MISSION]: 'Unique, one-off objectives with specific goals.',
+  [CATEGORY_LABELS.EXPEDITION]: 'Large, long-term projects with multiple phases.',
 };
 
 const CYBER_BUTTON_STYLE = `
@@ -99,7 +100,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      category: 'Today',
+      category: CATEGORY_LABELS.GENERAL, // Defaults to 'Khet'
       importance: 'medium',
       dueDate: new Date(),
       estimatedTime: 30,
@@ -119,59 +120,56 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
     setSubtasks(subtasks.filter((_, index) => index !== indexToRemove));
   };
 
-  // --- THE NEW LOGIC ---
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting task...", values);
+  // --- THE PURIFIED LOGIC ---
 
-    // SAFETY CHECK: Ensure user exists before proceeding
+async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
-      toast({ title: "Error", description: "You must be logged in to scribe tasks.", variant: "destructive" });
+      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
       return;
     }
 
     try {
-      // FIX: Add 'userId' here so it satisfies the Task type definition
+      // 1. STRICT DEFINITION: Only 'Daily Rituals' trigger the Template logic
+      const isRitualType = values.category === CATEGORY_LABELS.RITUAL;
+
+      // 2. PREPARE THE DATA: 
+      // Sacred Duties will have isRitual: false here
       const newTaskData = {
         ...values,
         subtasks,
-        userId: user.uid, // <--- The missing key!
+        userId: user.uid,
+        isRitual: isRitualType, 
       };
 
-      // BRANCH 1: DAILY RITUALS (The Double Strike)
-      if (values.category === 'Daily Rituals') {
-        // 1. The Decree (Save Template)
+      if (isRitualType) {
+        // --- BRANCH 1: ONLY FOR DAILY RITUALS ---
+        // This creates the master template in the dailyRituals collection
         const templateRef = await addDoc(collection(db, "dailyRituals"), {
           ...newTaskData,
-          isRitual: true, // Mark as Template
           createdAt: serverTimestamp(),
         });
 
-        // 2. The Avatar (First Breath Clone)
+        // This creates today's instance in the tasks collection
         await addDoc(collection(db, "tasks"), {
           ...newTaskData,
-          isRitual: true,              // Mark as Ritual Instance
-          originRitualId: templateRef.id, // Link to Parent
-          dueDate: new Date(),         // Due Today!
+          originRitualId: templateRef.id,
+          dueDate: new Date(),
           completed: false,
           createdAt: serverTimestamp(),
         });
 
-        // 3. The Proclamation
-        toast({
-          title: "The First Breath",
-          description: "Your Ritual is established. The Midnight Scribe will renew it daily. The first instance awaits you now.",
-          className: "border-cyan-500 bg-black text-cyan-400"
-        });
-
+        toast({ title: "The First Breath", description: "Ritual established." });
       } else {
-        // BRANCH 2: STANDARD TASKS (Business as Usual)
-        // Now newTaskData includes userId, so TypeScript will be happy!
-        onTaskAdd(newTaskData);
-
-        toast({
-          title: "Task Scribed",
-          description: `"${newTaskData.title}" has been added to your list.`,
+        // --- BRANCH 2: EVERYTHING ELSE (Sacred Duties, Missions, Khet, etc.) ---
+        // We call the standard handler which writes ONLY to the 'tasks' collection
+        // We explicitly force isRitual to false just to be safe
+        onTaskAdd({ 
+          ...newTaskData, 
+          isRitual: false,
+          originRitualId: undefined
         });
+
+        toast({ title: "Task Scribed", description: `"${values.title}" added.` });
       }
 
       form.reset();
@@ -179,7 +177,7 @@ export function AddTaskDialog({ onTaskAdd }: AddTaskDialogProps) {
       setOpen(false);
     } catch (error) {
       console.error("Error in onSubmit:", error);
-      toast({ title: "Error", description: "Could not scribe task.", variant: "destructive" });
+      toast({ title: "Error", variant: "destructive" });
     }
   }
 

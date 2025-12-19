@@ -29,20 +29,12 @@ export function PtahManager() {
     }, [updateAvailable]); // Removed 'user' dependency to avoid loop, simple check is fine
 
    // 2. THE RITUAL ACTION (FIXED & DEBUGGED)
-    const handleEmbrace = async () => {
-        console.log("🔨 Embrace clicked. Checking systems...");
+const handleEmbrace = async () => {
+    if (!user) return;
 
-        // Diagnostic 1: Check User
-        if (!user) {
-            console.error("❌ No user found.");
-            alert("Error: User not found. Please refresh.");
-            return;
-        }
-
-        try {
-            // STEP 1: PREPARE THE DATA
-            // We need to format your complex Config object into a string for the 'details' field
-            const formattedDetails = `
+    try {
+        // STEP 1: PREPARE THE DATA (Weaving the Instructions)
+        const formattedDetails = `
 VERSION: ${PTAH_CONFIG.version}
 DATE: ${PTAH_CONFIG.date}
 
@@ -50,24 +42,27 @@ ${PTAH_CONFIG.intro}
 
 CHANGES:
 ${PTAH_CONFIG.changes.map(c => `• ${c.title}: ${c.description}`).join("\n")}
-            `.trim();
 
-            console.log("📝 Payload prepared. Scribing to DB...");
+INITIATION GUIDE:
+${PTAH_CONFIG.instructions.map((inst, i) => `${inst}`).join("\n")}
 
-            // STEP 2: SCRIBE TO FIRESTORE
-            await addDoc(collection(db, "tasks"), {
-                userId: user.uid,
-                // 👇 FIX: Use 'title' instead of 'releaseTitle'
-                title: PTAH_CONFIG.title, 
-                // 👇 FIX: Use our formatted string instead of 'releaseNotes'
-                details: formattedDetails,
-                // 👇 FIX: Default to "Nun" since 'targetCategory' is missing in config
-                category: "Nun", 
-                dueDate: new Date(),
-                completed: false,
-                createdAt: serverTimestamp(),
-                tags: ["System Update", "Gift of Ptah"]
-            });
+DEV NOTE:
+${PTAH_CONFIG.devNote}
+        `.trim();
+
+        console.log("📝 Payload prepared. Scribing to DB...");
+
+        // STEP 2: SCRIBE TO FIRESTORE
+        await addDoc(collection(db, "tasks"), {
+            userId: user.uid,
+            title: PTAH_CONFIG.title, 
+            details: formattedDetails,
+            category: "Special Missions", // Upgraded from "Nun" for this major event
+            dueDate: new Date(),
+            completed: false,
+            createdAt: serverTimestamp(),
+            tags: ["System Update", "Gift of Ptah", "Khet Manifest"]
+        });
 
             console.log("✅ Scribe successful. Saving version...");
 

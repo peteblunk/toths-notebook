@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen } from 'lucide-react'; 
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
@@ -107,46 +107,46 @@ export default function ManageRitualsPage() {
             {rituals.length > 0 ? (
                 <div className="space-y-4">
                     {rituals.map((ritual) => (
-                        <Card key={ritual.id} className="bg-slate-900/80 border-cyan-900/50 flex items-center justify-between p-4 hover:border-cyan-500/50 transition-colors group">
-                            <div>
-                                <CardTitle className="text-lg text-cyan-50 group-hover:text-cyan-400 transition-colors">{ritual.title}</CardTitle>
-                                <CardDescription className="text-slate-400">
-                                    Importance: <span className="capitalize text-cyan-400">{ritual.importance}</span> | 
-                                    Est. Time: <span className="text-cyan-400">{ritual.estimatedTime} min</span>
+                        <Card
+                            key={ritual.id}
+                            /* TRIMMED BUFFER: Reduced p-4 to p-2 on mobile, p-3 on desktop */
+                            className="bg-slate-900/80 border-cyan-900/50 flex items-center justify-between p-2 sm:p-3 hover:border-cyan-500/50 transition-colors group overflow-hidden"
+                        >
+                            <div className="flex-1 min-w-0 pr-2"> {/* Added min-w-0 to prevent text from pushing icons off-screen */}
+                                <CardTitle className="text-base sm:text-lg text-cyan-50 truncate">
+                                    {ritual.title}
+                                </CardTitle>
+                                <CardDescription className="text-[10px] sm:text-xs text-slate-400 truncate">
+                                    {ritual.importance} | {ritual.estimatedTime}m
                                 </CardDescription>
                             </div>
-                            
-                            {/* ACTION BUTTONS (Cyber Style) */}
-                            <div className="flex items-center gap-3">
-                                
-                                {/* EDIT BUTTON (Cyber Stylus) */}
-                                <div 
+
+                            {/* ACTION BUTTONS: Tightened gap to allow larger icons */}
+                            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                                {/* STYLUS BUTTON */}
+                                <div
                                     role="button"
                                     onClick={() => handleEditClick(ritual)}
                                     className={cn(
-                                        "group/stylus cursor-pointer",
-                                        "flex items-center justify-center p-2 rounded-md",
-                                        "text-cyan-500 hover:bg-cyan-950/30",
-                                        "transition-all duration-300 active:scale-95"
+                                        "group/stylus cursor-pointer flex items-center justify-center p-1 rounded-lg transition-all active:scale-95",
+                                        "border-2 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)] bg-black"
                                     )}
-                                    title="Edit Ritual"
                                 >
-                                    <CyberStylus className="w-32 h-32" />
+                                    {/* INCREASED ICON SIZE: w-12 to w-14/16 */}
+                                    <CyberStylus className="w-14 h-14 sm:w-20 sm:h-20 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
                                 </div>
 
-                                {/* DELETE BUTTON (Cyber Jar) */}
-                                <div 
+                                {/* JAR BUTTON */}
+                                <div
                                     role="button"
                                     onClick={() => handleDeleteClick(ritual)}
                                     className={cn(
-                                        "group/modal-jar cursor-pointer",
-                                        "flex items-center justify-center p-2 rounded-md",
-                                        "text-red-500 hover:bg-red-950/30",
-                                        "transition-all duration-300 active:scale-95"
+                                        "group/modal-jar cursor-pointer flex items-center justify-center p-1 rounded-lg transition-all active:scale-95",
+                                        "border-2 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.2)] bg-black"
                                     )}
-                                    title="Banish Ritual"
                                 >
-                                    <DuamatefJar className="w-32 h-32" />
+                                    {/* INCREASED ICON SIZE: w-12 to w-14/16 */}
+                                    <DuamatefJar className="w-14 h-14 sm:w-20 sm:h-20 text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]" />
                                 </div>
                             </div>
                         </Card>
@@ -162,27 +162,54 @@ export default function ManageRitualsPage() {
 
             {/* THE EDIT DIALOG */}
             {selectedRitual && (
-                <EditRitualDialog 
-                    task={selectedRitual} 
-                    open={isEditOpen} 
-                    onOpenChange={setIsEditOpen} 
+                <EditRitualDialog
+                    task={selectedRitual}
+                    open={isEditOpen}
+                    onOpenChange={setIsEditOpen}
                 />
             )}
 
             {/* THE BANISHMENT DIALOG */}
             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <AlertDialogContent className="bg-slate-950 border-destructive text-slate-50 rounded-lg">
-                    <AlertDialogHeader className="flex flex-col items-center text-center">
-                        <DuamatefHead className="w-72 h-72 text-destructive -mb-12" />
-                        <AlertDialogTitle className="font-headline text-destructive p-5">Banish Ritual?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-slate-400 font-body">
-                            Confirm this Daily Ritual no longer supports Ma'at.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-black text-primary font-headline border border-primary hover:bg-primary/10">Preserve Ritual</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteRitual} className="bg-black text-destructive font-headline border border-destructive hover:bg-destructive/10">Confirm Banishment</AlertDialogAction>
-                    </AlertDialogFooter>
+                {/* PURIFIED VOID: Changed bg-slate-950 to bg-black for total void */}
+                <AlertDialogContent className="bg-black border-destructive text-slate-50 rounded-lg shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+                    <AlertDialogContent className="bg-black border-destructive text-slate-50 rounded-lg shadow-[0_0_50px_rgba(239,68,68,0.2)] min-h-[80vh] flex flex-col justify-between p-8">
+
+                        {/* TOP: The Sacred Icon claims the upper void */}
+                        <div className="flex-1 flex items-center justify-center">
+                            <DuamatefHead className="w-80 h-80 text-destructive brightness-125" />
+                        </div>
+
+                        {/* BOTTOM: The Action Zone (Text + Buttons) */}
+                        <div className="space-y-2">
+                            <AlertDialogHeader className="flex flex-col items-center text-center p-0">
+                                <AlertDialogTitle className="font-headline text-destructive text-2xl tracking-[0.3em] brightness-150 p-0">
+                                    Banish Ritual?
+                                </AlertDialogTitle>
+
+                                <AlertDialogDescription className="text-slate-300 font-body brightness-110 text-xs max-w-[250px]">
+                                    Confirm Daily Ritual no longer supports Ma'at.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+
+                            <AlertDialogFooter className="mt-6">
+                                <div className="flex flex-col sm:flex-row-reverse gap-4 w-full justify-center items-center">
+                                    <AlertDialogAction
+                                        onClick={handleDeleteRitual}
+                                        className="w-full sm:w-auto sm:min-w-[160px] h-12 bg-black text-destructive font-headline border-2 border-destructive hover:bg-destructive/20 hover:text-destructive brightness-125 uppercase tracking-[0.2em] text-[11px] flex items-center justify-center transition-all opacity-100"
+                                    >
+                                        Confirm Banishment
+                                    </AlertDialogAction>
+
+                                    <AlertDialogCancel
+                                        className="w-full sm:w-auto sm:min-w-[160px] h-12 bg-black text-primary font-headline border-2 border-primary hover:bg-primary/20 hover:text-primary mt-0 sm:mt-0 brightness-125 uppercase tracking-[0.2em] text-[11px] flex items-center justify-center transition-all opacity-100"
+                                    >
+                                        Preserve Ritual
+                                    </AlertDialogCancel>
+                                </div>
+                            </AlertDialogFooter>
+                        </div>
+                    </AlertDialogContent>
                 </AlertDialogContent>
             </AlertDialog>
         </div>

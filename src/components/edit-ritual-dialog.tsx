@@ -1,6 +1,17 @@
 "use client";
 
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Plus } from 'lucide-react';
+import { DuamatefHead } from '@/components/icons/duamatef-head';
 import { CyberJar } from '@/components/icons/cyber-jar';
 import { CyberStylus } from './icons/cyber-stylus';
 import { cn } from '@/lib/utils';
@@ -43,6 +55,8 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
   const [importance, setImportance] = useState(task.importance);
   const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
   const [newSubtaskText, setNewSubtaskText] = useState('');
+  const [showBanishConfirm, setShowBanishConfirm] = useState(false);
+
   // Safely handle the date conversion to avoid the toISOString crash
   const [dueDate, setDueDate] = useState<string>(() => {
     if (!task.dueDate) return '';
@@ -60,7 +74,7 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
     }
   });
   // Logic to hide the Banish button for instances in the task list
-  const isSacredInstance = collectionName === "tasks" && (task.isRitual || !!(task as any).originRitualId) || 
+  const isSacredInstance = collectionName === "tasks" && (task.isRitual || !!(task as any).originRitualId) ||
     task.category === CATEGORY_LABELS.RITUAL;
 
   const { toast } = useToast();
@@ -113,14 +127,13 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
   };
 
   const handleDeleteRitual = async () => {
-    if (!confirm("Are you sure you want to banish this ritual?")) return;
-
     try {
       const taskRef = doc(db, collectionName, task.id);
       await deleteDoc(taskRef);
 
       toast({ title: "Ritual Banished", description: "Removed from the scrolls." });
       onOpenChange(false);
+      setShowBanishConfirm(false);
     } catch (error) {
       console.error("Error deleting ritual:", error);
       toast({ title: "Error", description: "Could not delete.", variant: "destructive" });
@@ -129,9 +142,11 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-[400px] rounded-lg bg-black">
         <DialogHeader>
-          <DialogTitle className="text-xl font-headline text-cyan-400 tracking-wide">Edit Ritual</DialogTitle>
+          <DialogTitle className="text-center font-headline text-2xl text-cyan-400">
+            Edit Ritual
+          </DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -172,39 +187,39 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
           </div>
 
           {/* --- THE TIMELINE GATE (Full-Area Trigger) --- */}
-{canEditDate && (
-  <div className="grid gap-2 mb-6 animate-in fade-in slide-in-from-top-2">
-    <Label htmlFor="dueDate" className="text-cyan-400 font-display text-[10px] uppercase tracking-widest ml-1">
-      Adjust Due Date
-    </Label>
-    
-    {/* The Capture Zone: Clicking ANYWHERE in this div triggers the date picker */}
-    <div 
-      className="relative group cursor-pointer"
-      onClick={() => {
-        // Find the hidden input and trigger the browser's native picker
-        const input = document.getElementById('dueDate-hidden') as HTMLInputElement;
-        if (input) input.showPicker();
-      }}
-    >
-      <div className="flex items-center justify-between h-14 px-4 bg-black border-2 border-cyan-900/50 rounded-md group-hover:border-cyan-500 transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-        <span className="text-white font-mono tracking-wider">
-          {dueDate ? format(new Date(dueDate), "PPPP") : "NO DATE SET"}
-        </span>
-        <CalendarIcon className="w-6 h-6 text-cyan-500 group-hover:text-cyan-300 transition-colors" />
-      </div>
+          {canEditDate && (
+            <div className="grid gap-2 mb-6 animate-in fade-in slide-in-from-top-2">
+              <Label htmlFor="dueDate" className="text-cyan-400 font-display text-[10px] uppercase tracking-widest ml-1">
+                Adjust Due Date
+              </Label>
 
-      {/* The Hidden Actual Input: We hide it visually but keep it for the showPicker() functionality */}
-      <input
-        id="dueDate-hidden"
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-      />
-    </div>
-  </div>
-)}
+              {/* The Capture Zone: Clicking ANYWHERE in this div triggers the date picker */}
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => {
+                  // Find the hidden input and trigger the browser's native picker
+                  const input = document.getElementById('dueDate-hidden') as HTMLInputElement;
+                  if (input) input.showPicker();
+                }}
+              >
+                <div className="flex items-center justify-between h-14 px-4 bg-black border-2 border-cyan-900/50 rounded-md group-hover:border-cyan-500 transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+                  <span className="text-white font-mono tracking-wider">
+                    {dueDate ? format(new Date(dueDate), "PPPP") : "NO DATE SET"}
+                  </span>
+                  <CalendarIcon className="w-6 h-6 text-cyan-500 group-hover:text-cyan-300 transition-colors" />
+                </div>
+
+                {/* The Hidden Actual Input: We hide it visually but keep it for the showPicker() functionality */}
+                <input
+                  id="dueDate-hidden"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                />
+              </div>
+            </div>
+          )}
 
 
           <div className="grid gap-2">
@@ -250,54 +265,73 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
           </div>
         </div>
 
-<DialogFooter className="flex !flex-col gap-4 w-full pt-6 mt-4 border-t border-cyan-900/30">
-  
-  {/* TOP ROW: SECONDARY OPTIONS */}
-  <div className="flex flex-row gap-4 w-full">
-    
-    {/* CANCEL - Now flex-1 by default, but visually stable */}
-    <div 
-      role="button"
-      onClick={() => onOpenChange(false)} 
-      className={cn(
-        "h-16 rounded-md border-2 border-slate-800 flex items-center justify-center bg-black cursor-pointer transition-all duration-300 group hover:border-slate-400",
-        isSacredInstance ? "w-full" : "flex-1" // Spans full width if Banish is hidden
-      )}
-    >
-      <span className="font-display font-bold uppercase tracking-[0.3em] text-slate-500 group-hover:text-white text-sm">
-        CANCEL
-      </span>
-    </div>
+        <DialogFooter className="flex !flex-col sm:flex-col sm:justify-center items-center gap-4 w-full pt-6 mt-4 border-t border-cyan-900/30">
+          <div className="flex flex-row gap-4 w-full">
+            <div
+              role="button"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                "h-16 rounded-md border-2 border-slate-800 flex items-center justify-center bg-black cursor-pointer transition-all duration-300 group hover:border-slate-400",
+                isSacredInstance ? "w-full" : "flex-1"
+              )}
+            >
+              <span className="font-display font-bold uppercase tracking-[0.3em] text-slate-500 group-hover:text-white text-sm">
+                CANCEL
+              </span>
+            </div>
 
-    {/* BANISH - THE SACRED GUARD FIX */}
-    {!isSacredInstance && (
-      <div
-        role="button"
-        onClick={handleDeleteRitual}
-        className="flex-1 h-16 bg-black border-2 border-red-900/20 hover:border-red-500 text-red-900 hover:text-red-500 font-display font-bold uppercase tracking-[0.3em] text-sm transition-all duration-300 rounded-md flex items-center justify-center gap-4 p-0 shadow-[0_0_15px_rgba(153,27,27,0.1)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)] cursor-pointer group"
-      >
-        <CyberJar className="w-10 h-10 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
-        <span className="leading-none">BANISH</span>
-      </div>
-    )}
-  </div>
+            {!isSacredInstance && (
+              <AlertDialog open={showBanishConfirm} onOpenChange={setShowBanishConfirm}>
+                <AlertDialogTrigger asChild>
+                  <div
+                    role="button"
+                    className="flex-1 h-16 bg-black border-2 border-red-900/20 hover:border-red-500 text-red-900 hover:text-red-500 font-display font-bold uppercase tracking-[0.3em] text-sm transition-all duration-300 rounded-md flex items-center justify-center gap-4 p-0 shadow-[0_0_15px_rgba(153,27,27,0.1)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)] cursor-pointer group"
+                  >
+                    <CyberJar className="w-10 h-10 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <span className="leading-none">BANISH</span>
+                  </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-black border-red-500">
+                  <AlertDialogHeader className="relative flex flex-col items-center pt-56 pb-4">
+                    {/* THE RITUAL STAGE: This floats above everything */}
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-full flex justify-center overflow-visible pointer-events-none">
+                      <DuamatefHead
+                        className="w-64 mx-auto h-auto text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.7)] transition-transform duration-500"
+                      />
+                    </div>
 
-  {/* BOTTOM ROW: THE FULL-WIDTH SAVE DECREE */}
-  <div 
-    role="button"
-    onClick={handleSave} 
-    className={cn(
-      "w-full h-20 rounded-md flex items-center justify-center gap-6 cursor-pointer", 
-      CYBER_BUTTON_STYLE,
-      "!bg-black hover:!bg-black p-0"
-    )}
-  >
-    <CyberStylus className="w-12 h-12 animate-pulse shrink-0" />
-    <span className="font-display font-bold uppercase tracking-[0.4em] text-base leading-none">
-      SAVE
-    </span>
-  </div>
-</DialogFooter>
+                    <AlertDialogTitle className="text-center font-headline text-3xl tracking-tighter text-red-600 uppercase mt-5">
+                      Banish Ritual?
+                    </AlertDialogTitle>
+
+                    <AlertDialogDescription className="text-center text-slate-400 font-mono text-[10px] tracking-[0.2em] uppercase max-w-[250px]">
+                      Confirm this Daily Ritual no longer supports Ma'at.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="!bg-black hover:!bg-black">Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteRitual} className="bg-red-800 hover:bg-red-700">Banish</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+
+          <div
+            role="button"
+            onClick={handleSave}
+            className={cn(
+              "w-full h-20 rounded-md flex items-center justify-center gap-6 cursor-pointer",
+              CYBER_BUTTON_STYLE,
+              "!bg-black hover:!bg-black p-0"
+            )}
+          >
+            <CyberStylus className="w-12 h-12 animate-pulse shrink-0" />
+            <span className="font-display font-bold uppercase tracking-[0.4em] text-base leading-none">
+              SAVE
+            </span>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

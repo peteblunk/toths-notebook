@@ -10,7 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Roboto', 'sans-serif'],
+        body: ['Quantico', 'sans-serif'],
         headline: ['Orbitron', 'sans-serif'],
         code: ['monospace'],
       },
@@ -88,10 +88,32 @@ export default {
             height: '0',
           },
         },
+        'pulse-glow': {
+          '0%, 100%': {
+            opacity: '0.7',
+            filter: 'drop-shadow(0 0 3px rgba(251, 191, 36, 0.4))',
+          },
+          '50%': {
+            opacity: '1',
+            filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))',
+           },
+        },
+        'pulse-glow-cyan': {
+          '0%, 100%': {
+            opacity: '0.5',
+            filter: 'drop-shadow(0 0 2px hsl(var(--primary) / 0.4))',
+          },
+          '50%': {
+            opacity: '1',
+            filter: 'drop-shadow(0 0 5px hsl(var(--primary) / 0.8))',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
+        'pulse-glow-cyan': 'pulse-glow-cyan 3s ease-in-out infinite',
       },
     },
   },

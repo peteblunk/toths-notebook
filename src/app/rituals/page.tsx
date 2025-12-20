@@ -13,9 +13,20 @@ import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
 import { EditRitualDialog } from '@/components/edit-ritual-dialog';
 // 👇 NEW IMPORTS
-import { CyberJar } from '@/components/icons/cyber-jar';
+import { DuamatefJar } from '@/components/icons/duamatef-jar';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { cn } from '@/lib/utils';
+import { DuamatefHead } from '@/components/icons/duamatef-head';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function ManageRitualsPage() {
     const [rituals, setRituals] = useState<Task[]>([]);
@@ -25,6 +36,10 @@ export default function ManageRitualsPage() {
     // State to manage the Editing Dialog
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedRitual, setSelectedRitual] = useState<Task | null>(null);
+
+    // State to manage the Deleting Dialog
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [ritualToDelete, setRitualToDelete] = useState<Task | null>(null);
 
     // Real-time listener for the dailyRituals collection
     useEffect(() => {
@@ -47,27 +62,33 @@ export default function ManageRitualsPage() {
         return () => unsubscribe();
     }, [user]);
 
-    const handleDeleteRitual = async (ritualId: string, ritualTitle: string) => {
-        if (!confirm(`Are you sure you want to banish the ritual "${ritualTitle}"? It will no longer be generated daily.`)) {
-            return;
-        }
-        
-        const ritualDocRef = doc(db, 'dailyRituals', ritualId);
+    const handleDeleteRitual = async () => {
+        if (!ritualToDelete) return;
+
+        const ritualDocRef = doc(db, 'dailyRituals', ritualToDelete.id);
         try {
             await deleteDoc(ritualDocRef);
             toast({
                 title: "Ritual Banished",
-                description: `"${ritualTitle}" has been removed from your daily templates.`,
+                description: `"${ritualToDelete.title}" has been removed from your daily templates.`,
             });
         } catch (error) {
             console.error("Error deleting ritual: ", error);
             toast({ title: "Error", description: "Could not delete ritual.", variant: 'destructive' });
+        } finally {
+            setIsDeleteOpen(false);
+            setRitualToDelete(null);
         }
     };
 
     const handleEditClick = (ritual: Task) => {
         setSelectedRitual(ritual);
         setIsEditOpen(true);
+    };
+
+    const handleDeleteClick = (ritual: Task) => {
+        setRitualToDelete(ritual);
+        setIsDeleteOpen(true);
     };
 
     return (
@@ -110,13 +131,13 @@ export default function ManageRitualsPage() {
                                     )}
                                     title="Edit Ritual"
                                 >
-                                    <CyberStylus className="w-20 h-20" />
+                                    <CyberStylus className="w-32 h-32" />
                                 </div>
 
                                 {/* DELETE BUTTON (Cyber Jar) */}
                                 <div 
                                     role="button"
-                                    onClick={() => handleDeleteRitual(ritual.id, ritual.title)}
+                                    onClick={() => handleDeleteClick(ritual)}
                                     className={cn(
                                         "group/modal-jar cursor-pointer",
                                         "flex items-center justify-center p-2 rounded-md",
@@ -125,7 +146,7 @@ export default function ManageRitualsPage() {
                                     )}
                                     title="Banish Ritual"
                                 >
-                                    <CyberJar className="w-10 h-10" />
+                                    <DuamatefJar className="w-32 h-32" />
                                 </div>
                             </div>
                         </Card>
@@ -147,6 +168,23 @@ export default function ManageRitualsPage() {
                     onOpenChange={setIsEditOpen} 
                 />
             )}
+
+            {/* THE BANISHMENT DIALOG */}
+            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <AlertDialogContent className="bg-slate-950 border-destructive text-slate-50 rounded-lg">
+                    <AlertDialogHeader className="flex flex-col items-center text-center">
+                        <DuamatefHead className="w-72 h-72 text-destructive -mb-12" />
+                        <AlertDialogTitle className="font-headline text-destructive p-5">Banish Ritual?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-400 font-body">
+                            Confirm this Daily Ritual no longer supports Ma'at.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-black text-primary font-headline border border-primary hover:bg-primary/10">Preserve Ritual</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteRitual} className="bg-black text-destructive font-headline border border-destructive hover:bg-destructive/10">Confirm Banishment</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT_MANIFESTO // THOTHS_NOTEBOOK</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        body {
+            background-color: #050505;
+            color: #00ff41; /* Cyber Green */
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.2) 50%,
+                rgba(0, 0, 0, 0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Typography */
+        h1 {
+            color: #d600ff; /* Neon Pink */
+            font-size: 3rem;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #d600ff;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(214, 0, 255, 0.5);
+        }
+
+        h2 {
+            color: #00ffff; /* Cyan */
+            font-size: 1.8rem;
+            margin-top: 60px;
+            margin-bottom: 20px;
+            border-left: 5px solid #00ffff;
+            padding-left: 15px;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 50px;
+            font-style: italic;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        ul, ol {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 15px;
+            list-style: none;
+        }
+
+        li::before {
+            content: ">";
+            color: #d600ff;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        strong {
+            color: #fff;
+            background: rgba(0, 255, 65, 0.1);
+            padding: 2px 5px;
+        }
+
+        .anthem-box {
+            border: 1px solid #00ff41;
+            padding: 30px;
+            margin-top: 80px;
+            background: rgba(0, 255, 65, 0.05);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+        }
+
+        .anthem-text {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+        }
+
+        .footer {
+            margin-top: 100px;
+            border-top: 1px dashed #333;
+            padding-top: 20px;
+            color: #444;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .blink { animation: blinker 1s step-end infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="feather-icon">🪶</div>
+    
+    <h1>The Rule of Ptah</h1>
+    <div class="subtitle">Protocols for Collaborative Creation</div>
+
+    <p><strong>Preamble:</strong> We honor Ptah (Craftsmanship) and Ma'at (Order) in all development. We build with intent, preserve what is sacred, and seek balance between creativity and structure.</p>
+<h2>THE BACKEND DOES NOT EXIST FOR ITS OWN GLORY. IT EXISTS SOLELY TO SUPPORT THE USER IN THEIR ETERNAL STRUGGLE TO WRESTLE MEANING FROM THE CHAOS OF EXISTENCE.
+
+THE SYSTEM MUST NEVER PUNISH THE USER FOR BEING HUMAN.
+
+WE CONVERT THE ANXIETY OF CHAOS (NUN) INTO THE PEACE OF ORDER (MA'AT).</h2>
+
+
+
+    <ol>
+        <li><strong>Part I: The Prime Directive (Preservation)</strong>
+            <ol>
+                <li><strong>Principle:</strong> "Before a Sacred Scroll is rewritten, its Current State must be revealed."
+                    <ol>
+                        <li>When a file requires significant modification, the Assistant (Gemini) shall request the current file contents.</li>
+                        <li>The Designer (Pete) shall provide the current code from the repository ("The Territory").</li>
+                        <li>The Assistant shall draft new code that integrates with existing logic, strictly avoiding blind overwrites.</li>
+                    </ol>
+                </li>
+            </ol>
+        </li>
+
+        <li><strong>Part II: The Edict of the Lotus (Mobile First)</strong>
+            <ol>
+                <li><strong>Principle:</strong> "The Scribe shall build for the palm before the desktop."
+                    <ol>
+                        <li>All design and development shall prioritize the mobile user experience as the bedrock of creation.</li>
+                        <li>We seek to bring Ma'at (Order) to the user by delivering an unparalleled, holistic experience on the small screen.</li>
+                        <li>The glory of a feature is measured by its seamless function and aesthetic on a mobile device.</li>
+                    </ol>
+                </li>
+            </ol>
+        </li>
+
+        <li><strong>Part III: The Ritual of the Branch (Workflow)</strong>
+            <ol>
+                <li><strong>Principle:</strong> "Cowboy Coding is Banished to the Abyss."
+                    <ol>
+                        <li>Direct coding on the <code>main</code> branch is prohibited.</li>
+                        <li>A unique branch shall be initialized for every task using the format: <code>git checkout -b feature/scope-name</code>.</li>
+                    </ol>
+                </li>
+                <li><strong>Scope Definition:</strong>
+                    <ol>
+                        <li>Before code is written, a clear <strong>Scope of Work</strong> must be defined and agreed upon.</li>
+                        <li>Development shall not deviate from the agreed Scope.</li>
+                        <li>Commits shall be performed only upon the completion of the Scope.</li>
+                    </ol>
+                </li>
+            </ol>
+        </li>
+
+        <li><strong>Part IV: The Ritual of Verification (Quality Control)</strong>
+            <ol>
+                <li><strong>Principle:</strong> "Trust, but Verify."
+                    <ol>
+                        <li>Debugging must be performed on both <strong>Desktop</strong> and <strong>Mobile</strong> interfaces.</li>
+                        <li>The command <code>npm run build</code> must successfully complete locally before merging.</li>
+                    </ol>
+                </li>
+                <li><strong>Production Deployment:</strong>
+                    <ol>
+                        <li>Merging to <code>main</code> requires a successful local build.</li>
+                        <li>Pushing to Production (Vercel) requires a final round of debugging on the merged code.</li>
+                    </ol>
+                </li>
+            </ol>
+        </li>
+
+        <li><strong>Part V: The Path of Wisdom (Education)</strong>
+            <ol>
+                <li><strong>Principle:</strong> "The Scribe learns until the end of days."
+                    <ol>
+                        <li>Before initiating a branch, the Assistant shall select one technical concept relevant to the Scope.</li>
+                        <li>The Assistant shall provide a brief explanation of this concept to enhance the Designer's technical proficiency.</li>
+                    </ol>
+                </li>
+            </ol>
+        </li>
+    </ol>
+
+    <div class="feather-icon">⚖️</div>
+
+</body>
+</html>

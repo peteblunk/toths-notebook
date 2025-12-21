@@ -1,43 +1,43 @@
 export const PTAH_CONFIG = {
-  version: "1.2.2",
-  title: "The Manifest of Khet & The Temporal Gateways",
-  date: "December 18, 2025",
-  type: "MAJOR_EXPANSION",
+  version: "1.2.4", // Incremented for the Sentinel Update
+  title: "THE DUAMUTEF SENTINEL & NEON RESONANCE",
+  date: "December 21, 2025",
+  type: "IMPROVEMENT_VIBE",
 
-  intro: "The Great Work evolves. We have moved beyond simple 'tasks' into the classification of 'Khet' (Mortal Matter). This update harmonizes the physical labor of the Scribe with the eternal flow of the Temple Gateways.",
+  intro: "The Temple has manifested the Duamutef Sentinel to guard the transition between creation and the void, ensuring every act of banishment is a conscious ritual.",
 
   // The "What's New" Section
   changes: [
     {
-      icon: "Atom", 
-      title: "The Introduction of Khet",
-      description: "Replaced the 'Today' task type with 'Khet.' In Cyber-Egyptian philosophy, Khet represents the physical body and mortal matter. It is the general labor required to sustain the Temple—distinct from specific Missions or Sacred Duties. Use it for your day-to-day tasks... which in no wise diminishes their importance."
+      icon: "DuamutefHead", 
+      title: "Duamutef Sentinel Protocol",
+      description: "Replaced the common CyberJar with the Duamutef Sentinel. Every banishment now flows through a protective failsafe portal, preventing accidental loss of Khet and honoring the transition of matter.",
     },
     {
-      icon: "PanelRightClose", 
-      title: "Temporal Gateways (Sidebar Refactor)",
-      description: "Refactored the sidebar into twin holographic gateways. Scribes may now choose from: 'Temporal View' for upcoming deadlines across all types, and 'The Undone' - helpful in finding that next item for our life force to act on to churn into Ma'at. In this view Ma'at is hidden to focus the mind."
+      icon: "Lotus", 
+      title: "Lotus Navigation Resonance",
+      description: "In strict accordance with the Lotus Protocol for mobile scribes, sidebar navigation has been purged of 'Sticky Hovers.' Menus now illuminate with neon resonance upon touch, optimized for the Pixel 7a glass.",
     },
     {
-      icon: "CalendarRange", 
-      title: "The Malleable Timeline",
-      description: "FEATURE RESTORED: All Khet-class tasks (General Khet, Duties, Missions, Expeditions) now feature a massive 'Capture Zone' date picker for effortless scheduling. Thanks be to the nameless scribe who drew this unfortunate loss of function to the attention of the Temple. Ra be with you. Always."
+      icon: "Ankh", 
+      title: "Morning Gate Breath",
+      description: "Synchronized the Sanctification (Ankh) pulse with the meditative breath of the Morning Gate, ensuring the Task Altar feels like a living, breathing artifact.",
     },
     {
-      icon: "ShieldCheck", 
-      title: "The Sacred Guard",
-      description: "Reinforced the boundary between Mortal Khet and Divine Rituals. Daily Rituals are now protected from accidental 'Banishment' to preserve the timeline's heartbeat."
-    }
+      icon: "Code", 
+      title: "Architectural Ma'at",
+      description: "Refined the internal component spirit-structure to pass the Trial of the Compiler (npm run build), ensuring long-term stability in the digital archives.",
+    },
   ],
 
   // The "How to Use" Section
   instructions: [
-    "1. UNDERSTAND KHET: When adding a general task, select 'Khet.' It is the 'Mortal Matter' of your day—the essential building blocks of your physical reality.",
-    "2. PRESERVE DISTINCTION: Use 'Sacred Duties' for high-honor labor and 'Grand Expeditions' for long-term voyages. They are distinct manifestations of your effort.",
-    "3. TOGGLE GATEWAYS: Use the new Sidebar to switch between 'Temporal' (Deadlines) and 'Essence' (Category-based) views.",
-    "4. CAPTURE THE DATE: Touch anywhere in the wide 'Due Date' area to shift your deadlines. This 'Gift of Ptah' honors the user who reported the temporal lock.",
-    "5. RESPECT THE RITUAL: Note that Rituals cannot be banished; they are the constants around which your Khet revolves."
+    "1. MASTER THE SENTINEL: Touch the Red Head or the Sacred Vessel to summon the Banishment Portal. You must bow (confirm) before Khet is cast into the void.",
+    "2. THE BREATH OF SANCTITY: Watch the Ankh pulse. A slow breath indicates a task in waiting; a steady glow signifies a ritual sanctified.",
+    "3. NAVIGATE THE VOID: Use the Sidebar's illuminated gateways to switch between Temporal (Time) and Essence (Category) filters without the interference of hover-ghosts.",
+    "4. RESPECT THE CONSTANTS: Remember that Daily Rituals are the bedrock of the Temple; they cannot be banished, only performed or restored.",
+    "5. ESCAPE WITH GRACE: The new Lunar (White) Escape button provides a clear path back to the scroll without committing changes to the fire."
   ],
 
-  devNote: "The system now recognizes that the Scribe is both a physical being (Khet) and a spiritual one (Ritual). By allowing Khet tasks to be malleable while Rituals remain fixed, we achieve true Ma'at."
+  devNote: "By integrating the Duamutef failsafe, we have bridged the gap between 'Delete' and 'Ritual.' The system now treats the removal of Khet as a meaningful transition, not merely a loss of data. Ma'at is restored."
 };

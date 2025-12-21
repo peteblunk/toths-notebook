@@ -1,17 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { BanishmentPortal } from './banishment-portal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +13,7 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Plus } from 'lucide-react';
 import { DuamatefHead } from '@/components/icons/duamatef-head';
+import { DuamatefJar } from '@/components/icons/duamatef-jar';
 import { CyberJar } from '@/components/icons/cyber-jar';
 import { CyberStylus } from './icons/cyber-stylus';
 import { cn } from '@/lib/utils';
@@ -142,42 +133,44 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[90vw] max-w-[400px] rounded-lg bg-black">
-        <DialogHeader>
-          <DialogTitle className="text-center font-headline text-2xl text-cyan-400">
+      {/* 1. We apply the scroll logic directly to the DialogContent to match Production */}
+      <DialogContent className="w-[95vw] max-w-[400px] bg-black border-cyan-900/50 p-6 rounded-lg max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col gap-0">
+
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-center font-headline text-2xl text-primary">
             Edit Ritual
           </DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="title" className="text-cyan-400">Ritual Name</Label>
+            <Label htmlFor="title" className="text-primary">Ritual Name</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-slate-900 border-cyan-900 focus:border-cyan-500"
+              className="cyber-input font-body"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="time" className="text-cyan-400">Est. Time (min)</Label>
+              <Label htmlFor="time" className="text-primary">Est. Time (min)</Label>
               <Input
                 id="time"
                 type="number"
                 value={estimatedTime}
                 onChange={(e) => setEstimatedTime(e.target.value)}
-                className="bg-slate-900 border-cyan-900 focus:border-cyan-500"
+                className="cyber-input font-body"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="importance" className="text-cyan-400">Importance</Label>
+              <Label htmlFor="importance" className="text-primary">Importance</Label>
               <select
                 id="importance"
                 value={importance}
                 onChange={(e) => setImportance(e.target.value as 'low' | 'medium' | 'high')}
-                className="flex h-10 w-full rounded-md border border-cyan-900 bg-slate-900 px-3 py-2 text-sm text-white"
+                className="cyber-input font-body"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -189,27 +182,26 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
           {/* --- THE TIMELINE GATE (Full-Area Trigger) --- */}
           {canEditDate && (
             <div className="grid gap-2 mb-6 animate-in fade-in slide-in-from-top-2">
-              <Label htmlFor="dueDate" className="text-cyan-400 font-display text-[10px] uppercase tracking-widest ml-1">
+              <Label htmlFor="dueDate" className="text-primary font-headline text-[10px] uppercase tracking-widest ml-1">
                 Adjust Due Date
               </Label>
 
-              {/* The Capture Zone: Clicking ANYWHERE in this div triggers the date picker */}
+              {/* The Capture Zone: Now an Altar of Time */}
               <div
                 className="relative group cursor-pointer"
                 onClick={() => {
-                  // Find the hidden input and trigger the browser's native picker
                   const input = document.getElementById('dueDate-hidden') as HTMLInputElement;
                   if (input) input.showPicker();
                 }}
               >
-                <div className="flex items-center justify-between h-14 px-4 bg-black border-2 border-cyan-900/50 rounded-md group-hover:border-cyan-500 transition-all duration-300 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-                  <span className="text-white font-mono tracking-wider">
+                <div className="cyber-input flex items-center justify-between h-14 px-4 font-body">
+                  <span className="text-foreground tracking-wider">
                     {dueDate ? format(new Date(dueDate), "PPPP") : "NO DATE SET"}
                   </span>
-                  <CalendarIcon className="w-6 h-6 text-cyan-500 group-hover:text-cyan-300 transition-colors" />
+                  <CalendarIcon className="w-6 h-6 text-primary group-hover:text-cyan-300 transition-colors" />
                 </div>
 
-                {/* The Hidden Actual Input: We hide it visually but keep it for the showPicker() functionality */}
+                {/* The Hidden Actual Input remains unchanged for logic */}
                 <input
                   id="dueDate-hidden"
                   type="date"
@@ -247,91 +239,89 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
               </Button>
             </div>
 
-            <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1">
+            <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
               {subtasks.map((subtask, index) => (
-                <div key={index} className="flex items-center gap-2 bg-slate-900/50 p-2 rounded border border-cyan-900/30 group">
-                  <span className="flex-1 text-sm truncate">{subtask.text}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                <div
+                  key={index}
+                  className="flex items-center gap-3 bg-altar/30 p-2 pl-4 rounded border border-border/30 group transition-all hover:bg-altar/50"
+                >
+                  <span className="flex-1 text-sm font-body text-slate-300 truncate">
+                    {subtask.text}
+                  </span>
+
+                  {/* THE UNBOUND SENTINEL: Larger icon, zero-padding hit area */}
+                  <div
+                    role="button"
                     onClick={() => handleDeleteSubtask(index)}
+                    /* Removing 'group' and 'hover' - adding 'active' for tactile feedback */
+                    className="w-12 h-12 flex items-center justify-center cursor-pointer transition-all active:scale-75 active:opacity-100 shrink-0 select-none"
                   >
-                    <CyberJar className="w-5 h-5" />
-                  </Button>
+                    <DuamatefHead
+                      className={cn(
+                        "w-10 h-10 transition-all duration-200",
+                        /* Base state: Subtle and respectful of the Void */
+                        "text-red-600 active:drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]",
+                        /* Active state: The flare of banishment occurs only on touch */
+                        "active:text-red-600 active:drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]"
+                      )}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <DialogFooter className="flex !flex-col sm:flex-col sm:justify-center items-center gap-4 w-full pt-6 mt-4 border-t border-cyan-900/30">
-          <div className="flex flex-row gap-4 w-full">
-            <div
-              role="button"
-              onClick={() => onOpenChange(false)}
-              className={cn(
-                "h-16 rounded-md border-2 border-slate-800 flex items-center justify-center bg-black cursor-pointer transition-all duration-300 group hover:border-slate-400",
-                isSacredInstance ? "w-full" : "flex-1"
-              )}
-            >
-              <span className="font-display font-bold uppercase tracking-[0.3em] text-slate-500 group-hover:text-white text-sm">
-                CANCEL
-              </span>
-            </div>
+<DialogFooter className="flex flex-col gap-4 w-full pt-6 mt-4 border-t border-cyan-900/30">
+  {/* ROW 1: ESCAPE & BANISH (Desktop: More compact) */}
+  <div className="flex flex-row gap-4 w-full items-stretch">
+  {/* ESCAPE: Now using the White/Lunar style */}
+  <div
+    role="button"
+    onClick={() => onOpenChange(false)}
+    className={cn(
+      "cyber-input-white flex items-center justify-center cursor-pointer",
+      "h-20 md:h-14", // Shorter on desktop
+      isSacredInstance ? "w-full" : "flex-1"
+    )}
+  >
+    <span className="font-headline font-bold uppercase tracking-[0.3em] text-sm md:text-xs">
+      ESCAPE
+    </span>
+  </div>
 
-            {!isSacredInstance && (
-              <AlertDialog open={showBanishConfirm} onOpenChange={setShowBanishConfirm}>
-                <AlertDialogTrigger asChild>
-                  <div
-                    role="button"
-                    className="flex-1 h-16 bg-black border-2 border-red-900/20 hover:border-red-500 text-red-900 hover:text-red-500 font-display font-bold uppercase tracking-[0.3em] text-sm transition-all duration-300 rounded-md flex items-center justify-center gap-4 p-0 shadow-[0_0_15px_rgba(153,27,27,0.1)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)] cursor-pointer group"
-                  >
-                    <CyberJar className="w-10 h-10 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
-                    <span className="leading-none">BANISH</span>
-                  </div>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-black border-red-500">
-                  <AlertDialogHeader className="relative flex flex-col items-center pt-56 pb-4">
-                    {/* THE RITUAL STAGE: This floats above everything */}
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-full flex justify-center overflow-visible pointer-events-none">
-                      <DuamatefHead
-                        className="w-64 mx-auto h-auto text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.7)] transition-transform duration-500"
-                      />
-                    </div>
+  {/* BANISH: Keeping the Red-Head Sentinel */}
+  {!isSacredInstance && (
+    <BanishmentPortal onConfirm={handleDeleteRitual} ritualTitle={title}>
+      <div
+        role="button"
+        className={cn(
+          "flex-1 rounded-md border-2 border-red-600 flex items-center justify-center bg-black cursor-pointer transition-all active:scale-95 active:bg-red-950/40",
+          "h-20 md:h-14" // Match the Escape button height
+        )}
+      >
+        <DuamatefJar className="w-14 h-14 md:w-8 md:h-8 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+      </div>
+    </BanishmentPortal>
+  )}
+</div>
 
-                    <AlertDialogTitle className="text-center font-headline text-3xl tracking-tighter text-red-600 uppercase mt-5">
-                      Banish Ritual?
-                    </AlertDialogTitle>
-
-                    <AlertDialogDescription className="text-center text-slate-400 font-mono text-[10px] tracking-[0.2em] uppercase max-w-[250px]">
-                      Confirm this Daily Ritual no longer supports Ma'at.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="!bg-black hover:!bg-black">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteRitual} className="bg-red-800 hover:bg-red-700">Banish</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-
-          <div
-            role="button"
-            onClick={handleSave}
-            className={cn(
-              "w-full h-20 rounded-md flex items-center justify-center gap-6 cursor-pointer",
-              CYBER_BUTTON_STYLE,
-              "!bg-black hover:!bg-black p-0"
-            )}
-          >
-            <CyberStylus className="w-12 h-12 animate-pulse shrink-0" />
-            <span className="font-display font-bold uppercase tracking-[0.4em] text-base leading-none">
-              SAVE
-            </span>
-          </div>
-        </DialogFooter>
+  {/* ROW 2: SAVE (Desktop: Less massive) */}
+  <div
+    role="button"
+    onClick={handleSave}
+    className={cn(
+      "w-full h-20 md:h-16 rounded-md flex items-center justify-center gap-6 cursor-pointer",
+      CYBER_BUTTON_STYLE,
+      "border-2 border-cyan-400 active:scale-95"
+    )}
+  >
+    <CyberStylus className="w-12 h-12 md:w-8 md:h-8 animate-pulse text-cyan-400" />
+    <span className="font-headline font-bold uppercase tracking-[0.4em] text-lg md:text-base text-cyan-400">
+      SAVE
+    </span>
+  </div>
+</DialogFooter>
       </DialogContent>
     </Dialog>
   );

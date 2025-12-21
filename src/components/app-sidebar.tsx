@@ -87,57 +87,59 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
 
       <SidebarContent className="flex-grow overflow-visible px-2 space-y-12 mt-8">
 
-        {/* TEMPORAL GATEWAY */}
-        <div className="group/temporal relative flex items-center h-12">
-          <div className="cursor-pointer py-2 pl-3 border-l-2 border-cyan-500/50 hover:border-cyan-400 hover:bg-cyan-950/20 transition-all duration-300 w-full z-10">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-cyan-300 font-display">
-              Temporal
-            </h3>
-          </div>
+{/* TEMPORAL GATEWAY */}
+<div className="group/temporal relative flex items-center h-12">
+  <div className="cursor-pointer py-2 pl-3 border-l-2 border-cyan-500/50 hover:border-cyan-400 hover:bg-cyan-950/20 transition-all duration-300 w-full z-10">
+    <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-cyan-300 font-display">
+      Temporal
+    </h3>
+  </div>
 
-          <div className="absolute left-[140px] top-0 flex flex-col space-y-2 opacity-0 -translate-x-8 pointer-events-none group-hover/temporal:opacity-100 group-hover/temporal:translate-x-4 group-hover/temporal:pointer-events-auto transition-all duration-300 ease-out z-[100] min-w-[140px]">
-            {temporalFilters.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleCategoryClick(item.name)}
-                className={`h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all ${
-                  activeCategory === item.name
-                    ? "border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.5)]"
-                    : "border-cyan-900 text-cyan-900 hover:border-cyan-500 hover:text-cyan-400"
-                }`}
-              >
-                <span className="w-4 h-4">{item.icon}</span>
-                {item.name}
-              </button>
-            ))}
-          </div>
-        </div>
+  <div className="absolute left-[140px] top-0 flex flex-col space-y-2 opacity-0 -translate-x-8 pointer-events-none group-hover/temporal:opacity-100 group-hover/temporal:translate-x-4 group-hover/temporal:pointer-events-auto transition-all duration-300 ease-out z-[100] min-w-[140px]">
+    {temporalFilters.map((item) => (
+      <button
+        key={item.name}
+        onClick={() => handleCategoryClick(item.name)}
+        className={`h-12 md:h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
+          activeCategory === item.name
+            ? "border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(0,255,255,0.5)]"
+            /* Brightened the inactive state for mobile visibility */
+            : "border-cyan-400/40 text-cyan-400/60 hover:border-cyan-400 hover:text-cyan-400"
+        }`}
+      >
+        <span className="w-4 h-4">{item.icon}</span>
+        {item.name}
+      </button>
+    ))}
+  </div>
+</div>
 
-        {/* THE UNDONE */}
-        <div className="group/undone relative flex items-center h-12">
-          <div className="cursor-pointer py-2 pl-3 border-l-2 border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-950/20 transition-all duration-300 w-full z-10">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-emerald-300 font-display">
-              The Undone
-            </h3>
-          </div>
+{/* THE UNDONE */}
+<div className="group/undone relative flex items-center h-12">
+  <div className="cursor-pointer py-2 pl-3 border-l-2 border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-950/20 transition-all duration-300 w-full z-10">
+    <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-emerald-300 font-display">
+      The Undone
+    </h3>
+  </div>
 
-          <div className="absolute left-[140px] top-0 flex flex-col space-y-2 opacity-0 -translate-x-8 pointer-events-none group-hover/undone:opacity-100 group-hover/undone:translate-x-4 group-hover/undone:pointer-events-auto transition-all duration-300 ease-out z-[100] min-w-[160px]">
-            {essenceFilters.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleCategoryClick(item.name)}
-                className={`h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all ${
-                  activeCategory === item.name
-                    ? "border-emerald-400 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
-                    : "border-emerald-900/50 text-emerald-900 hover:border-emerald-500 hover:text-emerald-400"
-                }`}
-              >
-                <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
-                {item.name}
-              </button>
-            ))}
-          </div>
-        </div>
+  <div className="absolute left-[140px] top-0 flex flex-col space-y-2 opacity-0 -translate-x-8 pointer-events-none group-hover/undone:opacity-100 group-hover/undone:translate-x-4 group-hover/undone:pointer-events-auto transition-all duration-300 ease-out z-[100] min-w-[160px]">
+    {essenceFilters.map((item) => (
+      <button
+        key={item.name}
+        onClick={() => handleCategoryClick(item.name)}
+        className={`h-12 md:h-10 px-4 flex items-center gap-3 bg-black border font-display text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
+          activeCategory === item.name
+            ? "border-emerald-400 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+            /* Brightened the inactive state for mobile visibility */
+            : "border-emerald-500/40 text-emerald-500/60 hover:border-emerald-400 hover:text-emerald-400"
+        }`}
+      >
+        <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>
+        {item.name}
+      </button>
+    ))}
+  </div>
+</div>
       </SidebarContent>
 
       <SidebarFooter>

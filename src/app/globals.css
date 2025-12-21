@@ -2,19 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-}
+body {}
 
 @layer base {
   :root {
     --background: 0 0% 0%;
     --foreground: 210 40% 98%;
-    --card: 231 38% 13%;
-    --card-foreground: 210 40% 98%;
-    --popover: 231 38% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 201 90% 55%;
-    --primary-foreground: 201 90% 15%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 0%;
+    --altar: 222 47% 11%; /* This is roughly slate-900 (HSL) */
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 0%;
     --secondary: 282 82% 39%;
     --secondary-foreground: 210 40% 98%;
     --muted: 231 38% 20%;
@@ -43,27 +43,56 @@ body {
     --sidebar-border: 231 38% 15%;
     --sidebar-ring: 201 90% 55%;
   }
+@layer components {
+  .cyber-input {
+    /* 1. Direct HSL link to bypass Tailwind's @apply delay */
+    background-color: hsl(var(--altar)) !important; 
+    
+    /* 2. Apply the remaining structural rituals */
+    @apply border-border/50 text-foreground transition-all duration-300 rounded-md px-3 py-2 w-full;
+    border-width: 1px;
+  }
 
+  .cyber-input:focus {
+    /* 3. The Altar deepens into the Absolute Void upon focus */
+    background-color: #000000 !important;
+    @apply outline-none border-primary;
+    box-shadow: 0 0 15px theme('colors.primary.DEFAULT / 40%');
+  }
+
+  /* The New Lunar Variant for Escape/Neutral actions */
+  .cyber-input-white {
+    background-color: hsl(var(--altar));
+    @apply border-white/20 text-white/70 transition-all duration-300 rounded-md px-3 py-2 w-full font-body;
+    border-width: 2px;
+  }
+
+  .cyber-input-white:active {
+    @apply border-white text-white bg-white/10 scale-95;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  }
+}
+}
   .dark {
-    --background: 231 38% 10%;
-    --foreground: 210 40% 98%;
-    --card: 231 38% 13%;
+    --background: 0 0% 0%;
+    --foreground: 110 100% 35%;
+    --card: 0 0% 0%;
     --card-foreground: 210 40% 98%;
-    --popover: 231 38% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 201 90% 55%;
+    --input-altar: 222 47% 11%; /* This is roughly slate-900 (HSL) */
+    --popover: 0 0% 0% --popover-foreground: 210 40% 98%;
+    --primary: 180 100% 50%;
     --primary-foreground: 201 90% 15%;
     --secondary: 282 82% 39%;
     --secondary-foreground: 210 40% 98%;
     --muted: 231 38% 20%;
     --muted-foreground: 231 38% 60%;
-    --accent: 308 67% 52%;
+    --accent: 190 100% 29%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 231 38% 20%;
+    --border: 280 100% 60%;
     --input: 231 38% 20%;
-    --ring: 201 90% 55%;
+    --ring: 45 100% 100%;
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -71,22 +100,61 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    --sidebar-background: 231 38% 8%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 201 90% 55%;
+    --sidebar-primary: 0 100% 50%;
     --sidebar-primary-foreground: 201 90% 15%;
-    --sidebar-accent: 231 38% 15%;
+    --sidebar-accent: 0 100% 50%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 231 38% 15%;
-    --sidebar-ring: 201 90% 55%;
+    --sidebar-border: 0 100% 50%;
+    --sidebar-ring: 0 100% 50%;
   }
-}
+
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  /* globals.css */
+
+  /* The Scrollbar Track (The path) */
+  ::-webkit-scrollbar {
+    width: 5px;
+    /* Make it thin and sleek */
+  }
+
+  /* The Background of the scrollbar (The Void) */
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+
+  /* The Handle (The part you see/touch) */
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--accent));
+    /* Use your Accent color! */
+    border-radius: 10px;
+  }
+
+  /* The Handle on Hover (Powering up) */
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
 }
+
+/*Cyber Egyptian Vibe Colors
+
+Color         ,HSL Value  ,Hex Equivalent,Feel
+
+Duamutef Red, 0 100% 50%,   #FF0000,  The Red-Headed Protector
+Cyber Cyan,   180 100% 50%, #00FFFF,  Electric Nile Water
+Ankh Gold,    45 100% 50%,  #FFC000,  Radiance of Ra
+Silver,       0 0% 75%,     #C0C0C0,  Metallic Moon-glow
+Thoth Purple, 280 100% 60%, #B915CC,  Magic & Secret Wisdom
+Neon Lime,    110 100% 50%, #39FF14,  Primordial Vitality
+
+*/

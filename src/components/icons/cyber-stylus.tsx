@@ -8,7 +8,7 @@ export function CyberStylus({ className }: CyberStylusProps) {
   return (
     <svg 
       // Matched to your Inkscape A4 Canvas
-      viewBox="0 0 210 297" 
+      viewBox="55 60 100 180" 
       fill="none" 
       stroke="currentColor" 
       strokeWidth="3" 

@@ -93,10 +93,10 @@ export default function ManageRitualsPage() {
 
     return (
         <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
-            <Button asChild variant="ghost" className="mb-4 text-cyan-400 hover:text-cyan-300">
+            <Button asChild variant="ghost" className="mb-4 text-primary hover:text-primary-10">
                 <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Tasks
+                    Return to Main Hall
                 </Link>
             </Button>
             <div className="mb-6 border-b border-cyan-900/50 pb-4">
@@ -110,14 +110,13 @@ export default function ManageRitualsPage() {
                         <Card
                             key={ritual.id}
                             /* TRIMMED BUFFER: Reduced p-4 to p-2 on mobile, p-3 on desktop */
-                            className="bg-slate-900/80 border-cyan-900/50 flex items-center justify-between p-2 sm:p-3 hover:border-cyan-500/50 transition-colors group overflow-hidden"
+                            className="bg-card border-border flex items-center justify-between p-2 sm:p-3 hover:border-accent transition-colors group overflow-hidden"
                         >
                             <div className="flex-1 min-w-0 pr-2"> {/* Added min-w-0 to prevent text from pushing icons off-screen */}
-                                <CardTitle className="text-base sm:text-lg text-cyan-50 truncate">
+                                <CardTitle className="font-body font-bold text-base sm:text-lg text-foreground truncate">
                                     {ritual.title}
                                 </CardTitle>
                                 <CardDescription className="text-[10px] sm:text-xs text-slate-400 truncate">
-                                    {ritual.importance} | {ritual.estimatedTime}m
                                 </CardDescription>
                             </div>
 

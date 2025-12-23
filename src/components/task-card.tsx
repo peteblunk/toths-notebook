@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Badge } from './ui/badge';
-import { EditRitualDialog } from './edit-ritual-dialog';
+import { EditTaskDialog } from './edit-task-dialog';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { motion } from 'framer-motion';
@@ -417,7 +417,7 @@ export function TaskCard({
                 </DialogContent>
             </Dialog>
 
-            <EditRitualDialog
+            <EditTaskDialog
                 task={task}
                 open={isEditOpen}
                 onOpenChange={setIsEditOpen}

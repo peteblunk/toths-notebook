@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Moon, Star, Wind, Scroll, History, Cpu } from "lucide-react"; 
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
+import { KhepriScarab } from "@/components/khepri-scarab"
 
 // --- CUSTOM CYBER ANKH COMPONENT ---
 const CyberAnkh = ({ className }: { className?: string }) => (
@@ -132,58 +133,50 @@ export default function EveningChroniclePage() {
   }
 
   // --- STEP 1: THE THRESHOLD ---
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-700 border-4 border-cyan-500/10 m-2 rounded-3xl overflow-hidden">
+ // --- STEP 1: THE THRESHOLD (Isolated Testing Mode) ---
+// --- STEP 1: THE THRESHOLD (DEBUG & DEVELOPMENT MODE) ---
+if (step === 1) {
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 z-[9999] relative">
+      
+      {/* DEVELOPMENT CARD: HIGH CONTRAST WHITE BACKGROUND */}
+      <Card className="w-full max-w-sm bg-white border-4 border-red-500 shadow-[0_0_50px_rgba(255,255,255,0.2)] rounded-3xl overflow-visible z-[10000] relative">
+        <CardHeader className="text-center pb-2 bg-slate-100 rounded-t-3xl border-b">
+          <CardTitle className="text-black font-headline tracking-widest text-xs uppercase font-bold">
+            Development Mode: Path Verification
+          </CardTitle>
+        </CardHeader>
         
-        {/* Moon Icon */}
-        <div className="mb-6 animate-pulse drop-shadow-[0_0_15px_rgba(34,211,238,0.4)]">
-            <Moon className="w-16 h-16 text-cyan-400" strokeWidth={1.5} />
-        </div>
+        <CardContent className="flex flex-col items-center py-12 bg-white rounded-b-3xl">
+          {/* SCARAB TESTING CONTAINER - FORCED SCALE & VISIBILITY */}
+          <div className="relative w-64 h-64 flex items-center justify-center border-2 border-dashed border-slate-200 bg-white">
+            <KhepriScarab onInitiate={() => setStep(2)} />
+          </div>
+          
+          <div className="mt-8 text-center space-y-2">
+            <p className="text-black font-bold text-sm font-headline tracking-tighter uppercase">
+              Debug View: Khepri-Scarab
+            </p>
+            <p className="text-slate-500 text-[10px] font-sans italic max-w-[200px]">
+              If parts are missing, check viewBox and strokeWidth in scarab-icon.tsx
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Header Section */}
-        <div className="mb-10 text-center space-y-4 max-w-md">
-          <h1 className="text-3xl md:text-5xl font-headline text-cyan-400 tracking-wider drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
-            The Day is Done.
-          </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed font-sans">
-            The sun has set on your efforts.
-          </p>
-          <p className="text-lg text-muted-foreground leading-relaxed font-sans">
-            Are you ready to review your deeds and close the cycle?
-          </p>
-        </div>
-        
-        {/* Action Area */}
-        <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-            <Button 
-                onClick={() => setStep(2)} 
-                variant="ghost"
-                className="w-full text-lg py-3 h-auto font-headline tracking-widest text-cyan-400 hover:text-cyan-100 hover:bg-cyan-950/10 transition-all drop-shadow-[0_0_5px_rgba(34,211,238,0.5)] uppercase border border-cyan-500/20"
-            >
-                Scribe the Chronicle
-            </Button>
-
-             <Link href="/" className="w-full">
-                <Button variant="ghost" className="w-full font-headline tracking-wider text-cyan-400 hover:text-cyan-100 text-lg uppercase drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">
-                    Not yet
-                </Button>
-            </Link>
-        </div>
-
-        <div className="mt-12 animate-in fade-in slide-in-from-bottom duration-1000 delay-500">
-            <Button 
-                variant="link" 
-                onClick={handleOpenArchives}
-                className="font-headline text-cyan-400 hover:text-cyan-100 gap-2 uppercase tracking-[0.2em] text-xs drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]"
-            >
-                <History className="w-4 h-4" />
-                Open Archives
-            </Button>
-        </div>
+      {/* Emergency Bypass for Testing */}
+      <div className="mt-8 flex flex-col items-center gap-4">
+        <Button 
+          variant="secondary" 
+          onClick={() => setStep(2)}
+          className="font-headline text-white bg-slate-800 uppercase tracking-widest text-xs px-8"
+        >
+          Bypass to Step 2
+        </Button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // --- STEP 2: MA'AT CREATED (The Offering) ---
   if (step === 2) {

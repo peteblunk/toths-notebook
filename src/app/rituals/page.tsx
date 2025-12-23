@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
-import { EditRitualDialog } from '@/components/edit-ritual-dialog';
+import { EditRitualTemplateDialog } from '@/components/edit-ritual-template-dialog';
 // 👇 NEW IMPORTS
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
@@ -161,7 +161,7 @@ export default function ManageRitualsPage() {
 
             {/* THE EDIT DIALOG */}
             {selectedRitual && (
-                <EditRitualDialog
+                <EditRitualTemplateDialog
                     task={selectedRitual}
                     open={isEditOpen}
                     onOpenChange={setIsEditOpen}

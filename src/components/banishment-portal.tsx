@@ -49,7 +49,7 @@ export function BanishmentPortal({ children, onConfirm, ritualTitle }: Banishmen
             <div className="flex flex-col gap-4 w-full justify-center items-center">
               <AlertDialogAction
                 onClick={onConfirm}
-                className="w-full h-14 bg-black text-destructive font-headline border-2 border-destructive hover:bg-destructive/20 uppercase tracking-[0.2em] text-[11px] transition-all"
+                className="w-full h-14 bg-black text-destructive font-headline border-2 border-destructive/80 brightness-150 saturate-150 hover:bg-destructive/20 uppercase tracking-[0.2em] text-[11px] transition-all font-bold"
               >
                 Confirm Banishment
               </AlertDialogAction>

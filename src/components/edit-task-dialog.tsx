@@ -30,14 +30,14 @@ const CYBER_BUTTON_STYLE = `
   transition-all duration-300
 `;
 
-interface EditRitualDialogProps {
+interface EditTaskDialogProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   collectionName?: string;
 }
 
-export function EditRitualDialog({ task, open, onOpenChange, collectionName = "tasks" }: EditRitualDialogProps) {
+export function EditTaskDialog({ task, open, onOpenChange, collectionName = "tasks" }: EditTaskDialogProps) {
   if (!task) return null;
 
   const [title, setTitle] = useState(task.title);
@@ -138,13 +138,13 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
         <DialogHeader className="mb-4">
           <DialogTitle className="text-center font-headline text-2xl text-primary">
-            Edit Ritual
+            Edit Task
           </DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="title" className="text-primary">Ritual Name</Label>
+            <Label htmlFor="title" className="text-primary">Task Name</Label>
             <Input
               id="title"
               value={title}
@@ -155,7 +155,7 @@ export function EditRitualDialog({ task, open, onOpenChange, collectionName = "t
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="time" className="text-primary">Est. Time (min)</Label>
+              <Label htmlFor="time" className="text-primary">Approx. Time (min)</Label>
               <Input
                 id="time"
                 type="number"

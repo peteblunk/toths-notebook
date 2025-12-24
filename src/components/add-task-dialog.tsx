@@ -228,13 +228,19 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {Object.values(CATEGORY_LABELS).map((label) => (
-                        <SelectItem key={label} value={label}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                   <SelectContent className="z-50 bg-black border-zinc-800">
+  {Object.values(CATEGORY_LABELS).map((label) => (
+    <SelectItem 
+      key={label} 
+      value={label}
+      // text-[#39FF14] is your Neon Lime
+      // focus:bg-[#39FF14]/10 creates a subtle lime glow on hover
+      className="text-[#39FF14] focus:bg-[#39FF14]/10 focus:text-[#39FF14] cursor-pointer font-body"
+    >
+      {label}
+    </SelectItem>
+  ))}
+</SelectContent>
                   </Select>
                   <FormDescription>
                     {categoryDescriptions[field.value as TaskCategory]}
@@ -308,7 +314,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                           <SelectValue placeholder="Select level" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-black">
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
@@ -356,14 +362,32 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
+                    <PopoverContent className="w-auto p-0 z-50 bg-black border-zinc-800" align="start">
+  <Calendar
+    mode="single"
+    selected={field.value}
+    onSelect={field.onChange}
+    initialFocus
+    className="text-[#39FF14]"
+    classNames={{
+      // --- ALIGNMENT FIX ---
+      head_row: "flex w-full justify-between", // Ensures the row spans the container
+      head_cell: "text-[#39FF14]/60 font-headline uppercase text-[10px] w-9 font-normal flex-1 flex justify-center", 
+      
+      // --- THOTH NEON CIRCLE ---
+      day_selected: cn(
+        "bg-transparent border-2 border-[#B915CC]", // Thoth Purple border
+        "text-[#39FF14] hover:bg-[#B915CC]/20 focus:bg-[#B915CC]/20", 
+        "rounded-full shadow-[0_0_10px_rgba(185,21,204,0.8)]" // The Neon Glow
+      ),
+      
+      // --- HOVER STATE ---
+      day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-[#39FF14]/10 rounded-full transition-all",
+      
+      day_today: "text-[#00FFFF] border border-[#00FFFF] rounded-full", // Cyber Cyan for 'Today'
+    }}
+  />
+</PopoverContent>
                   </Popover>
                   <FormMessage />
                 </FormItem>

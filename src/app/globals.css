@@ -9,12 +9,12 @@ body {}
     --background: 0 0% 0%;
     --foreground: 210 40% 98%;
     --card: 0 0% 0%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 210 40% 98%;
     --altar: 222 47% 11%; /* This is roughly slate-900 (HSL) */
     --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 210 40% 98%;
     --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 0%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 282 82% 39%;
     --secondary-foreground: 210 40% 98%;
     --muted: 231 38% 20%;

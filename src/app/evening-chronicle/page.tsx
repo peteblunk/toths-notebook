@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Moon, Star, Wind, Scroll, History, Cpu } from "lucide-react"; 
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
-import { KhepriScarab } from "@/components/khepri-scarab"
+import { KhepriIconMotion } from "@/components/icons/khepri-icon-motion";
 
 // --- CUSTOM CYBER ANKH COMPONENT ---
 const CyberAnkh = ({ className }: { className?: string }) => (
@@ -140,25 +140,25 @@ if (step === 1) {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 z-[9999] relative">
       
       {/* DEVELOPMENT CARD: HIGH CONTRAST WHITE BACKGROUND */}
-      <Card className="w-full max-w-sm bg-white border-4 border-red-500 shadow-[0_0_50px_rgba(255,255,255,0.2)] rounded-3xl overflow-visible z-[10000] relative">
-        <CardHeader className="text-center pb-2 bg-slate-100 rounded-t-3xl border-b">
+      <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm border-4 border-red-500 shadow-[0_0_50px_rgba(255,0,0,0.3)] rounded-3xl overflow-hidden z-[10000] relative">
+        <CardHeader className="text-center pb-2 bg-slate-100/70 rounded-t-3xl border-b border-slate-200">
           <CardTitle className="text-black font-headline tracking-widest text-xs uppercase font-bold">
-            Development Mode: Path Verification
+            Khepri Animation Test
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="flex flex-col items-center py-12 bg-white rounded-b-3xl">
-          {/* SCARAB TESTING CONTAINER - FORCED SCALE & VISIBILITY */}
-          <div className="relative w-64 h-64 flex items-center justify-center border-2 border-dashed border-slate-200 bg-white">
-            <KhepriScarab onInitiate={() => setStep(2)} />
+        <CardContent className="flex flex-col items-center py-12 bg-transparent rounded-b-3xl">
+          {/* SCARAB TESTING CONTAINER */}
+          <div className="relative w-64 h-64 flex items-center justify-center cursor-pointer" onClick={() => setTimeout(() => setStep(2), 1500)}>
+            <KhepriIconMotion className="w-64 h-64 text-slate-800" />
           </div>
           
           <div className="mt-8 text-center space-y-2">
             <p className="text-black font-bold text-sm font-headline tracking-tighter uppercase">
-              Debug View: Khepri-Scarab
+              Debug View: KhepriIconMotion
             </p>
             <p className="text-slate-500 text-[10px] font-sans italic max-w-[200px]">
-              If parts are missing, check viewBox and strokeWidth in scarab-icon.tsx
+              If animation fails, check Framer Motion variants in khepri-icon-motion.tsx
             </p>
           </div>
         </CardContent>

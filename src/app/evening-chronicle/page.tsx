@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Moon, Star, Wind, Scroll, History, Cpu } from "lucide-react"; 
 import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
-import { KhepriIconMotion } from "@/components/icons/khepri-icon-motion";
+import { KhepriIconMotion } from "@/components/khepri-animation";
 
 // --- CUSTOM CYBER ANKH COMPONENT ---
 const CyberAnkh = ({ className }: { className?: string }) => (
@@ -35,6 +35,7 @@ export default function EveningChroniclePage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [user, setUser] = useState<any>(null);
+  const [isScarabGold, setIsScarabGold] = useState(false);
   
   // Data State
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
@@ -132,47 +133,62 @@ export default function EveningChroniclePage() {
      router.push("/archives");
   }
 
+  const handleScarabClick = () => {
+    setIsScarabGold(true);
+    setTimeout(() => {
+      setStep(2);
+      // Reset gold state after transition for subsequent uses, if any
+      // setTimeout(() => setIsScarabGold(false), 500); 
+    }, 2000);
+  };
+
   // --- STEP 1: THE THRESHOLD ---
- // --- STEP 1: THE THRESHOLD (Isolated Testing Mode) ---
-// --- STEP 1: THE THRESHOLD (DEBUG & DEVELOPMENT MODE) ---
 if (step === 1) {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 z-[9999] relative">
+    <div className="relative min-h-screen bg-black flex flex-col items-center justify-center p-4">
       
-      {/* DEVELOPMENT CARD: HIGH CONTRAST WHITE BACKGROUND */}
-      <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm border-4 border-red-500 shadow-[0_0_50px_rgba(255,0,0,0.3)] rounded-3xl overflow-hidden z-[10000] relative">
-        <CardHeader className="text-center pb-2 bg-slate-100/70 rounded-t-3xl border-b border-slate-200">
-          <CardTitle className="text-black font-headline tracking-widest text-xs uppercase font-bold">
-            Khepri Animation Test
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="flex flex-col items-center py-12 bg-transparent rounded-b-3xl">
-          {/* SCARAB TESTING CONTAINER */}
-          <div className="relative w-64 h-64 flex items-center justify-center cursor-pointer" onClick={() => setTimeout(() => setStep(2), 1500)}>
-            <KhepriIconMotion className="w-64 h-64 text-slate-800" />
-          </div>
-          
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-black font-bold text-sm font-headline tracking-tighter uppercase">
-              Debug View: KhepriIconMotion
-            </p>
-            <p className="text-slate-500 text-[10px] font-sans italic max-w-[200px]">
-              If animation fails, check Framer Motion variants in khepri-icon-motion.tsx
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* 3. ESCAPE HATCH: Back to Main Hall */}
+      <button 
+        onClick={() => router.push("/")}
+        className="absolute top-8 left-8 flex items-center gap-3 text-zinc-500 hover:text-red-500 transition-colors group"
+      >
+        <div className="p-2 border border-zinc-800 rounded-lg group-hover:border-red-500/50">
+          <History size={20} className="text-zinc-600 group-hover:text-red-500" />
+        </div>
+        <span className="text-xs uppercase tracking-[0.2em] font-headline font-bold">Main Hall</span>
+      </button>
 
-      {/* Emergency Bypass for Testing */}
-      <div className="mt-8 flex flex-col items-center gap-4">
-        <Button 
-          variant="secondary" 
-          onClick={() => setStep(2)}
-          className="font-headline text-white bg-slate-800 uppercase tracking-widest text-xs px-8"
-        >
-          Bypass to Step 2
-        </Button>
+      {/* 2. RITUAL VERBIAGE: Moved to Top */}
+      <div className="max-w-xs text-center mb-12 space-y-4 animate-in fade-in duration-1000">
+        <h2 className="text-cyan-400/80 text-[24px] tracking-[0.4em] uppercase font-bold font-headline">
+          The Evening Chronicle
+        </h2>
+        <p className="text-[hsl(280,100%,60%)] text-xl font-body">
+          Review the Ma'at you helped create today, and reflect upon your actions.
+        </p>
+       
+       
+
+      </div>
+
+      {/* 1. THE SCARAB: Unobstructed & Clean */}
+      <div 
+        className="relative w-72 h-72 flex flex-col items-center justify-center cursor-pointer group"
+        onClick={handleScarabClick}
+      >
+        <KhepriIconMotion 
+          className="w-full h-full"
+          forceGold={isScarabGold}
+        />
+        
+        {/* ACTIVATE TEXT: Moved below the scarab */}
+        {!isScarabGold && (
+          <div className="mt-8 animate-pulse">
+            <p className="text-cyan-400/90 text-[9px] font-headline uppercase tracking-[0.6em] group-hover:text-cyan-400 transition-all">
+              Initiate Khepri Protocol
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

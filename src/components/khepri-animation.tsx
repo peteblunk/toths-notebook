@@ -117,21 +117,21 @@ export const KhepriIconMotion = React.forwardRef<SVGSVGElement, KhepriIconProps>
 
 {/* 2. THE SUBSTRATE: Pure Black with Duamutef Red Outline */}
 <motion.rect 
-  x="0.5" 
-  y="0.5" 
-  width="99" 
-  height="99" 
-  rx="6" 
+  x="2.0" 
+  y="21.5" 
+  width="97" 
+  height="49" 
+  rx="4" 
   // Pure Black Void as requested
   fill="#000000" 
   // Dynamic border color: Duamutef Red (#FF0000) shifting to Gold
   stroke={forceGold ? "#FFD700" : "#001EFF"}
-  strokeWidth="0.5px"
+  strokeWidth="0.7px"
   // A subtle outer glow for the neon effect
   style={{ 
     filter: forceGold 
       ? "drop-shadow(0 0 2px rgba(255, 215, 0, 0.5))" 
-      : "drop-shadow(0 0 3px #001EFF",
+      : "drop-shadow(0 0 5px #001EFF",
     transition: "all 1s ease-in-out"
   }}
   pointerEvents="none" 

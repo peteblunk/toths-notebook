@@ -1,77 +1,137 @@
 "use client";
 
-import { useRouter } from 'next/navigation'; // 1. Import Router
-import { Sidebar, SidebarInset, SidebarTrigger, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import { db, auth } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { Scroll, ChevronDown, ChevronUp, ArrowLeft, Star, Moon } from "lucide-react";
 
 export default function ArchivesPage() {
-  const router = useRouter(); // 2. Initialize Router
+  const router = useRouter();
+  const [chronicles, setChronicles] = useState<any[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 3. The Navigation Handler
-  // When a user clicks a category (like "Today" or "Rituals"), 
-  // we intercept it and force a navigation back to the main app.
-  const handleReturnToDashboard = (category: string) => {
-     router.push('/');
-  };
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const q = query(
+      collection(db, "chronicles"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setChronicles(docs);
+      setLoading(false);
+      if (docs.length > 0 && !expandedId) setExpandedId(docs[0].id);
+    });
+
+    return () => unsubscribe();
+  }, [expandedId]);
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-col md:flex-row">
+    <main className="min-h-[100dvh] w-full bg-slate-950 text-slate-200 overflow-y-auto custom-scrollbar">
+      
+      {/* 🏛️ THE LUMINOUS HEADER: Now explicitly visible on mobile */}
+      <div className="sticky top-0 z-50 w-full bg-slate-950/90 backdrop-blur-xl border-b border-cyan-500/30 px-4 py-6 flex items-center justify-between shadow-[0_4px_20px_rgba(34,211,238,0.15)]">
+        <button 
+          onClick={() => router.push("/")}
+          className="p-2 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/10 transition-all active:scale-90"
+        >
+          <ArrowLeft size={20} />
+        </button>
         
-        <Sidebar>
-          {/* 4. Pass the handler to the sidebar */}
-          <AppSidebar 
-             activeCategory="Archives" 
-             setActiveCategory={handleReturnToDashboard} 
-          />
-        </Sidebar>
+        <h1 className="font-headline font-bold text-xl text-cyan-400 tracking-[0.2em] uppercase drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
+          The Archives
+        </h1>
 
-        <SidebarInset className="bg-background min-h-screen flex flex-col">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <span className="font-display font-bold text-lg">The Archives</span>
-          </header>
-          
-          <div className="flex flex-col items-center justify-center flex-1 text-center space-y-6 p-8">
-            {/* Animated Icon */}
-            <div className="relative">
-                <div className="absolute inset-0 bg-cyan-500 blur-xl opacity-20 animate-pulse rounded-full"></div>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="64" 
-                  height="64" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="1" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="text-cyan-400 relative z-10"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  <circle cx="12" cy="10" r="2" />
-                </svg>
-            </div>
-
-            <div className="space-y-2 max-w-md">
-                <h1 className="text-3xl font-display font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-                    ARCHIVES SEALED
-                </h1>
-                <p className="text-muted-foreground font-mono text-sm">
-                    The ancient scrolls are currently being digitized. <br/>
-                    Access to historical records is restricted by the High Scribe.
-                </p>
-            </div>
-            
-            <div className="px-4 py-2 border border-dashed border-zinc-700 rounded bg-zinc-900/50">
-                <code className="text-xs text-amber-500">Status: 404 // CONSTRUCTING_TIMELINE</code>
-            </div>
-          </div>
-        </SidebarInset>
+        <div className="w-10 flex justify-end">
+           <Scroll className="text-lime-400 drop-shadow-[0_0_5px_rgba(163,230,53,0.8)]" size={24} />
+        </div>
       </div>
-    </SidebarProvider>
+
+      <div className="max-w-3xl mx-auto p-4 space-y-4 pt-8">
+        {loading ? (
+          <div className="text-center py-20 text-cyan-400 animate-pulse font-headline tracking-widest">
+            DECRYPTING ANCIENT SCROLLS...
+          </div>
+        ) : chronicles.map((entry) => {
+          const isExpanded = expandedId === entry.id;
+          return (
+            <div 
+              key={entry.id} 
+              className={`group border rounded-2xl transition-all duration-500 ${
+                  isExpanded 
+                  ? 'border-cyan-400 bg-cyan-950/20 shadow-[0_0_30px_rgba(34,211,238,0.2)] scale-[1.02]' 
+                  : 'border-cyan-500/20 bg-black/40 hover:border-cyan-500/40 shadow-[0_0_15px_rgba(34,211,238,0.05)]'
+              }`}
+            >
+              <button 
+                onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                className="w-full p-5 flex justify-between items-center text-left"
+              >
+                <div className="flex items-center gap-4">
+                  {/* ICON: Now Lime Green and Brighter */}
+                  <div className={`p-3 rounded-xl border-2 transition-all duration-500 ${
+                    isExpanded 
+                    ? 'border-lime-400 bg-lime-400/20 shadow-[0_0_15px_rgba(163,230,53,0.6)]' 
+                    : 'border-lime-500/30 bg-lime-950/10'
+                  }`}>
+                    <Scroll size={22} className="text-lime-400" />
+                  </div>
+                  
+                  <div>
+                    <h3 className={`font-headline font-bold tracking-widest uppercase transition-all duration-500 ${
+                      isExpanded ? 'text-2xl text-cyan-300 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]' : 'text-sm text-cyan-500/70'
+                    }`}>
+                      {entry.date}
+                    </h3>
+                    {!isExpanded && (
+                      <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 italic">
+                        {entry.tomorrowQuest || "Quest Sealed"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {isExpanded ? <ChevronUp size={24} className="text-cyan-400" /> : <ChevronDown size={20} className="text-cyan-900" />}
+              </button>
+
+              {isExpanded && (
+                <div className="px-6 pb-8 space-y-8 animate-in zoom-in-95 fade-in duration-500">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-950/5">
+                      <h4 className="text-[10px] text-amber-500 font-bold uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                        <Star size={12} /> Achievements
+                      </h4>
+                      <p className="text-sm text-amber-100/90 italic font-serif leading-relaxed">"{entry.winsNote}"</p>
+                    </div>
+                    
+                    <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-950/5">
+                      <h4 className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                        <Moon size={12} /> Shadow Reflection
+                      </h4>
+                      <p className="text-sm text-indigo-100/80 leading-relaxed font-sans">"{entry.shadowWorkNote}"</p>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-6 border-t border-cyan-500/20">
+                     <div className="flex flex-wrap justify-center gap-2">
+                       {entry.victoriesLog?.map((task: string, i: number) => (
+                         <span key={i} className="text-[10px] px-3 py-1.5 bg-black border border-cyan-400/30 rounded-lg text-cyan-300 font-headline tracking-widest shadow-[inset_0_0_10px_rgba(34,211,238,0.1)]">
+                           {task}
+                         </span>
+                       ))}
+                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </main>
   );
 }

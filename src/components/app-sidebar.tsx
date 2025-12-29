@@ -158,7 +158,14 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
           </Dialog>
         </div>
 
+
         <div className="mt-auto border-t border-cyan-900/30 pt-2 flex flex-col gap-1">
+          <SidebarMenuButton asChild className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/50 group w-full justify-start pl-2 transition-all duration-300">
+  <Link href="/archives">
+    <Scroll className="w-4 h-4 mr-2 group-hover:rotate-[-12deg] transition-transform duration-500" />
+    <span className="font-bold tracking-wide">The Archives</span>
+  </Link>
+</SidebarMenuButton>
           <SidebarMenuButton asChild className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/50 group w-full justify-start pl-2">
             <Link href="/rituals">
               <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />

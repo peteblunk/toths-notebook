@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import { Scroll, ChevronDown, ChevronUp, ArrowLeft, Star, Moon } from "lucide-react";
+import { Scroll, ChevronDown, ChevronUp, ArrowLeft, Star, Moon, Sparkles } from "lucide-react";
 
 export default function ArchivesPage() {
   const router = useRouter();
@@ -100,6 +100,7 @@ export default function ArchivesPage() {
               </button>
 
               {isExpanded && (
+                
                 <div className="px-6 pb-8 space-y-8 animate-in zoom-in-95 fade-in duration-500">
                   <div className="grid grid-cols-1 gap-6">
                     <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-950/5">
@@ -116,7 +117,14 @@ export default function ArchivesPage() {
                       <p className="text-sm text-indigo-100/80 leading-relaxed font-sans">"{entry.shadowWorkNote}"</p>
                     </div>
                   </div>
-                  
+                  <div className="p-4 rounded-xl border border-lime-500/30 bg-lime-950/5 shadow-[inset_0_0_15px_rgba(163,230,53,0.05)]">
+                    <h4 className="text-[10px] text-lime-400 font-bold uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                      <Sparkles size={12} /> Tomorrow&apos;s Prophecy
+                    </h4>
+                    <p className="text-md text-lime-100/90 font-headline tracking-wide italic">
+                      {entry.tomorrowQuest || "No prophecy was recorded."}
+                    </p>
+                  </div>
                   <div className="pt-6 border-t border-cyan-500/20">
                      <div className="flex flex-wrap justify-center gap-2">
                        {entry.victoriesLog?.map((task: string, i: number) => (

@@ -1,43 +1,43 @@
 export const PTAH_CONFIG = {
-  version: "1.2.4", // Incremented for the Sentinel Update
-  title: "THE DUAMUTEF SENTINEL & NEON RESONANCE",
-  date: "December 21, 2025",
-  type: "IMPROVEMENT_VIBE",
+  version: "1.3.0", // Incremented for the Khepri & Library Restoration
+  title: "THE KHEPRI ASCENSION & SILICON SCARAB",
+  date: "December 29, 2025",
+  type: "RESTORATION_VIBE",
 
-  intro: "The Temple has manifested the Duamutef Sentinel to guard the transition between creation and the void, ensuring every act of banishment is a conscious ritual.",
+  intro: "The Temple has birthed the Silicon Scarab to power the Khepri Protocol, ensuring that every deed—even those once lost in the digitization of the scrolls—is rolled into the eternal Archives. The path from the Evening Chronicle to the Great Library is now wide and illuminated with neon truth.",
 
   // The "What's New" Section
   changes: [
     {
-      icon: "DuamutefHead", 
-      title: "Duamutef Sentinel Protocol",
-      description: "Replaced the common CyberJar with the Duamutef Sentinel. Every banishment now flows through a protective failsafe portal, preventing accidental loss of Khet and honoring the transition of matter.",
+      icon: "Scarab", 
+      title: "Khepri Protocol & Silicon Scarab",
+      description: "Introduced the Silicon Scarab technology. This microscopic scribe now powers the Thoth Chip, ensuring a perfect batch-seal of your wins, reflections, and intentions without data loss.",
     },
     {
-      icon: "Lotus", 
-      title: "Lotus Navigation Resonance",
-      description: "In strict accordance with the Lotus Protocol for mobile scribes, sidebar navigation has been purged of 'Sticky Hovers.' Menus now illuminate with neon resonance upon touch, optimized for the Pixel 7a glass.",
+      icon: "Scroll", 
+      title: "Reopening of the Great Library",
+      description: "The Archives are no longer sealed for digitization. Every task completed during the temporary closure has been faithfully recorded. The gates are open, featuring a new cyber-neon expandable scroll layout.",
     },
     {
-      icon: "Ankh", 
-      title: "Morning Gate Breath",
-      description: "Synchronized the Sanctification (Ankh) pulse with the meditative breath of the Morning Gate, ensuring the Task Altar feels like a living, breathing artifact.",
+      icon: "Moon", 
+      title: "Evening Chronicle UI Refinement",
+      description: "Navigation within the Chronicle has been optimized for the Pixel 7 Pro. Implemented a linear, immersive 'Void Mode' with high-contrast attestation fields and neon-glow feedback for every input.",
     },
     {
-      icon: "Code", 
-      title: "Architectural Ma'at",
-      description: "Refined the internal component spirit-structure to pass the Trial of the Compiler (npm run build), ensuring long-term stability in the digital archives.",
+      icon: "Sparkles", 
+      title: "Improved Inspirational Resonance",
+      description: "Refined the prompts within the Chronicle to better elicit deep shadow-work and gratitude. The Temple now speaks with a more resonant and ancient voice during the sealing of the record.",
     },
   ],
 
   // The "How to Use" Section
   instructions: [
-    "1. MASTER THE SENTINEL: Touch the Red Head or the Sacred Vessel to summon the Banishment Portal. You must bow (confirm) before Khet is cast into the void.",
-    "2. THE BREATH OF SANCTITY: Watch the Ankh pulse. A slow breath indicates a task in waiting; a steady glow signifies a ritual sanctified.",
-    "3. NAVIGATE THE VOID: Use the Sidebar's illuminated gateways to switch between Temporal (Time) and Essence (Category) filters without the interference of hover-ghosts.",
-    "4. RESPECT THE CONSTANTS: Remember that Daily Rituals are the bedrock of the Temple; they cannot be banished, only performed or restored.",
-    "5. ESCAPE WITH GRACE: The new Lunar (White) Escape button provides a clear path back to the scroll without committing changes to the fire."
+    "1. TAPPING THE CHIP: At the conclusion of the Evening Chronicle, tap the Thoth Chip (Silicon Scarab). This triggers an atomic dispersal of data, clearing your active board and populating the Library.",
+    "2. CONSULT THE SCROLLS: Access the Archives via the new sidebar gate. Note that the most recent day automatically expands to show your 'Wins' and 'Shadow Work' in high-fidelity neon.",
+    "3. OBSERVE THE GLOW: Tiles in the Archives now feature a constant cyber-glow. Active tiles scale and brighten, while inactive scrolls maintain a steady neon resonance.",
+    "4. TOMORROW'S PROPHECY: Your 'Tomorrow's Main Quest' is now permanently visible on your archived cards, serving as a reminder of the intentions you spoke into existence.",
+    "5. THE CLEANSING: Trust in the Scarab; upon sealing, your daily deeds are archived and your board is cleansed, ready for the Midnight Scribe's fresh inscriptions."
   ],
 
-  devNote: "By integrating the Duamutef failsafe, we have bridged the gap between 'Delete' and 'Ritual.' The system now treats the removal of Khet as a meaningful transition, not merely a loss of data. Ma'at is restored."
+  devNote: "By integrating the batch-commit dispersal, we have finally linked the active ritual to the historical record. The archives are now a living timeline of lived Ma'at, protected by the Silicon Scarab and the Silicon Scribe alike. Order is absolute."
 };

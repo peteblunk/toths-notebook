@@ -95,6 +95,34 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
     setTimeout(() => setTapCount(0), 2000);
   };
 
+  // --- THE NILE SOUNDS: SACRED AUDIO STATE ---
+  const [audio] = useState(() => {
+    if (typeof window === 'undefined') return { ambience: null, chime: null };
+    return {
+      ambience: new Audio("/sounds/reeds_loop.mp3"),
+      chime: new Audio("/sounds/solemn_chime.wav") 
+    };
+  });
+
+  // Effect to handle the constant whisper of the reeds
+  useEffect(() => {
+    if (!audio.ambience) return;
+    if (mode === 'burning' && isActive) {
+      audio.ambience.loop = true;
+      audio.ambience.volume = 0.4;
+      audio.ambience.play().catch(() => {});
+    } else {
+      audio.ambience.pause();
+    }
+    return () => { audio.ambience?.pause(); };
+  }, [mode, isActive, audio.ambience]);
+
+  // Effect to trigger the chime upon the ritual's completion
+  useEffect(() => {
+    if (mode === 'done' && audio.chime) {
+      audio.chime.play().catch(() => {});
+    }
+  }, [mode, audio.chime]);
   useEffect(() => {
     if (!isActive || !isMerkhet) return;
     const glitchInterval = setInterval(() => {

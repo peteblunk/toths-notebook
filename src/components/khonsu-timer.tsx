@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Play, Pause, RotateCcw } from "lucide-react";
@@ -67,6 +66,22 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
 
   const durations = [{ label: '2m', seconds: 120 }, { label: '5m', seconds: 300 }, { label: '10m', seconds: 600 }];
 
+  // --- 6-DIGIT SYNCED LOGIC ---
+  const formatTime = (s: number) => {
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getFormattedInput = (digits: string) => {
+    const padded = digits.padStart(6, '0').slice(-6);
+    const hrs = parseInt(padded.slice(0, 2));
+    const mins = padded.slice(2, 4);
+    const secs = padded.slice(4, 6);
+    return `${hrs}:${mins}:${secs}`;
+  };
+
   const handleKhonsuTap = () => {
     setTapCount(prev => {
       const next = prev + 1;
@@ -94,18 +109,6 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
   const progress = isMerkhet
     ? (elapsedTime % 3600) / 3600
     : (mode === 'setup' ? 0 : mode === 'done' ? 1 : 1 - (timeLeft / (totalTime || 1)));
-
-  const formatTime = (s: number) => {
-    const hrs = Math.floor(s / 3600);
-    const mins = Math.floor((s % 3600) / 60);
-    const secs = s % 60;
-    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getFormattedInput = (digits: string) => {
-    const padded = digits.padStart(4, '0').slice(-4);
-    return `0:${padded.slice(0, 2)}:${padded.slice(2, 4)}`;
-  };
 
   const startRitual = (seconds: number) => {
     if (!seconds || seconds <= 0) return;
@@ -178,30 +181,29 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
             <h2 className={`text-2xl font-bold tracking-[0.2em] font-display uppercase transition-colors ${isMerkhet ? 'text-rose-500 animate-pulse' : 'text-cyan-400'}`}>
               {isMerkhet ? "CHRONO-MERKHET" : "KHONSU RECKONS"}
             </h2>
-            <p className={`text-[9px] font-headline mt-1 tracking-[0.4em] uppercase ${isMerkhet ? 'text-red-500/90 font-bold' : 'text-cyan-400/80'}`}>
-              {mode === 'setup' ? "Awaiting Offering" : isActive ? "Time Circuit Flow Active" : "Time Circuit Flow Suspended"}
+            <p className={`text-[9px] font-headline mt-1 tracking-[0.4em] uppercase ${isMerkhet ? 'text-red-500/90 font-bold' : 'text-cyan-500/50'}`}>
+              {mode === 'setup' ? "Awaiting Offering" : isActive ? "Circuit Flow Active" : "Circuit Flow Suspended"}
             </p>
           </div>
 
           <div className="space-y-4">
-            {/* THE CLOCK BOX: Tightened to w-[160px] with smaller numerals */}
-            <div
-              className={`group relative p-1 bg-black/40 backdrop-blur-md border-2 rounded-[.5rem] w-[160px] h-[54px] flex items-center justify-center transition-all duration-500
-  ${isMerkhet
-                  ? `border-rose-500 shadow-[0_0_30px_rgba(255,0,60,0.5)] ${isGlitching ? 'glitch-active border-rose-300' : ''}`
-                  : 'border-cyan-500 shadow-[0_0_15px_rgba(0,255,255,0.15)]'}`}
+            {/* THE CLOCK BOX: Widened slightly for safe HH:MM:SS entry */}
+            <div 
+              className={`group relative p-2 bg-black/40 backdrop-blur-md border-2 rounded-[1rem] w-[140px] h-[54px] flex items-center justify-center transition-all duration-500
+              ${isMerkhet 
+                ? `border-rose-600 shadow-[0_0_20px_rgba(255,0,60,0.2)] ${isGlitching ? 'glitch-active border-rose-300' : ''}` 
+                : 'border-cyan-500 shadow-[0_0_15px_rgba(0,255,255,0.15)]'}`}
               onClick={() => !isMerkhet && mode === 'setup' && setIsEditing(true)}
             >
-              {/* THE FAUX-DIGITAL GRID */}
-              <div className={`flex flex-row items-baseline justify-center w-full tabular-nums font-headline text-3xl tracking-normal transition-all
-    ${isMerkhet
-                  ? `text-rose-500 drop-shadow-[0_0_10px_rgba(255,0,60,0.8)]`
+              <div className={`flex flex-row items-baseline justify-center w-full px-2 tabular-nums font-headline text-3xl tracking-normal transition-all
+                ${isMerkhet 
+                  ? `text-rose-500 drop-shadow-[0_0_10px_rgba(255,0,60,0.8)]` 
                   : (isEditing ? "text-cyan-300 animate-pulse" : "text-pink-500 drop-shadow-[0_0_8px_rgba(255,20,147,0.7)]")}`}>
-
+                
                 {timeChars.map((char, index) => (
-                  <span
-                    key={index}
-                    className={`inline-flex justify-center ${char === ':' ? 'w-[10px]' : 'w-[22px]'} transition-all duration-100`}
+                  <span 
+                    key={index} 
+                    className={`inline-flex justify-center ${char === ':' ? 'w-[10px]' : 'w-[20px]'} transition-all duration-100`}
                   >
                     {char}
                   </span>
@@ -209,42 +211,46 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
               </div>
 
               {isEditing && !isMerkhet && (
-                <input
+                <input 
                   ref={inputRef}
-                  type="tel"
+                  type="text" 
+                  inputMode="numeric"
                   value={rawDigits}
-                  onChange={(e) => setRawDigits(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setRawDigits(val);
+                  }}
                   onBlur={() => setIsEditing(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditing(false);
+                      const padded = rawDigits.padStart(6, '0').slice(-6);
+                      const h = parseInt(padded.slice(0, 2));
+                      const m = parseInt(padded.slice(2, 4));
+                      const s = parseInt(padded.slice(4, 6));
+                      const totalSecs = (h * 3600) + (m * 60) + s;
+                      if (totalSecs > 0) startRitual(totalSecs);
+                    }
+                  }}
                   autoFocus
                   className="absolute inset-0 w-full h-full opacity-0 z-30 cursor-text"
                 />
               )}
             </div>
 
-            {/* ACTION ROW: Text-only buttons for a minimalist feel */}
-            <div className="flex gap-3 flex-wrap items-center mt-2">
+            <div className="flex gap-3 flex-wrap items-center">
               {mode === 'setup' && !isMerkhet && (
                 durations.map(d => (
                   <Button key={d.label} onClick={() => startRitual(d.seconds)} variant="outline" size="sm" className="bg-black/50 backdrop-blur-md border-cyan-800 text-cyan-500 hover:bg-cyan-500 hover:text-black font-headline text-[9px] tracking-[0.2em]">{d.label}</Button>
                 ))
               )}
               {mode === 'burning' && (
-                <Button
-                  onClick={() => setIsActive(!isActive)}
-                  variant="ghost"
-                  size="sm"
-                  className={`border rounded-xl ${isMerkhet ? 'border-rose-800 text-rose-500 hover:bg-rose-950' : 'border-cyan-800 text-cyan-400 hover:bg-cyan-950'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}
-                >
+                <Button onClick={() => setIsActive(!isActive)} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-800 text-rose-500 hover:bg-rose-950' : 'border-cyan-800 text-cyan-400 hover:bg-cyan-950'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
                   {isActive ? "Suspend" : "Resume"}
                 </Button>
               )}
               {(mode === 'burning' || mode === 'done') && (
-                <Button
-                  onClick={resetAll}
-                  variant="ghost"
-                  size="sm"
-                  className={`border rounded-xl ${isMerkhet ? 'border-rose-500 text-rose-600' : 'border-green-500 text-green-700'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}
-                >
+                <Button onClick={resetAll} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-950 text-rose-900' : 'border-purple-900 text-purple-700'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
                   Reset Cycle
                 </Button>
               )}
@@ -258,8 +264,12 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
             isClickable={true}
             onClick={() => {
               if (mode === 'setup' && !isMerkhet) {
-                const secs = (parseInt(rawDigits.padStart(4, '0').slice(-4, -2)) * 60) + parseInt(rawDigits.slice(-2));
-                if (secs > 0) startRitual(secs);
+                const padded = rawDigits.padStart(6, '0').slice(-6);
+                const h = parseInt(padded.slice(0, 2));
+                const m = parseInt(padded.slice(2, 4));
+                const s = parseInt(padded.slice(4, 6));
+                const totalSecs = (h * 3600) + (m * 60) + s;
+                if (totalSecs > 0) startRitual(totalSecs);
               } else {
                 if (mode === 'setup') setMode('burning');
                 setIsActive(!isActive);

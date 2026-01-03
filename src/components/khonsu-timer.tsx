@@ -64,7 +64,7 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
   const [isGlitching, setIsGlitching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const durations = [{ label: '2m', seconds: 120 }, { label: '5m', seconds: 300 }, { label: '10m', seconds: 600 }];
+  const durations = [{ label: '2m', seconds: 120 }, { label: '5m', seconds: 300 }, { label: '10m', seconds: 600 }, { label: '42m', seconds: 2520 }];
 
   // --- 6-DIGIT SYNCED LOGIC ---
   const formatTime = (s: number) => {
@@ -100,7 +100,7 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
     if (typeof window === 'undefined') return { ambience: null, chime: null };
     return {
       ambience: new Audio("/sounds/reeds_loop.mp3"),
-      chime: new Audio("/sounds/solemn_chime.wav") 
+      chime: new Audio("/sounds/solemn_chime.wav")
     };
   });
 
@@ -110,7 +110,7 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
     if (mode === 'burning' && isActive) {
       audio.ambience.loop = true;
       audio.ambience.volume = 0.4;
-      audio.ambience.play().catch(() => {});
+      audio.ambience.play().catch(() => { });
     } else {
       audio.ambience.pause();
     }
@@ -120,7 +120,13 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
   // Effect to trigger the chime upon the ritual's completion
   useEffect(() => {
     if (mode === 'done' && audio.chime) {
-      audio.chime.play().catch(() => {});
+      audio.chime.play().catch(() => { });
+      // If it was the Ultimate Answer (42m), trigger a Great Quake
+    if (totalTime === 2520) {
+      setIsGlitching(true);
+      // A longer, more rhythmic glitch to simulate a temple shaking
+      setTimeout(() => setIsGlitching(false), 1000); 
+    }
     }
   }, [mode, audio.chime]);
   useEffect(() => {
@@ -195,6 +201,7 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
         }
       `}</style>
 
+
       <div
         onClick={handleKhonsuTap}
         className="absolute inset-0 z-0 bg-contain bg-center bg-no-repeat opacity-30 cursor-crosshair"
@@ -204,44 +211,99 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
       {onClose && <button onClick={onClose} className={`absolute top-4 right-4 z-50 ${isMerkhet ? 'text-rose-500' : 'text-cyan-500'} hover:text-white`}><X /></button>}
 
       <div className="relative z-20 flex flex-row items-end justify-between p-10 w-full mt-auto bg-gradient-to-t from-black via-black/90 to-transparent">
-        <div className="flex flex-col items-start gap-6">
+        <div className="flex flex-col items-start gap-2">
           <div>
             <h2 className={`text-2xl font-bold tracking-[0.2em] font-display uppercase transition-colors ${isMerkhet ? 'text-rose-500 animate-pulse' : 'text-cyan-400'}`}>
               {isMerkhet ? "CHRONO-MERKHET" : "KHONSU RECKONS"}
             </h2>
-            <p className={`text-[9px] font-headline mt-1 tracking-[0.4em] uppercase ${isMerkhet ? 'text-red-500/90 font-bold' : 'text-cyan-500/50'}`}>
+            <p className={`text-[9px] font-headline mt-1 tracking-[0.4em] uppercase ${isMerkhet ? 'text-red-500/90 font-bold' : 'text-cyan-300/90'}`}>
               {mode === 'setup' ? "Awaiting Offering" : isActive ? "Circuit Flow Active" : "Circuit Flow Suspended"}
             </p>
           </div>
 
-          <div className="space-y-4">
-            {/* THE CLOCK BOX: Widened slightly for safe HH:MM:SS entry */}
-            <div 
-              className={`group relative p-2 bg-black/40 backdrop-blur-md border-2 rounded-[1rem] w-[140px] h-[54px] flex items-center justify-center transition-all duration-500
-              ${isMerkhet 
-                ? `border-rose-600 shadow-[0_0_20px_rgba(255,0,60,0.2)] ${isGlitching ? 'glitch-active border-rose-300' : ''}` 
-                : 'border-cyan-500 shadow-[0_0_15px_rgba(0,255,255,0.15)]'}`}
+          <div className="flex flex-row items-center justify-between w-full">
+            <div className="flex gap-4 flex-wrap items-center">
+              {mode === 'setup' && !isMerkhet && (
+                durations.map(d => (
+                  <Button
+                    key={d.label}
+                    onClick={() => startRitual(d.seconds)}
+                    variant="outline"
+                    /* We keep size="sm" but expand it with custom padding and height below */
+                    className="h-[46px] px-4 bg-black/50 backdrop-blur-md border-cyan-600 text-cyan-300 hover:bg-cyan-500 hover:text-black font-headline text-[12px] tracking-[0.2em] transition-all duration-300"
+                  >
+                    {d.label}
+                  </Button>)
+                  )
+                  
+              )}
+             
+              {(mode === 'burning' || mode === 'done') && (
+                <Button onClick={resetAll} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-950 text-rose-900' : 'border-indigo-200 text-indigo-200'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
+                  Reset Cycle
+                </Button>
+              )}
+              {mode === 'burning' && (
+                <Button onClick={() => setIsActive(!isActive)} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-800 text-rose-500 hover:bg-rose-950' : 'border-cyan-500 text-cyan-400 hover:bg-cyan-950'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
+                  {isActive ? "Suspend" : "Resume"}
+                </Button>
+              )}
+
+            </div>
+            <div className="mb-0 mr-">
+              <CyberMoon
+                progress={progress}
+                isClickable={true}
+                onClick={() => {
+                  if (mode === 'setup' && !isMerkhet) {
+                    const padded = rawDigits.padStart(6, '0').slice(-6);
+                    const h = parseInt(padded.slice(0, 2));
+                    const m = parseInt(padded.slice(2, 4));
+                    const s = parseInt(padded.slice(4, 6));
+                    const totalSecs = (h * 3600) + (m * 60) + s;
+                    if (totalSecs > 0) startRitual(totalSecs);
+                  } else {
+                    if (mode === 'setup') setMode('burning');
+                    setIsActive(!isActive);
+                  }
+                }}
+                isMerkhet={isMerkhet}
+              />
+            </div>
+          </div>
+          <div className="space-y-0">
+            {/* THE CLOCK BOX: Fixed height prevents jumping, max-width keeps it cinematic */}
+            <div
+              className={`group relative p-2 bg-black/40 backdrop-blur-md border-4 rounded-[1.5rem] w-full max-w-[500px] h-[100px] flex items-center justify-center mx-auto transition-all duration-500
+  ${isMerkhet
+                  ? 'border-rose-600 shadow-[0_0_30px_rgba(255,0,60,0.3)]'
+                  : 'border-cyan-500 shadow-[0_0_20px_rgba(0,255,255,0.2)]'}`}
               onClick={() => !isMerkhet && mode === 'setup' && setIsEditing(true)}
             >
-              <div className={`flex flex-row items-baseline justify-center w-full px-2 tabular-nums font-headline text-3xl tracking-normal transition-all
-                ${isMerkhet 
-                  ? `text-rose-500 drop-shadow-[0_0_10px_rgba(255,0,60,0.8)]` 
-                  : (isEditing ? "text-cyan-300 animate-pulse" : "text-pink-500 drop-shadow-[0_0_8px_rgba(255,20,147,0.7)]")}`}>
-                
-                {timeChars.map((char, index) => (
-                  <span 
-                    key={index} 
-                    className={`inline-flex justify-center ${char === ':' ? 'w-[10px]' : 'w-[20px]'} transition-all duration-100`}
-                  >
-                    {char}
-                  </span>
-                ))}
+              <div className={`flex flex-row items-center justify-center w-full tabular-nums font-headline transition-all
+    ${isMerkhet ? 'text-rose-500' : (isEditing ? "text-cyan-300 animate-pulse" : "text-pink-500")}`}>
+
+                {/* DYNAMIC SCALING: Using 'vw' units allows the text to scale perfectly with screen width */}
+                <div className="text-[14vw] sm:text-[50px] leading-none flex items-baseline">
+                  {timeChars.map((char, index) => (
+                    <span
+                      key={index}
+                      className={`inline-flex justify-center transition-all duration-100 
+            ${char === ':' ? 'w-[0.4ch] opacity-90' : 'w-[1.1ch]'}`}
+                      style={{
+                        transform: char !== ':' ? 'scaleY(1.6)' : 'none',
+                      }}
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {isEditing && !isMerkhet && (
-                <input 
+                <input
                   ref={inputRef}
-                  type="text" 
+                  type="text"
                   inputMode="numeric"
                   value={rawDigits}
                   onChange={(e) => {
@@ -266,46 +328,11 @@ export function KhonsuTimer({ onClose }: { onClose?: () => void }) {
               )}
             </div>
 
-            <div className="flex gap-3 flex-wrap items-center">
-              {mode === 'setup' && !isMerkhet && (
-                durations.map(d => (
-                  <Button key={d.label} onClick={() => startRitual(d.seconds)} variant="outline" size="sm" className="bg-black/50 backdrop-blur-md border-cyan-800 text-cyan-500 hover:bg-cyan-500 hover:text-black font-headline text-[9px] tracking-[0.2em]">{d.label}</Button>
-                ))
-              )}
-              {mode === 'burning' && (
-                <Button onClick={() => setIsActive(!isActive)} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-800 text-rose-500 hover:bg-rose-950' : 'border-cyan-800 text-cyan-400 hover:bg-cyan-950'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
-                  {isActive ? "Suspend" : "Resume"}
-                </Button>
-              )}
-              {(mode === 'burning' || mode === 'done') && (
-                <Button onClick={resetAll} variant="ghost" size="sm" className={`border rounded-xl ${isMerkhet ? 'border-rose-950 text-rose-900' : 'border-purple-900 text-purple-700'} font-headline text-[9px] tracking-[0.2em] uppercase px-4`}>
-                  Reset Cycle
-                </Button>
-              )}
-            </div>
+
           </div>
         </div>
 
-        <div className="mb-6 mr-6">
-          <CyberMoon
-            progress={progress}
-            isClickable={true}
-            onClick={() => {
-              if (mode === 'setup' && !isMerkhet) {
-                const padded = rawDigits.padStart(6, '0').slice(-6);
-                const h = parseInt(padded.slice(0, 2));
-                const m = parseInt(padded.slice(2, 4));
-                const s = parseInt(padded.slice(4, 6));
-                const totalSecs = (h * 3600) + (m * 60) + s;
-                if (totalSecs > 0) startRitual(totalSecs);
-              } else {
-                if (mode === 'setup') setMode('burning');
-                setIsActive(!isActive);
-              }
-            }}
-            isMerkhet={isMerkhet}
-          />
-        </div>
+
       </div>
     </div>
   );

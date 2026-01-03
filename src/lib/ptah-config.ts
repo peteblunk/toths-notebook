@@ -1,43 +1,33 @@
 export const PTAH_CONFIG = {
-  version: "1.3.0", // Incremented for the Khepri & Library Restoration
-  title: "THE KHEPRI ASCENSION & SILICON SCARAB",
-  date: "December 29, 2025",
-  type: "RESTORATION_VIBE",
+  version: "1.3.3", // Incremented for the Khepri & Library Restoration
+  title: "THE SCRIBE'S DOSSIER AND CHRONO-MERKHET INITIATION",
+  date: "January 02, 2026 A.D. - Year 5526 of the Old Kingdom",
+  type: "ACCOUNTING_TEMPORAL",
 
-  intro: "The Temple has birthed the Silicon Scarab to power the Khepri Protocol, ensuring that every deed—even those once lost in the digitization of the scrolls—is rolled into the eternal Archives. The path from the Evening Chronicle to the Great Library is now wide and illuminated with neon truth.",
+  intro: "The temple architecture has evolved. Your digital identity is now anchored in the Scribe Dossier. Tap your avatar in the sidebar footer to enter your personal sanctuary. Installation of the Thoth Chip is initiated through the dossier. Additional data on your journey will be collected as the Temple expands its reach.",
 
   // The "What's New" Section
   changes: [
     {
-      icon: "Scarab", 
-      title: "Khepri Protocol & Silicon Scarab",
-      description: "Introduced the Silicon Scarab technology. This microscopic scribe now powers the Thoth Chip, ensuring a perfect batch-seal of your wins, reflections, and intentions without data loss.",
+      icon: "T-Chip", 
+      title: "Thoth Chip Installation",
+      description: "Adding the Thoth Chip to your homescreen can now be initiated directly from the Scribe Dossier. Visit your Dossier to permanently seal this interface to your device for full-screen, focused access.",
     },
     {
       icon: "Scroll", 
-      title: "Reopening of the Great Library",
-      description: "The Archives are no longer sealed for digitization. Every task completed during the temporary closure has been faithfully recorded. The gates are open, featuring a new cyber-neon expandable scroll layout.",
+      title: "The Chrono-Merkhet",
+      description: "It has long been the intention to expand the Invoke Khonsu time to chronometer function - for when the quantity of time is of unknown duration. Access this feature by tapping on the head of Khonsu four times.",
     },
-    {
-      icon: "Moon", 
-      title: "Evening Chronicle UI Refinement",
-      description: "Navigation within the Chronicle has been optimized for the Pixel 7 Pro. Implemented a linear, immersive 'Void Mode' with high-contrast attestation fields and neon-glow feedback for every input.",
-    },
-    {
-      icon: "Sparkles", 
-      title: "Improved Inspirational Resonance",
-      description: "Refined the prompts within the Chronicle to better elicit deep shadow-work and gratitude. The Temple now speaks with a more resonant and ancient voice during the sealing of the record.",
-    },
+    
   ],
 
   // The "How to Use" Section
   instructions: [
-    "1. TAPPING THE CHIP: At the conclusion of the Evening Chronicle, tap the Thoth Chip (Silicon Scarab). This triggers an atomic dispersal of data, clearing your active board and populating the Library.",
-    "2. CONSULT THE SCROLLS: Access the Archives via the new sidebar gate. Note that the most recent day automatically expands to show your 'Wins' and 'Shadow Work' in high-fidelity neon.",
-    "3. OBSERVE THE GLOW: Tiles in the Archives now feature a constant cyber-glow. Active tiles scale and brighten, while inactive scrolls maintain a steady neon resonance.",
-    "4. TOMORROW'S PROPHECY: Your 'Tomorrow's Main Quest' is now permanently visible on your archived cards, serving as a reminder of the intentions you spoke into existence.",
-    "5. THE CLEANSING: Trust in the Scarab; upon sealing, your daily deeds are archived and your board is cleansed, ready for the Midnight Scribe's fresh inscriptions."
+    "1. ACCESS THE DOSSEIR: Tap your Scribe identity in the sidebar footer to enter the Inner Sanctum and view your current Rank and Temple Connection status.",
+    "2. ADD THOTH CHIP TO YOUR DEVICE: Within the Dossier, locate the Thoth Chip Altar. If your connection is 'Weak', tap 'Invoke Installation' to anchor the sanctuary to your home screen.",
+    "3. INITIATE CHRONO-MERKHET: To access the hidden Chrono-Merkhet (Stopwatch), perform the Four-Tap Ritual on the lunar head of Khonsu in the primary sanctuary.",
+    "4. CONTACT THE TEMPLE: As always -  prayers, inquiries, reports of peculiarities to: rites@unclepetelaboratories.net"
   ],
 
-  devNote: "By integrating the batch-commit dispersal, we have finally linked the active ritual to the historical record. The archives are now a living timeline of lived Ma'at, protected by the Silicon Scarab and the Silicon Scribe alike. Order is absolute."
+ devNote: "Refactored the installation heka into the use-PWA hook, decoupling the Thoth Chip from the viewport-sentinel to allow manual invocation within the Scribe Dossier. The Merkhet digits have been justified at scaleY(1.6) to ensure the weight of time is felt. By centralizing the Registry of Souls, we have prepared the ground for the Grand Library's final integration. Order is absolute."
 };

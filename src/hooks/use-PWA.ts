@@ -11,35 +11,33 @@ export function usePWA() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-
-    // 1. Check if already running as PWA
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    setIsInstalled(isStandalone);
-    if (isStandalone) return;
-
-    // 2. Detect iOS
-    const ua = window.navigator.userAgent;
-    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-    setIsIOS(ios);
-
-    // 3. Capture the "Thoth Chip" event (Android/Chrome)
+    // 🏛️ STEP 1: Always listen for the install prompt immediately
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Auto-trigger the pop-up for the uninitiated
-      setTimeout(() => setShowPrompt(true), 3000);
+      // Only show the pop-up automatically if a user is present
+      if (user) {
+        setTimeout(() => setShowPrompt(true), 500);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // iOS manual prompt delay
-    if (ios) {
-      setTimeout(() => setShowPrompt(true), 5000);
+    // 🏛️ STEP 2: General Detection
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    setIsInstalled(isStandalone);
+
+    const ua = window.navigator.userAgent;
+    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    setIsIOS(ios);
+
+    // iOS manual prompt delay (only if user is logged in)
+    if (ios && user && !isStandalone) {
+      setTimeout(() => setShowPrompt(true), 750);
     }
 
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, [user]);
+  }, [user]); // Keep user in dependency array so prompts can trigger once logged in
 
   const installChip = async () => {
     if (!deferredPrompt) return;
@@ -48,8 +46,8 @@ export function usePWA() {
     if (outcome === 'accepted') {
       setShowPrompt(false);
       setIsInstalled(true);
+      setDeferredPrompt(null);
     }
-    setDeferredPrompt(null);
   };
 
   return {
@@ -58,6 +56,7 @@ export function usePWA() {
     isIOS,
     isInstalled,
     installChip,
+    // ⚖️ PROPER JUSTIFICATION: canInstall is true if prompt exists OR it's iOS/Not installed
     canInstall: !!deferredPrompt || (isIOS && !isInstalled)
   };
 }

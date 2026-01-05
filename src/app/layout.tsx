@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
 import { PtahManager } from '@/components/ptah-manager';
 import { OathGate } from '@/components/oath-gate';
-import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
+import { PwaInstallPrompt } from '@/pwa-install-prompt';
 
 // 1. Summon the fonts (Google Font Optimization)
 const quantico = Quantico({ 
@@ -55,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PwaInstallPrompt />
           <SidebarProvider>
             {children}
+            <PwaInstallPrompt />
           </SidebarProvider>
         </AuthProvider>
         <Toaster />

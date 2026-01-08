@@ -58,6 +58,28 @@ body {}
     background-color: #000000 !important;
     @apply outline-none border-primary;
     box-shadow: 0 0 15px theme('colors.primary.DEFAULT / 40%');
+
+    /* 🏺 THE GOLDEN RADIANCE (Amber) */
+  .glow-amber {
+    @apply drop-shadow-[0_0_8px_rgba(251,191,36,0.8)];
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.4));
+  }
+
+  /* 💎 THE LOGIC FLAME (Cyan) */
+  .glow-cyan {
+    @apply drop-shadow-[0_0_8px_rgba(34,211,238,0.8)];
+    filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.4));
+  }
+
+  /* ⚡ THE PULSING RELIC */
+  .glow-pulse {
+    animation: pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; filter: brightness(1.2) drop-shadow(0 0 15px rgba(251, 191, 36, 0.6)); }
+    50% { opacity: 0.8; filter: brightness(0.8) drop-shadow(0 0 5px rgba(251, 191, 36, 0.2)); }
+  }
   }
 
   /* The New Lunar Variant for Escape/Neutral actions */
@@ -145,7 +167,17 @@ body {}
     background: hsl(var(--primary));
   }
 }
-
+@keyframes scram-glitch {
+  0% { transform: translate(0); text-shadow: 2px 0 #ff0000, -2px 0 #00ffff; }
+  20% { transform: translate(-2px, 2px); opacity: 0.8; }
+  40% { transform: translate(2px, -2px); text-shadow: -2px 0 #ff0000, 2px 0 #00ffff; }
+  60% { transform: translate(-2px, -2px); opacity: 1; }
+  80% { transform: translate(2px, 2px); }
+  100% { transform: translate(0); }
+}
+.animate-scram {
+  animation: scram-glitch 2.0s infinite;
+}
 /*Cyber Egyptian Vibe Colors
 
 Color         ,HSL Value  ,Hex Equivalent,Feel

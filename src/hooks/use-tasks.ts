@@ -48,9 +48,8 @@ export function useTasks(filter?: string) {
             // Normalize Timestamps safely
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
             dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
+            streakData: data.streakData || null,
             
-            // --- THE FIX IS HERE ---
-            // Do NOT hardcode false. Read the DNA tag!
             isRitual: data.isRitual ?? false, 
             originRitualId: data.originRitualId ?? null,
         };

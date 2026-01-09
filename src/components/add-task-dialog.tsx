@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { INITIAL_STREAK_DATA } from "@/lib/types";
 // ----------------------------------------
 // --- NEW IMPORT FOR TASK CATEGORY LABELS
 import { CATEGORY_LABELS } from "@/lib/types";
@@ -138,7 +139,8 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
         ...values,
         subtasks,
         userId: user.uid,
-        isRitual: isRitualType, 
+        isRitual: isRitualType,
+        streakData: isRitualType ? INITIAL_STREAK_DATA : null, 
       };
 
       if (isRitualType) {

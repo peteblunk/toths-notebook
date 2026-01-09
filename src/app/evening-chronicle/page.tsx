@@ -19,6 +19,7 @@ interface Task {
   isRitual?: boolean;
   completed: boolean;
   dueDate?: string;
+  originRitualId?: string;
 }
 
 export default function EveningChroniclePage() {
@@ -110,6 +111,40 @@ export default function EveningChroniclePage() {
         "stats.maxStreak": Math.max(newStreak, userData?.stats?.maxStreak || 0),
         "stats.history10Day": history,
         "stats.lastRitualDate": scribeDate
+      });
+
+      // 🏺 3.5 UPDATE INDIVIDUAL RITUAL STREAKS
+      // Get the IDs of the ritual templates you actually finished today
+      const completedRitualIds = completedTasks
+        .filter(t => t.isRitual && t.originRitualId)
+        .map(t => t.originRitualId);
+
+      const ritualsRef = collection(db, "dailyRituals");
+      const ritualsQuery = query(ritualsRef, where("userId", "==", user.uid));
+      const ritualsSnap = await getDocs(ritualsQuery);
+
+      ritualsSnap.forEach((ritualDoc) => {
+        const rData = ritualDoc.data();
+        const s = rData.streakData || {
+          currentStreak: 0,
+          bestStreak: 0,
+          totalCompletions: 0,
+          history10: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        };
+
+        const isWin = completedRitualIds.includes(ritualDoc.id);
+        
+        // Push the new result into the history array
+        const newHistory = [...s.history10.slice(1), isWin ? 1 : 0];
+        const newStreak = isWin ? s.currentStreak + 1 : 0;
+
+        batch.update(ritualDoc.ref, {
+          "streakData.currentStreak": newStreak,
+          "streakData.bestStreak": Math.max(newStreak, s.bestStreak || 0),
+          "streakData.totalCompletions": s.totalCompletions + (isWin ? 1 : 0),
+          "streakData.history10": newHistory,
+          "streakData.lastUpdated": scribeDate
+        });
       });
 
       // 4. PURGE DEEDS (Delete only what was sealed/retained)

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-
+import { INITIAL_STREAK_DATA } from '@/lib/types'; // Move this to the top
+import { migrateRitualsToKhnum } from '@/lib/migrate';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export default function ManageRitualsPage() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [ritualToDelete, setRitualToDelete] = useState<Task | null>(null);
 
+
     // Real-time listener for the dailyRituals collection
     useEffect(() => {
         if (!user) {
@@ -61,7 +63,12 @@ export default function ManageRitualsPage() {
 
         return () => unsubscribe();
     }, [user]);
-
+const handleMigration = async () => {
+  const success = await migrateRitualsToKhnum();
+  if (success) {
+    toast({ title: "Migration Complete", description: "All rituals now carry the Flame." });
+  }
+};
     const handleDeleteRitual = async () => {
         if (!ritualToDelete) return;
 
@@ -90,7 +97,23 @@ export default function ManageRitualsPage() {
         setRitualToDelete(ritual);
         setIsDeleteOpen(true);
     };
-
+const StreakPips = ({ history }: { history: number[] }) => {
+  return (
+    <div className="flex gap-1 mt-1">
+      {history.map((didComplete, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-1.5 w-1.5 rounded-full transition-all duration-500",
+            didComplete 
+              ? "bg-[#39FF14] shadow-[0_0_5px_#39FF14]" // Neon Gold/Lime for success
+              : "bg-zinc-800" // Void for missing
+          )}
+        />
+      ))}
+    </div>
+  );
+};
     return (
         <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
             <Button asChild variant="ghost" className="mb-4 text-primary hover:text-primary-10">
@@ -112,13 +135,33 @@ export default function ManageRitualsPage() {
                             /* TRIMMED BUFFER: Reduced p-4 to p-2 on mobile, p-3 on desktop */
                             className="bg-card border-border flex items-center justify-between p-2 sm:p-3 hover:border-accent transition-colors group overflow-hidden"
                         >
-                            <div className="flex-1 min-w-0 pr-2"> {/* Added min-w-0 to prevent text from pushing icons off-screen */}
-                                <CardTitle className="font-body font-bold text-base sm:text-lg text-foreground truncate">
-                                    {ritual.title}
-                                </CardTitle>
-                                <CardDescription className="text-[10px] sm:text-xs text-slate-400 truncate">
-                                </CardDescription>
-                            </div>
+                            {/* 🏺 Inside the rituals.map in ManageRitualsPage */}
+<div className="flex-1 min-w-0 pr-2">
+    <CardTitle className="font-body font-bold text-base sm:text-lg text-foreground truncate flex items-center gap-2">
+        {ritual.title}
+        {/* THE FLAME: Only show if there's a streak */}
+        {ritual.streakData && ritual.streakData.currentStreak > 0 && (
+            <span className="text-[10px] bg-orange-500/20 text-orange-500 px-1.5 py-0.5 rounded border border-orange-500/30 flex items-center gap-1">
+                🔥 {ritual.streakData.currentStreak}
+            </span>
+        )}
+    </CardTitle>
+    
+    <div className="mt-1">
+        {ritual.streakData ? (
+            <div className="space-y-1">
+                <StreakPips history={ritual.streakData.history10} />
+                <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">
+                    Consecutive: {ritual.streakData.currentStreak} | Total: {ritual.streakData.totalCompletions}
+                </p>
+            </div>
+        ) : (
+            <p className="text-[10px] italic text-slate-500">
+                Awaiting first completion to begin streak...
+            </p>
+        )}
+    </div>
+</div>
 
                             {/* ACTION BUTTONS: Tightened gap to allow larger icons */}
                             <div className="flex items-center gap-1 sm:gap-2 shrink-0">

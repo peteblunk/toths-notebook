@@ -12,25 +12,35 @@ export default function ArchivesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
 
-    const q = query(
-      collection(db, "chronicles"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
+    // 🏺 We order by createdAt, but we should ensure the Auto-Scribe 
+    // is sending a proper serverTimestamp()!
+const q = query(
+  collection(db, "chronicles"),
+  where("userId", "==", user.uid)
+);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChronicles(docs);
       setLoading(false);
-      if (docs.length > 0 && !expandedId) setExpandedId(docs[0].id);
+      
+      // 🏺 Only set the initial expanded ID if we don't have one yet
+      if (docs.length > 0 && !expandedId) {
+        setExpandedId(docs[0].id);
+      }
+    }, (error) => {
+      console.error("The Hall of Records is sealed:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [expandedId]);
+    // 🏺 REMOVED [expandedId] from here to prevent re-subscribing on every click
+  }, []);
+
 
   return (
     <main className="min-h-[100dvh] w-full bg-slate-950 text-slate-200 overflow-y-auto custom-scrollbar">

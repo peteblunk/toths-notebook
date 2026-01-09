@@ -113,18 +113,24 @@ export default function EveningChroniclePage() {
         "stats.lastRitualDate": scribeDate
       });
 
-      // 🏺 3.5 UPDATE INDIVIDUAL RITUAL STREAKS
-      // Get the IDs of the ritual templates you actually finished today
+  // 🏺 3.5 UPDATE INDIVIDUAL RITUAL STREAKS
       const completedRitualIds = completedTasks
-        .filter(t => t.isRitual && t.originRitualId)
+        .filter(t => (t.isRitual || t.category === "Daily Ritual") && t.originRitualId)
         .map(t => t.originRitualId);
+
+      console.log("🏺 Ritual IDs identified for gold pips:", completedRitualIds);
 
       const ritualsRef = collection(db, "dailyRituals");
       const ritualsQuery = query(ritualsRef, where("userId", "==", user.uid));
       const ritualsSnap = await getDocs(ritualsQuery);
 
+      if (ritualsSnap.empty) {
+        console.log("📭 No ritual templates found to update.");
+      }
+
       ritualsSnap.forEach((ritualDoc) => {
         const rData = ritualDoc.data();
+        // Ensure s is never undefined
         const s = rData.streakData || {
           currentStreak: 0,
           bestStreak: 0,
@@ -134,23 +140,26 @@ export default function EveningChroniclePage() {
 
         const isWin = completedRitualIds.includes(ritualDoc.id);
         
-        // Push the new result into the history array
-        const newHistory = [...s.history10.slice(1), isWin ? 1 : 0];
-        const newStreak = isWin ? s.currentStreak + 1 : 0;
+        const newHistory = [...(s.history10 || [0,0,0,0,0,0,0,0,0,0]).slice(1), isWin ? 1 : 0];
+        const newStreak = isWin ? (s.currentStreak || 0) + 1 : 0;
 
         batch.update(ritualDoc.ref, {
           "streakData.currentStreak": newStreak,
           "streakData.bestStreak": Math.max(newStreak, s.bestStreak || 0),
-          "streakData.totalCompletions": s.totalCompletions + (isWin ? 1 : 0),
+          "streakData.totalCompletions": (s.totalCompletions || 0) + (isWin ? 1 : 0),
           "streakData.history10": newHistory,
           "streakData.lastUpdated": scribeDate
         });
       });
-
       // 4. PURGE DEEDS (Delete only what was sealed/retained)
-      completedTasks.forEach(t => batch.delete(doc(db, "tasks", t.id)));
-      incompleteRituals.forEach(t => batch.delete(doc(db, "tasks", t.id)));
+      // 🏺 RECTIFIED STEP 4: Protect the Khet
+// 1. Always delete completed tasks (they are now in the Archive)
+completedTasks.forEach(t => batch.delete(doc(db, "tasks", t.id)));
 
+// 2. ONLY delete incomplete tasks if they are RITUALS
+// This allows regular "Khet" to roll over to tomorrow!
+const ritualsToPurge = incompleteRituals.filter(t => t.isRitual || t.category === "Daily Ritual");
+ritualsToPurge.forEach(t => batch.delete(doc(db, "tasks", t.id)));
       await batch.commit();
       router.push("/archives");
     } catch (err) {

@@ -1,0 +1,45 @@
+You are a creative product strategist AI. Your task is to propose a list of innovative new features for a task management application called "Thoth's Notebook."
+
+**1. The Application: Thoth's Notebook**
+
+*   **Concept:** A task and habit management app designed to be both highly functional and deeply motivating. It merges a sleek, cyberpunk aesthetic with ancient Egyptian mythology. The goal is to make productivity feel like a mystical journey of self-improvement.
+*   **Target Audience:** Polymaths, creatives, and lifelong learners who juggle multiple projects and want a tool that's more engaging than a standard to-do list.
+*   **Tech Stack:** Next.js, React, TypeScript, Firebase (Auth & Firestore).
+
+**2. Core Existing Features**
+
+The app is already a capable task manager. Here's what it can do:
+
+*   **Full Task Management:** Users can create, update, and delete tasks. Tasks have properties like `title`, `details`, `importance` (low, medium, high), `dueDate`, `estimatedTime`, and `subtasks`.
+*   **Task Categories:** Tasks are organized into thematic categories:
+    *   **Khet:** General, miscellaneous tasks.
+    *   **Daily Rituals:** Recurring tasks and habits.
+    *   **Sacred Duties:** Important responsibilities (e.g., work, family).
+    *   **Special Missions:** Medium-term projects.
+    *   **Grand Expeditions:** Long-term, ambitious goals.
+*   **Ritual Templates:** Users can create templates of tasks ("Rituals") that can be instantiated for daily routines, helping to automate the setup of their day.
+*   **Sophisticated Habit & Streak System:** The app features a powerful two-layer system for habit formation:
+    *   **1. Per-Ritual Streaks:** Each "Daily Ritual" (the app's name for a habit) has its own dedicated streak (`currentStreak`, `bestStreak`, `history10`), rewarding consistency on a per-habit basis. This allows users to monitor their progress on individual goals.
+    *   **2. The Evening Seal (Meta-Habit):** The "Evening Chronicle" is a guided, multi-step end-of-day review process. Completing this review is treated as a keystone meta-habit and has its *own global user streak*. This powerfully incentivizes the crucial habit of daily reflection, planning, and system engagement. During the "Seal," the day's tasks are archived and individual ritual streaks are calculated and updated.
+*   **AI Prioritization:** The app has an AI flow that can help users prioritize their tasks.
+
+**3. The Goal: Propose New, Evidence-Based Features**
+
+I need a list of new features that will enhance the app's ability to help users build habits and achieve their goals.
+
+**4. Your Constraints & Required Output Format**
+
+For each feature you propose, please follow these strict guidelines:
+
+*   **Evidence-Based:** The feature's core mechanic must be grounded in established research from behavioral psychology, neuroscience, or habit formation science. Please cite the principle (e.g., "Temptation Bundling," "The Zeigarnik Effect," "Implementation Intentions," "Variable Rewards").
+*   **Thematic Alignment:** Each feature *must* fit the "cyberpunk ancient Egypt" theme. Propose a creative, thematic name for each feature.
+*   **Actionable Ideas:** Your proposals must be concrete and actionable.
+
+**Please format your response as a list. For each proposed feature, provide:**
+
+*   **Thematic Name:** A creative name that fits the app's mythology (e.g., "The Scribe's Oracle," "Amulet of Focus").
+*   **Core Function:** A concise, one-sentence description of what the user can do with this feature.
+*   **Psychological Principle:** The specific habit formation or productivity principle it's based on and a brief explanation of how the feature applies it.
+*   **Implementation Notes:** A few bullet points on how this could be integrated into the existing app structure and UI. Think about where it would live and how it would interact with the current Task and Ritual system.
+
+Your proposals should be innovative and go beyond the obvious "gamification" features. Focus on deep, meaningful mechanics that foster genuine motivation and discipline, all while wrapped in the app's unique thematic skin.

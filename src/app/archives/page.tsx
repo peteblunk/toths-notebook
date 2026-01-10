@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { db, auth } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { Scroll, ChevronDown, ChevronUp, ArrowLeft, Star, Moon, Sparkles } from "lucide-react";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function ArchivesPage() {
   const router = useRouter();
@@ -13,22 +14,26 @@ export default function ArchivesPage() {
   const [loading, setLoading] = useState(true);
 
 useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+  // 🏺 The Guarded Listener
+  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-    // 🏺 We order by createdAt, but we should ensure the Auto-Scribe 
-    // is sending a proper serverTimestamp()!
-const q = query(
-  collection(db, "chronicles"),
-  where("userId", "==", user.uid)
-);
+    // 📜 The Ordered Query (Requires the Index we discussed)
+    const q = query(
+      collection(db, "chronicles"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChronicles(docs);
       setLoading(false);
       
-      // 🏺 Only set the initial expanded ID if we don't have one yet
+      // Auto-expand the most recent scroll if none is selected
       if (docs.length > 0 && !expandedId) {
         setExpandedId(docs[0].id);
       }
@@ -37,9 +42,12 @@ const q = query(
       setLoading(false);
     });
 
-    return () => unsubscribe();
-    // 🏺 REMOVED [expandedId] from here to prevent re-subscribing on every click
-  }, []);
+    return () => unsubscribeSnapshot();
+  });
+
+  return () => unsubscribeAuth();
+}, []); // Empty dependency array is safe with onAuthStateChanged
+
 
 
   return (

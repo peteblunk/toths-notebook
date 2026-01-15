@@ -45,6 +45,7 @@
     "firebase": "^11.10.0",
     "framer-motion": "^11.2.12",
     "genkit": "^1.14.1",
+    "idb-keyval": "^6.2.2",
     "lucide-react": "^0.475.0",
     "next": "^14.2.35",
     "next-pwa": "^5.6.0",

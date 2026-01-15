@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CyberAnkh } from "@/components/icons/cyber-ankh";
 import Image from "next/image";
 import { useState } from "react";
+import { FirstPylonIcon } from "@/components/icons/FirstPylonIcon";
+import { useRouter } from "next/navigation";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface Task {
     id: string;
@@ -44,22 +47,39 @@ export function ChronicleSealingForm({
 }: SealingFormProps) {
     // 🏺 State to handle the local Hydraulic Sink animation
     const [isSealing, setIsSealing] = useState(false);
-
+  const { setOpenMobile } = useSidebar();
+      const router = useRouter();
     const handleLocalSeal = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSealing(true);
         // The "Thoth Sync": Trigger the actual DB function passed from page.tsx
         await onSeal(e);
     };
-
+const handleReturn = () => {
+    setOpenMobile(false);
+    router.push("/");
+  };
     return (
         <div className="w-full min-h-screen bg-slate-950 text-slate-200 font-sans animate-in fade-in duration-500 overflow-y-auto custom-scrollbar pb-32">
             
             {/* NAVIGATION GATES STAY THE SAME */}
             <div className="w-full max-w-4xl mx-auto flex justify-between items-start mb-8 px-4 pt-8">
                 <button type="button" onClick={onBack} className="flex items-center gap-3 p-2 px-4 border-2 border-lime-500 rounded-xl bg-lime-500/10 text-lime-500 font-headline font-bold text-xs tracking-[0.2em]"><History size={16} /> BACK</button>
-                <button type="button" onClick={onMainHall} className="flex items-center gap-3 p-2 px-4 border-2 border-[hsl(280,100%,60%)] rounded-xl bg-[hsl(280,100%,60%)]/10 text-[hsl(280,100%,60%)] font-headline font-bold text-xs tracking-[0.2em]"><Scroll size={16} /> MAIN HALL</button>
-            </div>
+<button
+          onClick={handleReturn}
+          className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
+        >
+          {/* The Pylon: Expanded to the very edge of the stone */}
+          <FirstPylonIcon
+            size={80}
+            className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+          />
+
+          {/* The Text: Tightly integrated foundation */}
+          <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
+            To Main Hall
+          </span>
+        </button>            </div>
 
             <form onSubmit={handleLocalSeal} className="max-w-xl mx-auto px-4">
 

@@ -7,10 +7,20 @@ import { Download, ShieldCheck, Trophy, Scroll, Fingerprint, ChevronLeft } from 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ThothChipAltar } from "@/components/thoth-chip-altar";
+import { FirstPylonIcon } from "@/components/icons/FirstPylonIcon";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
+
 
 export default function ScribeDossierPage() {
   const { user } = useAuth();
   const { installChip, isInstalled, canInstall } = usePWA();
+   const { setOpenMobile } = useSidebar();
+        const router = useRouter();
+    const handleReturn = () => {
+      setOpenMobile(false);
+      router.push("/");
+    };
   {/* 1. Logic at the top of the component */ }
   const isDjehuty = user?.uid === "YOUR_SORCERER_UID";
   const rank = isDjehuty ? "Sorcerer of Cyber Glyphs" : "Initiate Scribe of the First Hour";
@@ -24,9 +34,21 @@ export default function ScribeDossierPage() {
 
       {/* 🔙 RETURN NAVIGATION */}
       <div className="w-full max-w-md pt-6 flex justify-start z-20">
-        <Link href="/" className="flex items-center gap-2 text-cyan-600 hover:text-cyan-400 transition-colors font-headline text-xs tracking-widest uppercase">
-          <ChevronLeft className="w-4 h-4" /> RETURN TO MAIN HALL
-        </Link>
+          <button
+                 onClick={handleReturn}
+                 className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
+               >
+                 {/* The Pylon: Expanded to the very edge of the stone */}
+                 <FirstPylonIcon
+                   size={80}
+                   className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+                 />
+       
+                 {/* The Text: Tightly integrated foundation */}
+                 <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
+                   To Main Hall
+                 </span>
+               </button>  
       </div>
 
       {/* 🏛️ HEADER: Compact Mobile Identity */}

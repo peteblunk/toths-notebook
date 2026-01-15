@@ -4,16 +4,21 @@ import { Wind, History, Scroll } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
+import { useRouter } from "next/navigation"
+import { useSidebar } from "@/components/ui/sidebar";
+import { FirstPylonIcon } from "@/components/icons/FirstPylonIcon";
 
 interface GratitudeProps {
   onNext: () => void;
   onBack: () => void;
   onMainHall: () => void;
 }
+
 export function GratitudeBreath({ onNext, onBack, onMainHall }: GratitudeProps) {
   // 🏺 State to handle the "Hydraulic Flash"
   const [isInitiated, setIsInitiated] = useState(false);
-
+  const { setOpenMobile } = useSidebar();
+      const router = useRouter();
   const handleInitiate = () => {
     setIsInitiated(true);
     // 🌬️ A slightly faster transition here to keep the "Spiritual Flow"
@@ -21,16 +26,31 @@ export function GratitudeBreath({ onNext, onBack, onMainHall }: GratitudeProps) 
       onNext();
     }, 2000); 
   };
-
+const handleReturn = () => {
+    setOpenMobile(false);
+    router.push("/");
+  };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-1000 border-4 border-cyan-500/10 m-2 rounded-3xl">
       <div className="w-full flex justify-between items-start mb-8 px-2">
         <button onClick={onBack} className="flex items-center gap-3 p-2 px-4 border-2 border-lime-500 rounded-xl bg-lime-500/10 text-lime-500 font-headline font-bold text-xs tracking-[0.2em] hover:bg-lime-500/20 transition-all">
           <History size={16} /> BACK
         </button>
-        <button onClick={onMainHall} className="flex items-center gap-3 p-2 px-4 border-2 border-[hsl(280,100%,60%)] rounded-xl bg-[hsl(280,100%,60%)]/10 text-[hsl(280,100%,60%)] font-headline font-bold text-xs tracking-[0.2em] hover:bg-[hsl(280,100%,60%)]/20 transition-all">
-          <Scroll size={16} /> MAIN HALL
-        </button>
+       <button
+                 onClick={handleReturn}
+                 className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
+               >
+                 {/* The Pylon: Expanded to the very edge of the stone */}
+                 <FirstPylonIcon
+                   size={80}
+                   className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+                 />
+       
+                 {/* The Text: Tightly integrated foundation */}
+                 <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
+                   To Main Hall
+                 </span>
+               </button>
       </div>
 
       <div className="mb-8 animate-pulse">

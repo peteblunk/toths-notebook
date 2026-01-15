@@ -28,12 +28,21 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { FirstPylonIcon } from '@/components/icons/FirstPylonIcon';
+import { useSidebar } from '@/components/ui/sidebar';
+import { useRouter } from 'next/navigation';
+
 
 export default function ManageRitualsPage() {
     const [rituals, setRituals] = useState<Task[]>([]);
     const { user } = useAuth();
     const { toast } = useToast();
-
+ const { setOpenMobile } = useSidebar();
+      const router = useRouter();
+  const handleReturn = () => {
+    setOpenMobile(false);
+    router.push("/");
+  };
     // State to manage the Editing Dialog
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedRitual, setSelectedRitual] = useState<Task | null>(null);
@@ -116,12 +125,23 @@ const StreakPips = ({ history }: { history: number[] }) => {
 };
     return (
         <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
-            <Button asChild variant="ghost" className="mb-4 text-primary hover:text-primary-10">
-                <Link href="/">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Return to Main Hall
-                </Link>
-            </Button>
+           <div className="w-full flex justify-end mb-6">
+          <button
+          onClick={handleReturn}
+          className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
+        >
+          {/* The Pylon: Expanded to the very edge of the stone */}
+          <FirstPylonIcon
+            size={80}
+            className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+          />
+
+          {/* The Text: Tightly integrated foundation */}
+          <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
+            To Main Hall
+          </span>
+        </button>  
+            </div>
             <div className="mb-6 border-b border-cyan-900/50 pb-4">
                 <h1 className="text-3xl font-headline text-primary tracking-wider">Manage Daily Rituals</h1>
                 <p className="text-muted-foreground">View, edit, or banish the tasks that are created for you each day.</p>

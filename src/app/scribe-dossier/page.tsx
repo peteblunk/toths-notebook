@@ -1,26 +1,31 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { usePWA } from "@/hooks/use-PWA";
-import { Download, ShieldCheck, Trophy, Scroll, Fingerprint, ChevronLeft } from "lucide-react";
+import { Download, ShieldCheck, Trophy, Scroll, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ThothChipAltar } from "@/components/thoth-chip-altar";
 import { FirstPylonIcon } from "@/components/icons/FirstPylonIcon";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
+import { IstanbulDial } from "@/components/IstanbulDial"; 
+import { CryptoObeliskOverlay } from '@/components/CryptoObeliskOverlay';
+
+
 
 
 export default function ScribeDossierPage() {
   const { user } = useAuth();
   const { installChip, isInstalled, canInstall } = usePWA();
-   const { setOpenMobile } = useSidebar();
-        const router = useRouter();
-    const handleReturn = () => {
-      setOpenMobile(false);
-      router.push("/");
-    };
+  const { setOpenMobile } = useSidebar();
+  const router = useRouter();
+  const handleReturn = () => {
+    setOpenMobile(false);
+    router.push("/");
+  };
   {/* 1. Logic at the top of the component */ }
   const isDjehuty = user?.uid === "YOUR_SORCERER_UID";
   const rank = isDjehuty ? "Sorcerer of Cyber Glyphs" : "Initiate Scribe of the First Hour";
@@ -34,21 +39,21 @@ export default function ScribeDossierPage() {
 
       {/* 🔙 RETURN NAVIGATION */}
       <div className="w-full max-w-md pt-6 flex justify-start z-20">
-          <button
-                 onClick={handleReturn}
-                 className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
-               >
-                 {/* The Pylon: Expanded to the very edge of the stone */}
-                 <FirstPylonIcon
-                   size={80}
-                   className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
-                 />
-       
-                 {/* The Text: Tightly integrated foundation */}
-                 <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
-                   To Main Hall
-                 </span>
-               </button>  
+        <button
+          onClick={handleReturn}
+          className="flex flex-col items-center justify-center p-0.1 rounded-2xl border-2 border-cyan-400 bg-cyan-950/40 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)] min-w-[110px]"
+        >
+          {/* The Pylon: Expanded to the very edge of the stone */}
+          <FirstPylonIcon
+            size={80}
+            className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+          />
+
+          {/* The Text: Tightly integrated foundation */}
+          <span className="font-headline font-bold text-[8px] tracking-[0.em] uppercase text-cyan-300 mt-[-4px] mb-1">
+            To Main Hall
+          </span>
+        </button>
       </div>
 
       {/* 🏛️ HEADER: Compact Mobile Identity */}
@@ -75,17 +80,20 @@ export default function ScribeDossierPage() {
 
       {/* 🏺 THE DOSSIER CONTENT: Vertical Stacking */}
       <div className="w-full max-w-md space-y-6 relative z-10">
+        {/* COURT I: CRTYPOGRAPHIC OBELISK OF ISTANBUL (Now modular and clean) */}
+        {/* 🗿 THE SENTINEL OF THE ARCHIVE */}
+  <div className="flex justify-center w-full">
+    <CryptoObeliskOverlay />
+  </div>
 
-        {/* COURT I: THE THOTH CHIP (Optimized for small screens) */}
+        {/* COURT II: THE THOTH CHIP (Now modular and clean) */}
+        <ThothChipAltar
+          isInstalled={isInstalled}
+          canInstall={canInstall}
+          installChip={installChip}
+        />
 
-      {/* COURT I: THE THOTH CHIP (Now modular and clean) */}
-  <ThothChipAltar 
-    isInstalled={isInstalled} 
-    canInstall={canInstall} 
-    installChip={installChip} 
-  />
-
-        {/* COURT II: RITUAL MASTERY */}
+        {/* COURT III: RITUAL MASTERY */}
         <div className="grid grid-cols-2 gap-4">
           <div className="p-5 border border-cyan-900/30 bg-black/40 rounded-2xl flex flex-col items-center gap-3 text-center">
             <Trophy className="text-pink-600 w-6 h-6" />

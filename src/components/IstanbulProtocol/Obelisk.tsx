@@ -26,14 +26,22 @@ export const Obelisk = ({ ritualStage, color = "#00FFFF" }: { ritualStage: numbe
       />
       
       {/* THE CAPSTONE (The Benben Stone): Remains at the Summit */}
-      <path
-        id="capstone"
-        d="M 15.688,30.612 27.5,12.2 39.311,30.612 Z"
-        fill="#feff09"
-        className={`transition-all duration-1000 ${
-          ritualStage >= 2 ? "drop-shadow-[0_0_15px_#feff09]" : "drop-shadow-[0_0_5px_rgba(254,255,9,0.5)]"
-        }`}
-      />
+      {/* THE CAPSTONE (The Benben Stone) - Resonant Cyber Red */}
+<path
+  id="capstone"
+  d="M 15.588,30.612 27.5,10.388 39.4,30.612 Z"
+  fill="#db0909" // Deep base red
+  stroke="#8b0000" // Vibrant red edge
+  strokeWidth="0.2"
+  className={`transition-all duration-1000 ${
+    ritualStage >= 2 
+      ? "drop-shadow-[0_0_15px_rgba(255,0,0.8)] fill-red-700" 
+      : "drop-shadow-[0_0_5px_rgba(139,0,0,0.5)]"
+  }`}
+  style={{
+    filter: ritualStage >= 2 ? 'drop-shadow(0 0 3px #ff0000)' : 'none'
+  }}
+/>
 
       <style jsx global>{`
         @keyframes obelisk-float {

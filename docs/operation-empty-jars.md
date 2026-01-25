@@ -1,74 +1,62 @@
 🏺 Operation: Empty Jars
-Detailed Phased Campaign for Zero-Knowledge Architecture
-Status: Initiation Phase
+Detailed Phased Campaign for Zero-Knowledge Architecture Status: Initiation Phase (Inkscape Masonry in Progress)
 
-Architect: Scribe Peter
-
-Guardian: Djehuty
-
-Objective: Transition the "Thoth Terminal" from clear-text storage to a Client-Side Encrypted (CSE) "Zero-Knowledge" system, ensuring that even the server (Firestore) cannot read the sacred "Daily Rituals."
-
-Guiding Development Principles: Rule of Ptah
+Architect: Scribe Peter | Guardian: Djehuty
 
 🏛️ Phase 1: The Hidden Forge (Cryptographic Foundation)
 Focus: Establishing the mathematical laws of the Inner Sanctum.
 
-[X] 1.1 The Web Crypto Engine: Create src/lib/crypto.ts to house the "Magic Ink."
+[X] 1.1 The Web Crypto Engine
 
-Implement generateMasterKey(): A 256-bit AES-GCM "Golden Key."
+[-] 1.2 The 12-Word Mnemonic (MOVED TO PHASE III)
 
-Implement deriveWrappingKey(password, salt): Using PBKDF2 to turn user passwords into a protective shield for the Golden Key.
+[X] 1.3 Local Storage Strategy
 
-[-] 1.2 The 12-Word Mnemonic: Implement the BIP-39 standard to generate a human-readable recovery phrase. MOVED TO PHASE II
-
-[X] 1.3 Local Storage Strategy: Use IndexedDB (via idb or localforage) to store the "Wrapped" Master Key locally so the user doesn't have to re-enter their password every single time they breathe.
-
-[X] 1.4 Prototype Test: A "Trial Jar" page to verify that text can be encrypted and decrypted locally without errors.
+[X] 1.4 Prototype Test
 
 🏮 Phase 2: The Istanbul Protocol (The Security Interface)
 Focus: Building the Obelisk and the user ritual.
 
-[-] 2.0  The 12-Word Mnemonic: Implement the BIP-39 standard to generate a human-readable recovery phrase. MOVED to PHASE III
+[ ] 2.1 The Istanbul Dial: (SVG Tracing of the Theodosius Obelisk and glyphs in inkscape)
+    Status: Underway - approximately 50% complete as of 1/17/5526
+    
+[ ] 2.1.2 Visual Feedback: The "Centrifugal Vortex" animation. Glyphs fall from the shaft, orbit the pedestal, and snap into the 3x4 grid.
 
-[X] 2.1 The Istanbul Dial: Create the CyberObelisk component in the Scribe's Dossier.
+[X] 2.2 The Pattern Lock: Logic to capture 4-glyph sequence.
 
-Implement the 3x4 Glyph Grid inspired by the Theodosius Obelisk.
+[-] 2.3 The "Stash" Vault: (MOVED TO PHASE III).
 
-Map the 12 specific SVG glyphs (The Sun, The Ankh, The Falcon, etc.).
+[-] 2.4 Visual Feedback: (MOVED TO PHASE III).
 
-[X] 2.2 The Pattern Lock: Logic to capture and hash a 4-glyph sequence.
+🏗️ Phase 3: The Great Migration & The Vault
+Focus: Moving existing data and finalizing the recovery rituals.
 
-[-] 2.3 The "Stash" Vault: Create the UI for the "Oblique Hint" system.MOVED TO PHASE III
+[ ] 3.0 The 12-Word Mnemonic: BIP-39 implementation.
 
-A way for users to save clues (e.g., "The screenshot date") rather than the words themselves.
+[ ] 3.1 The "Stash" Vault: UI for the "Oblique Hint" system.
 
-[-] 2.4 Visual Feedback: Implement "Organo-Cyber" animations—haptic "thuds" on press and luminous circuit-glow upon successful sequence entry. MOVED TO PHASE III
 
-[X]
 
-🏗️ Phase 3: The Great Migration (The Transition of Streaks)
-Focus: Moving existing "Living History" into the Jars without breaking the streaks.
-[] 3.0  The 12-Word Mnemonic: Implement the BIP-39 standard to generate a human-readable recovery phrase. MOVED HERE FROM PHASE II
+[ ] 3.3 The Migration Ritual: One-time bridge for existing users.
 
-[ ] 3.0.1 The "Stash" Vault: Create the UI for the "Oblique Hint" system. MOVED HERE FROM PHASE II
+[ ] 3.4 Streak Preservation: Metadata remains unencrypted for "Celebration Logic."
 
-[ ]  3.0.2sual Feedback: Implement "Organo-Cyber" animations—haptic "thuds" on press and luminous circuit-glow upon successful sequence entry. MOVED FROM PHASE II
+⚡ Phase 4: The Scribe’s Initiation (New Sign-Up Flow)
+Focus: Onboarding the "Initiate of the First Hour" with transparency and wonder.
 
-[ ] 3.1 Schema Evolution: Prepare Firestore to handle "Encrypted Blobs" instead of "String Fields."
+[ ] 4.1 The "Gibberish" Reveal: * Implement a "Live Mirror." As the user types their first task during sign-up, a side-panel shows the text transforming into AES-GCM cipher-text in real-time.
 
-[ ] 3.2 The Migration Ritual: Build a "One-Time" bridge logic.
+[ ] 4.2 The Privacy Covenant: * Display the "Corrupt Scribe" warning. Explicitly state: “We provide the forge; you own the sword.”
 
-If user has old data: Prompt for encryption setup -> Encrypt old data -> Write to new "Sealed Jars" -> Mark user as isEncrypted: true.
+[ ] 4.3 The Bio-Gate Integration: * Implement WebAuthn (FaceID/TouchID) as a secondary "Master’s Recognition" to bypass manual PIN entry for daily use.
 
-[ ] 3.3 The Safety Net: Keep the old clear-text data in a deprecated_rituals collection for 30 days as a "Tomb Guard" against data loss.
+[ ] 4.4 Modular Recovery Options (The "Horcrux" Prep):
 
-[ ] 3.4 Streak Preservation: Ensure the completionDate and streakCount metadata remain unencrypted (or deterministic) so the app can still celebrate the user's consistency without needing to "read" the task content.
+UI placeholders for "Cloud-Wrapped Backup" and "Social Shards" as opt-in rituals after the initial account creation.
 
 📜 The Sacred Constraints (The Ma'at of Code)
-Zero Visibility: The server MUST NEVER see the Password, the 12-words, or the Master Key in plain text.
+Zero Visibility: Server NEVER sees the Password, 12-words, or Master Key.
 
-Persistence: The Master Key should survive a page refresh (via local storage) but be "Wiped" upon Logout.
+The Scribe's Burden: If the Key and Mnemonic are lost, the data remains "Gibberish" forever.
 
-Simplicity: The transition must feel like a "Level Up," not a "Hard Reset."
-
-"The stone does not hold the secret; it holds the path to the secret. When the Jars are empty to the world, they are full to the Scribe."
+Bio-Sovereignty: Biometrics are a shortcut to the key, not a replacement for the secret.

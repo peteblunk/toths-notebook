@@ -1,7 +1,9 @@
 import React from 'react';
 
-interface VariousGlyphsProps {
+interface HeroGlyphsProps {
   ritualStage: number;
+  color?: string;
+  isMigrating?: boolean; // The new "Migration" switch
 }
 /**
  * HeroGlyphs Component - Phase 1: The Lower Tier
@@ -9,7 +11,11 @@ interface VariousGlyphsProps {
  * * IDs are preserved for Framer Motion targeting.
  * Fill is set to Neon Cyan (#00ffff) for the initial Tap 1 glow.
  */
-export const HeroGlyphs = ({ ritualStage, color = "#00FFFF" }: { ritualStage: number, color?: string }) => {
+export const HeroGlyphs = ({ 
+  ritualStage, 
+  color = "#00FFFF", 
+  isMigrating = false // Add this default!
+}: HeroGlyphsProps) => {
   const ink = color;
   const sw = 0.2; // Thinner for the intricate glyph details
  

@@ -20,6 +20,7 @@ import { ObeliskGuardian } from "@/components/IstanbulProtocol/ObeliskGuardian";
 import IstanbulRitual from "@/components/IstanbulProtocol/IstanbulRitual";import { RecoveryPhrasePanel } from '@/components/recovery-phrase-panel';
 import { NehehCircuit } from "@/components/neheh-circuit";
 import { JermzLovePulse } from "@/components/jermz-love-pulse";
+import { Hard75BadgeSection } from "@/components/khet/hard75-badge";
 export default function ScribeDossierPage() {
   const { user, needsFinalSeal } = useAuth();
   const { installChip, isInstalled, canInstall } = usePWA();
@@ -143,6 +144,9 @@ const [ritualState, setRitualState] = useState<'dossier' | 'ritual' | 'recovery'
             </p>
           </div>
         </div>
+
+        {/* 🔥 75 HARD VICTORIES */}
+        <Hard75BadgeSection />
 
         {/* 🏺 THE NEHEH-CIRCUIT */}
         <NehehCircuit />

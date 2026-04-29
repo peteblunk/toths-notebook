@@ -41,6 +41,8 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/
 import { KhonsuTimer } from "@/components/khonsu-timer";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { useIphtyNodeActive } from "@/hooks/use-iphty-link";
+import { use75Hard } from "@/hooks/use-75hard";
+import { Flame } from "lucide-react";
 
 interface AppSidebarProps {
   activeCategory: string;
@@ -51,6 +53,9 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
   const { user } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
   const hasActiveIphtyChannels = useIphtyNodeActive();
+  const { data: hardData, daysCompleted, effectiveDays } = use75Hard();
+  const hardActive = hardData?.active ?? false;
+  const hardMode = hardData?.mode ?? 'super';
 
   const handleSignOut = async () => {
     try {
@@ -95,6 +100,21 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
           </h1>
           <MoonPhaseIcon />
         </div>
+        {hardActive && (
+          <Link
+            href="/khet/dashboard"
+            onClick={handleNavClick}
+            className="mx-2 mb-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-red-600/50 bg-red-950/30 shadow-[0_0_10px_rgba(220,38,38,0.2)] hover:border-red-500 hover:bg-red-950/50 hover:shadow-[0_0_14px_rgba(220,38,38,0.35)] transition-all duration-200 cursor-pointer"
+          >
+            <Flame className="w-3 h-3 text-red-500 flex-shrink-0" />
+            <span className="text-[9px] font-headline uppercase tracking-[0.25em] text-red-400 leading-none">
+              75-Hard{hardMode === 'easy' ? ' (Easy)' : ''}
+            </span>
+            <span className="ml-auto text-[9px] font-headline font-bold text-red-300 tabular-nums">
+              {effectiveDays}/75
+            </span>
+          </Link>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="flex-grow overflow-visible px-2 space-y-12 mt-8">

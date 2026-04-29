@@ -124,6 +124,11 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
+
+    // 13. 75 HARD PROTOCOL: One document per user, keyed by userId
+    match /hardMode75/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     
   }
 }

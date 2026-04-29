@@ -3,10 +3,11 @@
 import React from 'react';
 import { TaskCard } from '@/components/task-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Scroll } from 'lucide-react';
+import { Scroll, Flame, CheckCircle2 } from 'lucide-react';
 import { useTasks } from '@/hooks/use-tasks';
 import { type Task } from '@/lib/types';
 import { CATEGORY_LABELS } from '@/lib/types';
+import { use75Hard } from '@/hooks/use-75hard';
 
 interface TaskListProps {
   filter: string;
@@ -20,6 +21,12 @@ export function TaskList({ filter }: TaskListProps) {
     toggleTask,
     deleteTask
   } = useTasks(filter);
+
+  const { data: hardData, todayLog: hardToday, dayNumber: hardDayNumber } = use75Hard();
+  const show75HardTile =
+    filter === 'Today' &&
+    (hardData?.active ?? false) &&
+    hardToday.complete;
 
   // ------------------------------------------------------------------
   // 1. THE PERSISTENCE LOGIC (The Scribe's Day)
@@ -144,12 +151,33 @@ export function TaskList({ filter }: TaskListProps) {
         ))}
       </div>
 
-      {isTemporal && maat.length > 0 && (
+      {(isTemporal && (maat.length > 0 || show75HardTile)) && (
         <div className="space-y-4 pt-4 relative">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
           <h3 className="text-xs font-bold text-amber-500 uppercase tracking-[0.2em] pl-1 mb-4 flex items-center gap-2">
             <span className="text-lg">☥</span> Ma'at (Order & Truth)
           </h3>
+
+          {/* 75 Hard completion tile */}
+          {show75HardTile && (
+            <div className="flex items-center gap-4 px-4 py-3 rounded-xl border border-emerald-500/60 bg-emerald-950/20 shadow-[0_0_18px_rgba(16,185,129,0.2)]">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg border border-emerald-500/50 bg-emerald-950/40 flex-shrink-0">
+                <Flame className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-headline uppercase tracking-[0.2em] text-emerald-300">
+                    75 Hard — Day {hardDayNumber} Complete
+                  </span>
+                </div>
+                <p className="text-[10px] text-emerald-600 mt-0.5">
+                  All protocols observed. The feather is balanced.
+                </p>
+              </div>
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0" />
+            </div>
+          )}
+
           <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">
             {maat.map((task) => (
               <TaskCard

@@ -42,6 +42,7 @@ import { StandaloneCardioPanel } from './standalone-cardio-panel';
 import { StandaloneAbsPanel } from './standalone-abs-panel';
 import type { WorkoutProgram, DeloadStrategy } from '@/lib/khet-types';
 import { cn, localDateStr } from '@/lib/utils';
+import { Khet75Hard } from './khet-75hard';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -105,6 +106,9 @@ export function KhetDashboard() {
           New Program
         </Button>
       </div>
+
+      {/* 75 Hard Protocol — sits directly under New Program */}
+      <Khet75Hard />
 
       {/* Action row: Gainz + Athlete Profile + Diary */}
       <div className="flex gap-2">

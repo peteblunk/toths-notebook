@@ -4,13 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import {
   X, Trophy, Flame, Clock, Zap, BarChart2, TrendingUp,
-  Dumbbell, CheckCircle2, Weight, Pencil, Trash2, Plus, Calendar,
+  Dumbbell, CheckCircle2, Weight, Pencil, Trash2, Plus, Calendar, Activity,
 } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
+import { useMobility } from '@/hooks/use-mobility';
 import { cn, localDateStr } from '@/lib/utils';
 import type { GlobalStats, FoundationalPR, KhetUserSettings, WeekStats } from '@/lib/khet-types';
 import { FOUNDATIONAL_MOVEMENTS } from '@/lib/khet-types';
 import type { WeightUnit } from '@/lib/khet-types';
+import type { MobilityStats } from '@/lib/mobility-types';
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -60,6 +62,129 @@ function Heatmap({ days }: { days: GlobalStats['heatmap'] }) {
         <div className="w-2.5 h-2.5 rounded-sm bg-amber-400 ml-2" />
         <span className="text-[9px] text-zinc-600">2+</span>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 90-day Mobility heatmap (blue palette)
+// ─────────────────────────────────────────────────────────────
+function MobilityHeatmap({ days }: { days: MobilityStats['heatmap'] }) {
+  const weeks: typeof days[] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  return (
+    <div className="space-y-1">
+      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+        90-Day Mobility Heat Map
+      </p>
+      <div className="flex gap-0.5">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-0.5">
+            {week.map((day) => (
+              <div
+                key={day.date}
+                title={`${day.date}: ${day.count} session${day.count !== 1 ? 's' : ''}${
+                  day.hasLevelUp ? ' ⚡ Level-Up' : ''
+                }`}
+                className={cn(
+                  'w-3 h-3 rounded-sm transition-colors',
+                  day.count === 0 && 'bg-zinc-800',
+                  day.count > 0 && !day.hasLevelUp && 'bg-blue-400',
+                  day.count > 0 &&  day.hasLevelUp && 'bg-blue-700',
+                )}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
+        <span className="text-[9px] text-zinc-600">None</span>
+        <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 ml-2" />
+        <span className="text-[9px] text-zinc-600">Done</span>
+        <div className="w-2.5 h-2.5 rounded-sm bg-blue-700 ml-2" />
+        <span className="text-[9px] text-zinc-600">Level-Up ⚡</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Mobility Dashboard tab
+// ─────────────────────────────────────────────────────────────
+function MobilityDashboard({ stats }: { stats: MobilityStats }) {
+  const hours   = Math.floor(stats.totalMinutes / 60);
+  const minutes = stats.totalMinutes % 60;
+  const timeLabel = stats.totalMinutes > 0
+    ? `${hours > 0 ? `${hours}h ` : ''}${minutes}m`
+    : '—';
+
+  const levelUpPct = stats.totalSessions > 0
+    ? Math.round((stats.levelUpSessions / stats.totalSessions) * 100)
+    : 0;
+
+  const STAT_TILES = [
+    { label: 'Total Sessions',    value: String(stats.totalSessions),    levelUp: false },
+    { label: 'Time on the Mat',   value: timeLabel,                      levelUp: false },
+    { label: 'Current Streak',    value: `${stats.currentStreakWeeks}w`, levelUp: false },
+    { label: 'Longest Streak',    value: `${stats.longestStreakWeeks}w`, levelUp: false },
+    { label: '⚡ Level-Up Sessions', value: String(stats.levelUpSessions), levelUp: true },
+    { label: '⚡ Level-Up Rate',    value: `${levelUpPct}%`,              levelUp: true },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Stat grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {STAT_TILES.map(({ label, value, levelUp }) => (
+          <div
+            key={label}
+            className={cn(
+              'rounded-lg border px-3 py-2.5 flex items-start gap-2',
+              levelUp
+                ? 'border-blue-800/60 bg-blue-950/20'
+                : 'border-blue-900/40 bg-blue-950/10',
+            )}
+          >
+            <Activity className={cn('w-3.5 h-3.5 flex-shrink-0 mt-0.5', levelUp ? 'text-blue-300' : 'text-blue-500')} />
+            <div className="min-w-0">
+              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className={cn('text-sm font-headline mt-0.5 leading-tight', levelUp ? 'text-blue-100' : 'text-blue-200')}>{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Heatmap */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <MobilityHeatmap days={stats.heatmap} />
+      </div>
+
+      {/* Streak callout */}
+      {stats.currentStreakWeeks >= 4 && (
+        <div className="rounded-lg border border-blue-600/40 bg-blue-950/10 p-3 flex items-center gap-2">
+          <Flame className="w-4 h-4 text-blue-400 flex-shrink-0" />
+          <p className="text-xs text-blue-200">
+            <strong>{stats.currentStreakWeeks}-week streak</strong> — Consistency carves the body.
+          </p>
+        </div>
+      )}
+
+      {/* Per-program breakdown */}
+      {stats.programBreakdown.length > 1 && (
+        <div className="space-y-1.5">
+          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          {stats.programBreakdown.map(({ programName, sessions }) => (
+            <div
+              key={programName}
+              className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
+            >
+              <span className="text-xs text-zinc-400 truncate">{programName}</span>
+              <span className="text-xs font-headline text-blue-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -334,10 +459,12 @@ interface GainzPanelProps {
 
 export function GainzPanel({ onClose }: GainzPanelProps) {
   const { getGlobalStats, getUserSettings, setManualPR, deleteManualPR } = useKhet();
+  const { getMobilityStats } = useMobility();
   const [stats, setStats] = useState<GlobalStats | null>(null);
+  const [mobilityStats, setMobilityStats] = useState<MobilityStats | null>(null);
   const [settings, setSettings] = useState<KhetUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'power' | 'hall'>('power');
+  const [tab, setTab] = useState<'power' | 'hall' | 'mobility'>('power');
   const [editingPR, setEditingPR] = useState<FoundationalPR | null>(null);
   const [addingPR, setAddingPR] = useState(false);
 
@@ -346,12 +473,13 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    Promise.all([getGlobalStats(), getUserSettings()]).then(([s, cfg]) => {
+    Promise.all([getGlobalStats(), getUserSettings(), getMobilityStats()]).then(([s, cfg, mob]) => {
       setStats(s);
       setSettings(cfg);
+      setMobilityStats(mob);
       setLoading(false);
     });
-  }, [getGlobalStats, getUserSettings]);
+  }, [getGlobalStats, getUserSettings, getMobilityStats]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -398,10 +526,11 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-4 pb-3 flex-shrink-0">
-          {([
-            { id: 'power', label: 'Power Dashboard', icon: BarChart2 },
-            { id: 'hall',  label: 'Hall of PRs',     icon: Trophy },
+        <div className="flex gap-1 px-4 pb-3 flex-shrink-0 flex-wrap">
+          {([  
+            { id: 'power',    label: 'Power',    icon: BarChart2 },
+            { id: 'hall',     label: 'Hall of PRs', icon: Trophy },
+            { id: 'mobility', label: 'Mobility', icon: Activity },
           ] as const).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -436,7 +565,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             </div>
           ) : tab === 'power' ? (
             <PowerDashboard stats={stats} />
-          ) : (
+          ) : tab === 'hall' ? (
             <HallOfPRs
               stats={stats}
               bodyWeight={bodyWeight}
@@ -444,6 +573,15 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
               onEditPR={(pr) => { setEditingPR(pr); setAddingPR(false); }}
               onAddPR={() => { setEditingPR(null); setAddingPR(true); }}
             />
+          ) : mobilityStats ? (
+            <MobilityDashboard stats={mobilityStats} />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-40 gap-3">
+              <Activity className="w-10 h-10 text-zinc-700" />
+              <p className="text-zinc-500 text-sm text-center">
+                Complete your first mobility session to unlock this chronicle.
+              </p>
+            </div>
           )}
         </div>
 

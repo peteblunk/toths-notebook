@@ -43,6 +43,7 @@ import { StandaloneAbsPanel } from './standalone-abs-panel';
 import type { WorkoutProgram, DeloadStrategy } from '@/lib/khet-types';
 import { cn, localDateStr } from '@/lib/utils';
 import { Khet75Hard } from './khet-75hard';
+import { KhetMobility, MobilityLaunchButton } from './khet-mobility';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -91,27 +92,31 @@ export function KhetDashboard() {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div>
+        <div className="mb-4">
           <h2 className="font-headline text-amber-400 text-xl uppercase tracking-widest">
             Khet-Station
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">Mass Displacement Engine</p>
         </div>
-        <Button
-          onClick={() => setWizardOpen(true)}
-          className="bg-amber-600 hover:bg-amber-500 text-black font-headline uppercase tracking-widest text-xs h-8"
-        >
-          <Plus className="w-3.5 h-3.5 mr-1" />
-          New Program
-        </Button>
+        {/* Program launch buttons */}
+        <div className="space-y-2">
+          <button
+            onClick={() => setWizardOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-amber-500/70 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 hover:border-amber-400 font-headline uppercase tracking-widest text-sm transition-all shadow-[0_0_14px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] active:scale-[0.98]"
+          >
+            <Dumbbell className="w-4 h-4" />
+            Create Strength Program
+          </button>
+          <MobilityLaunchButton />
+        </div>
       </div>
 
       {/* 75 Hard Protocol — sits directly under New Program */}
       <Khet75Hard />
 
-      {/* Action row: Gainz + Athlete Profile + Diary */}
-      <div className="flex gap-2">
+      {/* Action row: Gainz + Athlete Profile + Diary + Log Cardio + Log Abs */}
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setGainzOpen(true)}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-700 bg-zinc-950/40 hover:border-amber-600/40 hover:bg-amber-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-300 hover:text-amber-300"
@@ -133,10 +138,6 @@ export function KhetDashboard() {
           <BookOpen className="w-4 h-4" />
           Diary
         </button>
-      </div>
-
-      {/* Quick-log row: standalone Cardio + Abs */}
-      <div className="flex gap-2">
         <button
           onClick={() => setStandaloneCardioOpen(true)}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-cyan-800/50 bg-zinc-950/40 hover:border-cyan-600/60 hover:bg-cyan-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-400 hover:text-cyan-300"
@@ -179,6 +180,11 @@ export function KhetDashboard() {
           onDelete={() => handleDelete(program.id)}
         />
       ))}
+
+      {/* Mobility & Recovery — below strength program cards */}
+      <div className="space-y-3">
+        <KhetMobility />
+      </div>
 
       {/* Program Wizard — create */}
       <ProgramWizard

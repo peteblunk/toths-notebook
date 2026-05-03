@@ -445,7 +445,7 @@ export function MobilityLaunchButton() {
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-blue-500/60 bg-blue-950/20 text-blue-300 hover:bg-blue-950/40 hover:border-blue-400 font-headline uppercase tracking-widest text-sm transition-all shadow-[0_0_14px_rgba(59,130,246,0.15)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-[0.98]"
       >
         <Activity className="w-4 h-4" />
-        Start Mobility Program
+        Create Mobility Program
       </button>
       <MobilityProgramWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
     </>

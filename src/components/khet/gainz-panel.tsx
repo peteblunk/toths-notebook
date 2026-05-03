@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useMobility } from '@/hooks/use-mobility';
+import { useCore } from '@/hooks/use-core';
 import { cn, localDateStr } from '@/lib/utils';
 import type { GlobalStats, FoundationalPR, KhetUserSettings, WeekStats } from '@/lib/khet-types';
 import { FOUNDATIONAL_MOVEMENTS } from '@/lib/khet-types';
 import type { WeightUnit } from '@/lib/khet-types';
 import type { MobilityStats } from '@/lib/mobility-types';
+import type { CoreStats, CoreFitnessLevel } from '@/lib/core-types';
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -181,6 +183,195 @@ function MobilityDashboard({ stats }: { stats: MobilityStats }) {
             >
               <span className="text-xs text-zinc-400 truncate">{programName}</span>
               <span className="text-xs font-headline text-blue-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 90-day Core heatmap (orange palette)
+// ─────────────────────────────────────────────────────────────
+function CoreHeatmap({ days }: { days: CoreStats['heatmap'] }) {
+  const weeks: typeof days[] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  return (
+    <div className="space-y-1">
+      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+        90-Day Core Heat Map
+      </p>
+      <div className="flex gap-0.5">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-0.5">
+            {week.map((day) => (
+              <div
+                key={day.date}
+                title={`${day.date}: ${day.count} session${day.count !== 1 ? 's' : ''}`}
+                className={cn(
+                  'w-3 h-3 rounded-sm transition-colors',
+                  day.count === 0 && 'bg-zinc-800',
+                  day.count === 1 && 'bg-orange-600',
+                  day.count >= 2 && 'bg-orange-400',
+                )}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
+        <span className="text-[9px] text-zinc-600">None</span>
+        <div className="w-2.5 h-2.5 rounded-sm bg-orange-600 ml-2" />
+        <span className="text-[9px] text-zinc-600">1</span>
+        <div className="w-2.5 h-2.5 rounded-sm bg-orange-400 ml-2" />
+        <span className="text-[9px] text-zinc-600">2+</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Level Roadmap
+// ─────────────────────────────────────────────────────────────
+const CORE_LEVELS: CoreFitnessLevel[] = ['Beginner', 'Intermediate', 'Advanced', 'Elite'];
+const LEVEL_COLORS: Record<CoreFitnessLevel, string> = {
+  Beginner:     'bg-green-500 border-green-500 text-black',
+  Intermediate: 'bg-amber-400 border-amber-400 text-black',
+  Advanced:     'bg-orange-500 border-orange-500 text-black',
+  Elite:        'bg-red-500 border-red-500 text-white',
+};
+const LEVEL_DIM: Record<CoreFitnessLevel, string> = {
+  Beginner:     'border-green-800/40 text-green-700',
+  Intermediate: 'border-amber-800/40 text-amber-700',
+  Advanced:     'border-orange-800/40 text-orange-700',
+  Elite:        'border-red-800/40 text-red-800',
+};
+
+function LevelRoadmap({ breakdown }: { breakdown: CoreStats['programBreakdown'] }) {
+  // Derive highest achieved level from program breakdown names/sessions
+  // We map program breakdown by checking which levels have sessions
+  const levelSessions: Record<CoreFitnessLevel, number> = {
+    Beginner: 0, Intermediate: 0, Advanced: 0, Elite: 0,
+  };
+  // programBreakdown entries have programName — we annotate with level via the program name
+  // Since we don't have level in the breakdown, use session count as a proxy signal;
+  // The roadmap shows progress nodes regardless.
+  let total = 0;
+  breakdown.forEach(({ sessions }) => { total += sessions; });
+
+  // Simple tier thresholds: Beginner 0-9, Intermediate 10-29, Advanced 30-59, Elite 60+
+  const achievedIdx =
+    total >= 60 ? 3 :
+    total >= 30 ? 2 :
+    total >= 10 ? 1 : 0;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">Level Progression</p>
+      <div className="flex items-center gap-0">
+        {CORE_LEVELS.map((lvl, i) => {
+          const achieved = i <= achievedIdx;
+          const isCurrent = i === achievedIdx;
+          return (
+            <div key={lvl} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <div className={cn(
+                  'w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-headline transition-all',
+                  achieved ? LEVEL_COLORS[lvl] : LEVEL_DIM[lvl],
+                  isCurrent && 'shadow-[0_0_10px_rgba(249,115,22,0.5)] ring-1 ring-orange-400',
+                )}>
+                  {i + 1}
+                </div>
+                <p className={cn(
+                  'text-[8px] font-headline uppercase tracking-wider mt-1 text-center',
+                  achieved ? 'text-zinc-300' : 'text-zinc-700',
+                )}>{lvl}</p>
+              </div>
+              {i < CORE_LEVELS.length - 1 && (
+                <div className={cn(
+                  'h-0.5 flex-1 -mt-4',
+                  i < achievedIdx ? 'bg-orange-600' : 'bg-zinc-800',
+                )} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[9px] text-zinc-600 text-center">
+        {total} total sessions — {total < 10 ? `${10 - total} to Intermediate` : total < 30 ? `${30 - total} to Advanced` : total < 60 ? `${60 - total} to Elite` : 'Elite tier reached'}
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Core Dashboard tab
+// ─────────────────────────────────────────────────────────────
+function CoreDashboard({ stats }: { stats: CoreStats }) {
+  const hours   = Math.floor(stats.totalMinutes / 60);
+  const minutes = stats.totalMinutes % 60;
+  const timeLabel = stats.totalMinutes > 0
+    ? `${hours > 0 ? `${hours}h ` : ''}${minutes}m`
+    : '—';
+
+  const STAT_TILES = [
+    { label: 'Total Sessions',  value: String(stats.totalSessions) },
+    { label: 'Time in the Fire', value: timeLabel },
+    { label: 'Current Streak',   value: `${stats.currentStreakWeeks}w` },
+    { label: 'Longest Streak',   value: `${stats.longestStreakWeeks}w` },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Stat grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {STAT_TILES.map(({ label, value }) => (
+          <div
+            key={label}
+            className="rounded-lg border border-orange-900/40 bg-orange-950/10 px-3 py-2.5 flex items-start gap-2"
+          >
+            <Flame className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-orange-500" />
+            <div className="min-w-0">
+              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline mt-0.5 leading-tight text-orange-200">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Level Roadmap */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <LevelRoadmap breakdown={stats.programBreakdown} />
+      </div>
+
+      {/* Heatmap */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <CoreHeatmap days={stats.heatmap} />
+      </div>
+
+      {/* Streak callout */}
+      {stats.currentStreakWeeks >= 4 && (
+        <div className="rounded-lg border border-orange-600/40 bg-orange-950/10 p-3 flex items-center gap-2">
+          <Flame className="w-4 h-4 text-orange-400 flex-shrink-0" />
+          <p className="text-xs text-orange-200">
+            <strong>{stats.currentStreakWeeks}-week streak</strong> — The core is forged in consistency.
+          </p>
+        </div>
+      )}
+
+      {/* Per-program breakdown */}
+      {stats.programBreakdown.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          {stats.programBreakdown.map(({ programName, sessions }) => (
+            <div
+              key={programName}
+              className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
+            >
+              <span className="text-xs text-zinc-400 truncate">{programName}</span>
+              <span className="text-xs font-headline text-orange-300 flex-shrink-0 ml-2">{sessions} sessions</span>
             </div>
           ))}
         </div>
@@ -460,11 +651,13 @@ interface GainzPanelProps {
 export function GainzPanel({ onClose }: GainzPanelProps) {
   const { getGlobalStats, getUserSettings, setManualPR, deleteManualPR } = useKhet();
   const { getMobilityStats } = useMobility();
+  const { getCoreStats } = useCore();
   const [stats, setStats] = useState<GlobalStats | null>(null);
   const [mobilityStats, setMobilityStats] = useState<MobilityStats | null>(null);
+  const [coreStats, setCoreStats] = useState<CoreStats | null>(null);
   const [settings, setSettings] = useState<KhetUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'power' | 'hall' | 'mobility'>('power');
+  const [tab, setTab] = useState<'power' | 'hall' | 'mobility' | 'core'>('power');
   const [editingPR, setEditingPR] = useState<FoundationalPR | null>(null);
   const [addingPR, setAddingPR] = useState(false);
 
@@ -473,13 +666,14 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    Promise.all([getGlobalStats(), getUserSettings(), getMobilityStats()]).then(([s, cfg, mob]) => {
+    Promise.all([getGlobalStats(), getUserSettings(), getMobilityStats(), getCoreStats()]).then(([s, cfg, mob, core]) => {
       setStats(s);
       setSettings(cfg);
       setMobilityStats(mob);
+      setCoreStats(core);
       setLoading(false);
     });
-  }, [getGlobalStats, getUserSettings, getMobilityStats]);
+  }, [getGlobalStats, getUserSettings, getMobilityStats, getCoreStats]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -531,6 +725,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             { id: 'power',    label: 'Power',    icon: BarChart2 },
             { id: 'hall',     label: 'Hall of PRs', icon: Trophy },
             { id: 'mobility', label: 'Mobility', icon: Activity },
+            { id: 'core',     label: 'Core', icon: Flame },
           ] as const).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -573,16 +768,29 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
               onEditPR={(pr) => { setEditingPR(pr); setAddingPR(false); }}
               onAddPR={() => { setEditingPR(null); setAddingPR(true); }}
             />
-          ) : mobilityStats ? (
-            <MobilityDashboard stats={mobilityStats} />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-40 gap-3">
-              <Activity className="w-10 h-10 text-zinc-700" />
-              <p className="text-zinc-500 text-sm text-center">
-                Complete your first mobility session to unlock this chronicle.
-              </p>
-            </div>
-          )}
+          ) : tab === 'mobility' ? (
+            mobilityStats ? (
+              <MobilityDashboard stats={mobilityStats} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 gap-3">
+                <Activity className="w-10 h-10 text-zinc-700" />
+                <p className="text-zinc-500 text-sm text-center">
+                  Complete your first mobility session to unlock this chronicle.
+                </p>
+              </div>
+            )
+          ) : tab === 'core' ? (
+            coreStats ? (
+              <CoreDashboard stats={coreStats} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 gap-3">
+                <Flame className="w-10 h-10 text-zinc-700" />
+                <p className="text-zinc-500 text-sm text-center">
+                  Complete your first core session to unlock this chronicle.
+                </p>
+              </div>
+            )
+          ) : null}
         </div>
 
         {/* Manual PR form overlay */}

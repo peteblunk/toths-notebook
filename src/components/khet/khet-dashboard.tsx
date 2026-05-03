@@ -44,6 +44,7 @@ import type { WorkoutProgram, DeloadStrategy } from '@/lib/khet-types';
 import { cn, localDateStr } from '@/lib/utils';
 import { Khet75Hard } from './khet-75hard';
 import { KhetMobility, MobilityLaunchButton } from './khet-mobility';
+import { KhetCore, CoreLaunchButton } from './khet-core';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -97,7 +98,6 @@ export function KhetDashboard() {
           <h2 className="font-headline text-amber-400 text-xl uppercase tracking-widest">
             Khet-Station
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">Mass Displacement Engine</p>
         </div>
         {/* Program launch buttons */}
         <div className="space-y-2">
@@ -109,6 +109,7 @@ export function KhetDashboard() {
             Create Strength Program
           </button>
           <MobilityLaunchButton />
+          <CoreLaunchButton />
         </div>
       </div>
 
@@ -154,6 +155,14 @@ export function KhetDashboard() {
         </button>
       </div>
 
+      {/* Strength section header */}
+      <div className="flex items-center gap-2">
+        <Dumbbell className="w-4 h-4 text-amber-400" />
+        <h3 className="font-headline text-amber-400 text-sm uppercase tracking-widest">
+          Mass Displacement Engine
+        </h3>
+      </div>
+
       {/* Empty state */}
       {programs.length === 0 && (
         <div className="border border-dashed border-zinc-800 rounded-xl p-12 text-center">
@@ -184,6 +193,11 @@ export function KhetDashboard() {
       {/* Mobility & Recovery — below strength program cards */}
       <div className="space-y-3">
         <KhetMobility />
+      </div>
+
+      {/* Core & Abs Module */}
+      <div className="space-y-3">
+        <KhetCore />
       </div>
 
       {/* Program Wizard — create */}

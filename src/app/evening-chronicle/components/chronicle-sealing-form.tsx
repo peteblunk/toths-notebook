@@ -1,16 +1,20 @@
 "use client";
 
-import { History, Scroll, Star, Moon, Cpu } from "lucide-react";
+import { History, Scroll, Star, Moon, Cpu, Dumbbell, Activity, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CyberAnkh } from "@/components/icons/cyber-ankh";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FirstPylonIcon } from "@/components/icons/FirstPylonIcon";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/components/ui/sidebar";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/components/auth-provider";
+import { cn } from "@/lib/utils";
 
 interface Task {
     id: string;
@@ -18,6 +22,89 @@ interface Task {
     category?: string;
     isRitual?: boolean;
     completed: boolean;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Today's Training Recap — auto-fetches from Firestore
+// ─────────────────────────────────────────────────────────────
+interface TrainingEntry {
+  label: string;
+  programName: string;
+  durationMinutes: number;
+  type: 'khet' | 'mobility' | 'core';
+}
+
+function TodayTrainingRecap() {
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<TrainingEntry[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date();
+    const isLateNight = today.getHours() < 2 || (today.getHours() === 2 && today.getMinutes() < 30);
+    const d = new Date(today);
+    if (isLateNight) d.setDate(d.getDate() - 1);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const run = async () => {
+      const results: TrainingEntry[] = [];
+      const uid = user.uid;
+
+      const [khetSnap, mobSnap, coreSnap] = await Promise.all([
+        getDocs(query(collection(db, 'khetSessions'), where('userId', '==', uid), where('date', '==', dateStr))),
+        getDocs(query(collection(db, 'mobilitySessions'), where('userId', '==', uid), where('date', '==', dateStr))),
+        getDocs(query(collection(db, 'coreSessions'), where('userId', '==', uid), where('date', '==', dateStr))),
+      ]);
+
+      khetSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (data.completed) results.push({ label: data.label ?? 'Workout', programName: data.programName ?? '', durationMinutes: data.totalMinutes ?? data.durationMinutes ?? 0, type: 'khet' });
+      });
+      mobSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (data.completed) results.push({ label: data.label ?? 'Mobility', programName: data.programName ?? '', durationMinutes: data.durationMinutes ?? 0, type: 'mobility' });
+      });
+      coreSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (data.completed) results.push({ label: data.label ?? 'Core', programName: data.programName ?? '', durationMinutes: data.durationMinutes ?? 0, type: 'core' });
+      });
+
+      setEntries(results);
+    };
+    run();
+  }, [user]);
+
+  if (entries.length === 0) return null;
+
+  const TYPE_STYLE: Record<TrainingEntry['type'], { border: string; text: string; icon: React.ReactNode; label: string }> = {
+    khet:     { border: 'border-amber-500/40 bg-amber-950/20', text: 'text-amber-300', icon: <Dumbbell className="w-4 h-4" />, label: 'Strength' },
+    mobility: { border: 'border-blue-500/40 bg-blue-950/20',   text: 'text-blue-300',   icon: <Activity className="w-4 h-4" />,  label: 'Mobility' },
+    core:     { border: 'border-orange-500/40 bg-orange-950/20', text: 'text-orange-300', icon: <Flame className="w-4 h-4" />,  label: 'Core' },
+  };
+
+  return (
+    <div className="mb-10">
+      <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] mb-2">Today&apos;s Training</h3>
+      <div className="h-[1px] w-full bg-gradient-to-r from-amber-500/40 via-blue-400/30 to-orange-500/40 mb-4" />
+      <div className="space-y-2">
+        {entries.map((entry, i) => {
+          const s = TYPE_STYLE[entry.type];
+          return (
+            <div key={i} className={cn('flex items-center gap-3 rounded-xl border px-4 py-2.5', s.border)}>
+              <span className={cn(s.text)}>{s.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className={cn('text-xs font-headline uppercase tracking-wider', s.text)}>{s.label} — {entry.label}</p>
+                {entry.programName && <p className="text-[10px] text-zinc-500 mt-0.5 truncate">{entry.programName}</p>}
+              </div>
+              {entry.durationMinutes > 0 && (
+                <span className="text-[10px] font-headline text-zinc-500 flex-shrink-0">{entry.durationMinutes}m</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 interface SealingFormProps {
@@ -98,6 +185,7 @@ const handleReturn = () => {
                 </div>
 
                 {/* THE CARDS REMAIN THE SAME */}
+                <TodayTrainingRecap />
                 <div className="space-y-6">
                  <Card className="bg-black/40 border-cyan-500/20 shadow-xl backdrop-blur-sm">
                         <CardHeader className="py-4 px-6">

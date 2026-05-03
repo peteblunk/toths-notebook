@@ -10,6 +10,8 @@ import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { ExerciseLog, SetLog } from '@/lib/khet-types';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const ABS_EXERCISES = [
   { exerciseId: 'crunch',             name: 'Crunch' },
@@ -112,6 +114,28 @@ export function StandaloneAbsPanel({ onClose }: StandaloneAbsPanelProps) {
         linkedTaskId: null,
         linkedRitualId: null,
       });
+      // Stamp a completed task tile in Ma'at (non-critical)
+      try {
+        await addDoc(collection(db, 'tasks'), {
+          userId: user.uid,
+          title: 'Standalone — Abs',
+          iv: null,
+          isEncrypted: false,
+          category: 'Khet',
+          importance: 'medium',
+          estimatedTime: 0,
+          completed: true,
+          completedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          dueDate: new Date(),
+          isRitual: false,
+          originRitualId: null,
+          khetProgramId: 'standalone',
+          tags: ['Abs', 'Khet-Station'],
+        });
+      } catch {
+        // Non-critical
+      }
       toast({ title: 'Abs logged', description: `${logs.length} exercise${logs.length !== 1 ? 's' : ''}` });
       onClose();
     } catch {

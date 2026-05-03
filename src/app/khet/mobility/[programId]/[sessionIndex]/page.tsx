@@ -65,6 +65,26 @@ function BigTimer({ totalSeconds, onComplete, label, side }: BigTimerProps) {
   const pct = 1 - timeLeft / (totalSeconds || 1);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const doneRef = useRef(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const beep = (freq: number, dur: number, vol = 0.45) => {
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    } catch (_) { /* silent fail */ }
+  };
 
   useEffect(() => {
     return () => {
@@ -76,15 +96,21 @@ function BigTimer({ totalSeconds, onComplete, label, side }: BigTimerProps) {
     if (!isActive) return;
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        const next = prev - 1;
+        if (next === 3) beep(880, 0.12);
+        if (next === 2) beep(880, 0.12);
+        if (next === 1) beep(880, 0.12);
+        if (next <= 0) {
           clearInterval(intervalRef.current!);
           if (!doneRef.current) {
             doneRef.current = true;
+            beep(1047, 0.25, 0.6);
+            setTimeout(() => beep(1319, 0.4, 0.55), 280);
             setTimeout(onComplete, 300);
           }
           return 0;
         }
-        return prev - 1;
+        return next;
       });
     }, 1000);
     return () => {

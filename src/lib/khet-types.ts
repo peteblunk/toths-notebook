@@ -29,8 +29,10 @@ export interface ExerciseLog {
 export interface CardioLog {
   type: CardioType;
   duration: number;    // minutes
-  distance?: number;   // km
+  distance?: number;   // stored in the user's preferred DistanceUnit
   calories?: number;
+  avgBPM?: number;     // average heart rate
+  rpe?: number;        // rate of perceived exertion 1–10
 }
 
 /** A completed or in-progress workout session stored in Firestore */
@@ -226,11 +228,16 @@ export interface GlobalStats {
 /** Weight unit preference — 'lbs' is the default */
 export type WeightUnit = 'lbs' | 'kg';
 
+/** Distance unit preference — 'miles' is the default */
+export type DistanceUnit = 'miles' | 'km';
+
 /** User profile / settings stored in khetSettings/{docId} */
 export interface KhetUserSettings {
   userId: string;
   /** Preferred weight unit — defaults to 'lbs' when not set */
   weightUnit?: WeightUnit;
+  /** Preferred distance unit — defaults to 'miles' when not set */
+  distanceUnit?: DistanceUnit;
   /** Body weight in the user's chosen weightUnit */
   bodyWeight?: number;
   /** Daily maintenance calorie target */
@@ -274,6 +281,32 @@ export interface Exercise {
 export type ProgramGoal = 'Aesthetics' | 'Strength' | 'Conditioning';
 export type ProgramTimeSlot = '45m' | '60m' | '90m';
 export type ProgramEquipment = 'Full Gym' | 'Home' | 'Dumbbells Only';
+
+// ─────────────────────────────────────────────────────────────
+// Cardio Personal Records (Endurance Engine)
+// ─────────────────────────────────────────────────────────────
+
+/** Per-exercise cardio PRs tracked by the Endurance Engine */
+export interface CardioPR {
+  exerciseId: string;
+  exerciseName: string;
+  /** Maximum watts sustained in a single interval */
+  maxWatts?: number;
+  maxWattsDate?: string;
+  /** Best pace in seconds per km */
+  bestPaceSecPerKm?: number;
+  bestPaceDate?: string;
+  /** Highest calorie session total */
+  highestCalorieSession?: number;
+  highestCalorieDate?: string;
+  /** Highest average BPM for a session */
+  highestAvgBPM?: number;
+  highestAvgBPMDate?: string;
+  /** Total sessions logged for this exercise */
+  sessionCount: number;
+  /** Last 20 sessions for sparkline */
+  history: { date: string; calories: number; avgBPM?: number; durationMinutes?: number }[];
+}
 
 // ─────────────────────────────────────────────────────────────
 // Session Reducer Types (used by the active session page)

@@ -23,7 +23,7 @@ interface StandaloneCardioPanelProps {
 }
 
 export function StandaloneCardioPanel({ onClose }: StandaloneCardioPanelProps) {
-  const { saveSession } = useKhet();
+  const { saveSession, distanceUnit } = useKhet();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -104,7 +104,7 @@ export function StandaloneCardioPanel({ onClose }: StandaloneCardioPanelProps) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Distance (km)</label>
+            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Distance ({distanceUnit})</label>
             <Input type="number" min={0} step={0.1} value={distance} placeholder="0"
               onChange={(e) => setDistance(e.target.value)}
               className="h-10 bg-black border-zinc-700 text-sm text-white placeholder:text-zinc-700" />

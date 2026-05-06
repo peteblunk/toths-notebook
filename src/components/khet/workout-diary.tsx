@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { X, BookOpen, ChevronDown, ChevronUp, StickyNote, Dumbbell, Activity, Flame } from 'lucide-react';
+import { X, BookOpen, ChevronDown, ChevronUp, StickyNote, Dumbbell, Activity, Flame, Zap } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useAuth } from '@/components/auth-provider';
 import { cn } from '@/lib/utils';
 import type { WorkoutSession } from '@/lib/khet-types';
 import type { MobilitySessionLog } from '@/lib/mobility-types';
 import type { CoreSessionLog } from '@/lib/core-types';
+import type { CardioSessionLog } from '@/lib/endurance-types';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // ── Unified diary entry ────────────────────────────────────
-type DiaryEntryType = 'khet' | 'mobility' | 'core';
+type DiaryEntryType = 'khet' | 'mobility' | 'core' | 'cardio';
 interface DiaryEntry {
   id: string;
   type: DiaryEntryType;
@@ -29,12 +30,21 @@ interface DiaryEntry {
   slotsCompleted?: string[];
   // core only
   performanceData?: CoreSessionLog['performanceData'];
+  // cardio only
+  calories?: number;
+  avgBPM?: number;
+  rpe?: number;
+  exerciseName?: string;
+  segments?: CardioSessionLog['segments'];
+  maxFinisherDone?: boolean;
+  finisherCalories?: number;
 }
 
 const TYPE_STYLE: Record<DiaryEntryType, { border: string; openBorder: string; accent: string; dim: string; icon: React.ReactNode; tag: string }> = {
   khet:     { border: 'border-zinc-800', openBorder: 'border-amber-600/40', accent: 'text-amber-300', dim: 'text-amber-600/60', icon: <Dumbbell className="w-4 h-4" />, tag: 'Strength' },
   mobility: { border: 'border-zinc-800', openBorder: 'border-blue-600/40',  accent: 'text-blue-300',  dim: 'text-blue-600/60',  icon: <Activity className="w-4 h-4" />,  tag: 'Mobility' },
   core:     { border: 'border-zinc-800', openBorder: 'border-orange-600/40', accent: 'text-orange-300', dim: 'text-orange-600/60', icon: <Flame className="w-4 h-4" />, tag: 'Core' },
+  cardio:   { border: 'border-zinc-800', openBorder: 'border-red-600/40', accent: 'text-red-300', dim: 'text-red-600/60', icon: <Zap className="w-4 h-4" />, tag: 'Cardio' },
 };
 
 interface WorkoutDiaryProps {
@@ -112,8 +122,36 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
         };
       });
 
+      // 4. Cardio — unencrypted, query directly
+      const cardioSnap = await getDocs(query(
+        collection(db, 'cardioSessions'),
+        where('userId', '==', uid),
+        where('completed', '==', true),
+        orderBy('date', 'desc'),
+        limit(60),
+      ));
+      const cardioEntries: DiaryEntry[] = cardioSnap.docs.map((d) => {
+        const s = { id: d.id, ...d.data() } as CardioSessionLog;
+        return {
+          id: s.id,
+          type: 'cardio',
+          date: s.date,
+          programName: s.programName,
+          label: s.label,
+          durationMinutes: s.durationMinutes,
+          calories: s.calories,
+          avgBPM: s.avgBPM,
+          rpe: s.rpe,
+          exerciseName: s.exerciseName,
+          notes: s.notes,
+          segments: s.segments,
+          maxFinisherDone: s.maxFinisherDone,
+          finisherCalories: s.finisherCalories,
+        };
+      });
+
       // Merge + sort newest first
-      const all = [...khetEntries, ...mobEntries, ...coreEntries];
+      const all = [...khetEntries, ...mobEntries, ...coreEntries, ...cardioEntries];
       all.sort((a, b) => b.date.localeCompare(a.date));
       setEntries(all);
       setLoading(false);
@@ -220,6 +258,12 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
                     )}
                     {(entry.type === 'mobility' || entry.type === 'core') && entry.slotsCompleted && (
                       <span className="text-zinc-500 text-xs">{entry.slotsCompleted.length} exercises</span>
+                    )}
+                    {entry.type === 'cardio' && entry.calories != null && entry.calories > 0 && (
+                      <span className="text-red-400 text-xs">{entry.calories} kcal</span>
+                    )}
+                    {entry.type === 'cardio' && entry.avgBPM != null && entry.avgBPM > 0 && (
+                      <span className="text-zinc-500 text-xs">{entry.avgBPM} avg BPM</span>
                     )}
                     {(hasSessionNote || noteCount > 0) && (
                       <span className="flex items-center gap-1 text-[10px] font-headline uppercase tracking-wider text-amber-400 border border-amber-600/30 rounded-full px-1.5 py-0.5 bg-amber-950/20">
@@ -331,6 +375,77 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {/* ── Cardio detail ── */}
+                  {entry.type === 'cardio' && (
+                    <div className="space-y-3">
+                      {/* Per-segment calorie breakdown */}
+                      {entry.segments && entry.segments.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-headline uppercase tracking-widest text-zinc-400">Exercise Breakdown</p>
+                          {entry.segments.map((seg, idx) => (
+                            <div key={idx} className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+                              <p className="text-sm font-headline text-zinc-200">{seg.exerciseName}</p>
+                              <div className="text-right">
+                                <p className="text-sm font-headline text-red-300">{seg.durationMinutes}m</p>
+                                {seg.calories > 0 && (
+                                  <p className="text-xs text-red-400">~{seg.calories} kcal</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {/* Max Mode finisher row */}
+                          {entry.maxFinisherDone != null && (
+                            <div className={cn(
+                              'flex items-center justify-between rounded-lg border px-3 py-2',
+                              entry.maxFinisherDone
+                                ? 'border-green-800/50 bg-green-950/20'
+                                : 'border-zinc-800 bg-zinc-900/40 opacity-50',
+                            )}>
+                              <div className="flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-headline text-red-200">Burpee Finisher</p>
+                                  <p className="text-xs text-red-400/70">Max Mode {entry.maxFinisherDone ? '— Completed' : '— Skipped'}</p>
+                                </div>
+                              </div>
+                              {entry.finisherCalories && entry.finisherCalories > 0 && (
+                                <div className="text-right">
+                                  <p className="text-xs text-red-400">~{entry.finisherCalories} kcal</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* Stats row: total calories, BPM, RPE */}
+                      <div className="flex flex-wrap gap-2">
+                        {entry.calories != null && entry.calories > 0 && (
+                          <div className="rounded-lg border border-red-900/40 bg-red-950/15 px-3 py-1.5 text-center">
+                            <p className="text-sm font-headline text-red-200">{entry.calories}</p>
+                            <p className="text-[9px] text-zinc-500">Total kcal</p>
+                          </div>
+                        )}
+                        {entry.avgBPM != null && entry.avgBPM > 0 && (
+                          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-center">
+                            <p className="text-sm font-headline text-zinc-200">{entry.avgBPM}</p>
+                            <p className="text-[9px] text-zinc-500">Avg BPM</p>
+                          </div>
+                        )}
+                        {entry.rpe != null && (
+                          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-center">
+                            <p className="text-sm font-headline text-zinc-200">{entry.rpe}</p>
+                            <p className="text-[9px] text-zinc-500">RPE</p>
+                          </div>
+                        )}
+                      </div>
+                      {entry.notes && (
+                        <div className="rounded-lg border border-red-900/20 bg-red-950/10 px-3 py-2">
+                          <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{entry.notes}</p>
+                        </div>
+                      )}
                     </div>
                   )}
 

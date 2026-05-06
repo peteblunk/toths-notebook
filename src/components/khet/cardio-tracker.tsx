@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useKhetSession } from './khet-context';
+import { useKhet } from '@/hooks/use-khet';
 import type { CardioType } from '@/lib/khet-types';
 
 const CARDIO_TYPES: CardioType[] = [
@@ -24,6 +25,7 @@ const CARDIO_TYPES: CardioType[] = [
 
 export function CardioTracker() {
   const { state, dispatch } = useKhetSession();
+  const { distanceUnit } = useKhet();
   const { cardioEnabled, cardioLog } = state;
 
   return (
@@ -108,7 +110,7 @@ export function CardioTracker() {
             {/* Distance */}
             <div>
               <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">
-                Distance (km)
+                Distance ({distanceUnit})
               </label>
               <Input
                 type="number"

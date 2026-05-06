@@ -9,7 +9,6 @@ import {
   Calendar,
   ChevronRight,
   BarChart2,
-  Pencil,
   X,
   Check,
   Info,
@@ -27,6 +26,7 @@ import { useCore } from '@/hooks/use-core';
 import { useToast } from '@/hooks/use-toast';
 import { BanishmentPortal } from '@/components/banishment-portal';
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
+import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { CoreProgramWizard } from './core-program-wizard';
 import {
   CORE_EXERCISES,
@@ -786,7 +786,7 @@ function CoreEditModal({ program, onClose, onSave }: CoreEditModalProps) {
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           <p className="text-xs text-zinc-500 leading-relaxed">
-            Drag to reorder · Pencil to swap · Trash to remove · Add any exercise below.
+            Drag to reorder · Stylus to swap · Trash to remove · Add any exercise below.
           </p>
 
           {/* Tab switcher for AB */}
@@ -847,7 +847,7 @@ function CoreEditModal({ program, onClose, onSave }: CoreEditModalProps) {
                   className="p-1.5 text-zinc-600 hover:text-orange-300 transition-colors"
                   title="Swap exercise"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
+                  <CyberStylus className="w-5 h-5" />
                 </button>
                 {/* Remove */}
                 <button
@@ -1144,7 +1144,7 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
               className="p-1.5 rounded transition-colors text-zinc-500 hover:text-orange-400 hover:bg-zinc-800"
               title="Edit exercises"
             >
-              <Pencil className="w-4 h-4" />
+              <CyberStylus className="w-5 h-5" />
             </button>
           </div>
         </div>

@@ -84,21 +84,29 @@ export const automatedChronicle = onSchedule({
         .get();
       const alreadySealed = !existingChronicle.empty;
       const tasksSnapshot = await tasksRef.where("userId", "==", userId).get();
-      const completedTitles: string[] = [];
-      const incompleteRitualTitles: string[] = [];
+      // Each entry: plain string for unencrypted tasks, or { ciphertext, iv }
+      // object for encrypted ones so the client can decrypt with the masterKey.
+      interface TitleEntry { text: string; iv: string | null; isEncrypted: boolean }
+      const completedTitles: TitleEntry[] = [];
+      const incompleteRitualTitles: TitleEntry[] = [];
       const tasksToDelete: admin.firestore.DocumentReference[] = [];
       // Track which ritual template IDs were completed tonight
       const completedOriginRitualIds = new Set<string>();
       tasksSnapshot.forEach((doc) => {
         const data = doc.data();
+        // Preserve ciphertext + iv so the client can decrypt on its own device.
+        // The server never has the masterKey — but the client does.
+        const titleEntry: TitleEntry = data.isEncrypted
+          ? { text: data.title as string, iv: data.iv || null, isEncrypted: true }
+          : { text: data.title as string, iv: null, isEncrypted: false };
         if (data.completed) {
-          completedTitles.push(data.title);
+          completedTitles.push(titleEntry);
           tasksToDelete.push(doc.ref);
           if (data.originRitualId) {
             completedOriginRitualIds.add(data.originRitualId);
           }
         } else if (data.category === "Daily Ritual" || data.isRitual) {
-          incompleteRitualTitles.push(data.title);
+          incompleteRitualTitles.push(titleEntry);
           tasksToDelete.push(doc.ref);
         }
       });

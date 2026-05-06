@@ -112,6 +112,35 @@
         { "fieldPath": "userId",    "order": "ASCENDING" },
         { "fieldPath": "date",      "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "cardioSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId",    "order": "ASCENDING" },
+        { "fieldPath": "completed", "order": "ASCENDING" },
+        { "fieldPath": "date",      "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "cardioSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId",    "order": "ASCENDING" },
+        { "fieldPath": "completed", "order": "ASCENDING" },
+        { "fieldPath": "date",      "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "cardioSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId",     "order": "ASCENDING" },
+        { "fieldPath": "programId",  "order": "ASCENDING" },
+        { "fieldPath": "sessionIndex", "order": "ASCENDING" },
+        { "fieldPath": "completed",  "order": "ASCENDING" },
+        { "fieldPath": "date",       "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

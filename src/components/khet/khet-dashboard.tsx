@@ -18,6 +18,7 @@ import {
   BookOpen,
   Activity,
   FlameKindling,
+  ChevronDown,
 } from 'lucide-react';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
@@ -38,13 +39,17 @@ import { UserStatsPanel } from './user-stats-panel';
 import { BanishmentPortal } from '@/components/banishment-portal';
 import { FirstPylonIcon } from '@/components/icons/FirstPylonIcon';
 import { WorkoutDiary } from './workout-diary';
-import { StandaloneCardioPanel } from './standalone-cardio-panel';
+import { QuickLogCardio } from './quick-log-cardio';
 import { StandaloneAbsPanel } from './standalone-abs-panel';
 import type { WorkoutProgram, DeloadStrategy } from '@/lib/khet-types';
 import { cn, localDateStr } from '@/lib/utils';
 import { Khet75Hard } from './khet-75hard';
 import { KhetMobility, MobilityLaunchButton } from './khet-mobility';
 import { KhetCore, CoreLaunchButton } from './khet-core';
+import { MobilityProgramWizard } from './mobility-program-wizard';
+import { CoreProgramWizard } from './core-program-wizard';
+import { KhetCardio } from './khet-cardio';
+import { CardioProgramWizard } from './cardio-program-wizard';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -57,6 +62,10 @@ export function KhetDashboard() {
   const [diaryOpen, setDiaryOpen] = useState(false);
   const [standaloneCardioOpen, setStandaloneCardioOpen] = useState(false);
   const [standaloneAbsOpen, setStandaloneAbsOpen] = useState(false);
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [mobilityWizardOpen, setMobilityWizardOpen] = useState(false);
+  const [coreWizardOpen, setCoreWizardOpen] = useState(false);
+  const [cardioProgramWizardOpen, setCardioProgramWizardOpen] = useState(false);
 
   const handleDelete = async (id: string) => {
     try {
@@ -99,59 +108,144 @@ export function KhetDashboard() {
             Khet-Station
           </h2>
         </div>
-        {/* Program launch buttons */}
+        {/* Program launch — single expandable button */}
         <div className="space-y-2">
           <button
-            onClick={() => setWizardOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-amber-500/70 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 hover:border-amber-400 font-headline uppercase tracking-widest text-sm transition-all shadow-[0_0_14px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] active:scale-[0.98]"
+            onClick={() => setCreateMenuOpen((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 py-3 px-4 rounded-xl border-2 border-amber-500/70 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 hover:border-amber-400 font-headline uppercase tracking-widest text-sm transition-all shadow-[0_0_14px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.35)] active:scale-[0.98]"
           >
-            <Dumbbell className="w-4 h-4" />
-            Create Strength Program
+            <div className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create New Program
+            </div>
+            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', createMenuOpen && 'rotate-180')} />
           </button>
-          <MobilityLaunchButton />
-          <CoreLaunchButton />
+
+          {createMenuOpen && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 overflow-hidden divide-y divide-zinc-800/60">
+              {/* Strength */}
+              <button
+                onClick={() => { setCreateMenuOpen(false); setWizardOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-amber-950/20 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg border border-amber-700/50 bg-amber-950/30 flex items-center justify-center flex-shrink-0 group-hover:border-amber-500 transition-colors">
+                  <Dumbbell className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-headline uppercase tracking-widest text-amber-300">Strength Program</p>
+                  <p className="text-[10px] text-zinc-500">Mass Displacement Engine — PPL, Upper/Lower, Full Body</p>
+                </div>
+              </button>
+
+              {/* Mobility */}
+              <button
+                onClick={() => { setCreateMenuOpen(false); setMobilityWizardOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-950/20 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg border border-blue-700/50 bg-blue-950/30 flex items-center justify-center flex-shrink-0 group-hover:border-blue-500 transition-colors">
+                  <Activity className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-headline uppercase tracking-widest text-blue-300">Mobility Program</p>
+                  <p className="text-[10px] text-zinc-500">Flexibility, joint health &amp; recovery — 6-week progressions</p>
+                </div>
+              </button>
+
+              {/* Core */}
+              <button
+                onClick={() => { setCreateMenuOpen(false); setCoreWizardOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-950/20 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg border border-orange-700/50 bg-orange-950/30 flex items-center justify-center flex-shrink-0 group-hover:border-orange-500 transition-colors">
+                  <FlameKindling className="w-4 h-4 text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-headline uppercase tracking-widest text-orange-300">Core Program</p>
+                  <p className="text-[10px] text-zinc-500">Strength, endurance &amp; stability — 4 to 12 weeks</p>
+                </div>
+              </button>
+
+              {/* Cardio / Endurance */}
+              <button
+                onClick={() => { setCreateMenuOpen(false); setCardioProgramWizardOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-950/20 transition-colors text-left group"
+              >
+                <div className="w-8 h-8 rounded-lg border border-red-800/50 bg-red-950/30 flex items-center justify-center flex-shrink-0 group-hover:border-red-500 transition-colors">
+                  <Zap className="w-4 h-4 text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-headline uppercase tracking-widest text-red-300">Cardio / Endurance Program</p>
+                  <p className="text-[10px] text-zinc-500">Intervals, Zone 2, VO₂ Max — science-based engine</p>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 75 Hard Protocol — sits directly under New Program */}
       <Khet75Hard />
 
-      {/* Action row: Gainz + Athlete Profile + Diary + Log Cardio + Log Abs */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setGainzOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-700 bg-zinc-950/40 hover:border-amber-600/40 hover:bg-amber-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-300 hover:text-amber-300"
-        >
-          <BarChart2 className="w-4 h-4" />
-          Gainz
-        </button>
+      {/* Action row: Athlete, Diary, Log Cardio, Log Abs, Gainz */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* Athlete Profile */}
         <button
           onClick={() => setUserStatsOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-700 bg-zinc-950/40 hover:border-cyan-600/40 hover:bg-cyan-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-300 hover:text-cyan-300"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-cyan-700/60 bg-cyan-950/30 text-cyan-300 font-headline uppercase tracking-[0.15em] text-xs transition-all active:scale-95 active:bg-cyan-950/60 active:border-cyan-500 shadow-[inset_0_1px_0_rgba(34,211,238,0.08)]"
         >
-          <User className="w-4 h-4" />
-          Athlete Profile
+          <User className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+          <div className="text-left">
+            <p className="text-cyan-200 text-xs font-headline uppercase tracking-widest leading-tight">Athlete</p>
+            <p className="text-[9px] text-cyan-700 leading-tight">Profile &amp; settings</p>
+          </div>
         </button>
+
+        {/* Diary */}
         <button
           onClick={() => setDiaryOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-zinc-700 bg-zinc-950/40 hover:border-amber-600/40 hover:bg-amber-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-300 hover:text-amber-300"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-violet-700/60 bg-violet-950/30 text-violet-300 font-headline uppercase tracking-[0.15em] text-xs transition-all active:scale-95 active:bg-violet-950/60 active:border-violet-500 shadow-[inset_0_1px_0_rgba(139,92,246,0.08)]"
         >
-          <BookOpen className="w-4 h-4" />
-          Diary
+          <BookOpen className="w-5 h-5 text-violet-400 flex-shrink-0" />
+          <div className="text-left">
+            <p className="text-violet-200 text-xs font-headline uppercase tracking-widest leading-tight">Diary</p>
+            <p className="text-[9px] text-violet-700 leading-tight">All sessions logged</p>
+          </div>
         </button>
+
+        {/* Log Cardio */}
         <button
           onClick={() => setStandaloneCardioOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-cyan-800/50 bg-zinc-950/40 hover:border-cyan-600/60 hover:bg-cyan-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-400 hover:text-cyan-300"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-red-800/60 bg-red-950/30 text-red-300 font-headline uppercase tracking-[0.15em] text-xs transition-all active:scale-95 active:bg-red-950/60 active:border-red-500 shadow-[inset_0_1px_0_rgba(239,68,68,0.08)]"
         >
-          <Activity className="w-4 h-4" />
-          Log Cardio
+          <Activity className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <div className="text-left">
+            <p className="text-red-200 text-xs font-headline uppercase tracking-widest leading-tight">Log Cardio</p>
+            <p className="text-[9px] text-red-800 leading-tight">Quick session entry</p>
+          </div>
         </button>
+
+        {/* Log Abs */}
         <button
           onClick={() => setStandaloneAbsOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-amber-800/50 bg-zinc-950/40 hover:border-amber-600/60 hover:bg-amber-950/10 transition-all text-sm font-headline uppercase tracking-[0.2em] text-zinc-400 hover:text-amber-300"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-orange-700/60 bg-orange-950/30 text-orange-300 font-headline uppercase tracking-[0.15em] text-xs transition-all active:scale-95 active:bg-orange-950/60 active:border-orange-500 shadow-[inset_0_1px_0_rgba(249,115,22,0.08)]"
         >
-          <FlameKindling className="w-4 h-4" />
-          Log Abs
+          <FlameKindling className="w-5 h-5 text-orange-400 flex-shrink-0" />
+          <div className="text-left">
+            <p className="text-orange-200 text-xs font-headline uppercase tracking-widest leading-tight">Log Abs</p>
+            <p className="text-[9px] text-orange-700 leading-tight">Core &amp; abs session</p>
+          </div>
+        </button>
+
+        {/* Gainz — full-width on last row */}
+        <button
+          onClick={() => setGainzOpen(true)}
+          className="col-span-2 flex items-center gap-3 px-4 py-3.5 rounded-xl border border-amber-700/60 bg-amber-950/30 text-amber-300 font-headline uppercase tracking-[0.15em] text-xs transition-all active:scale-95 active:bg-amber-950/60 active:border-amber-500 shadow-[inset_0_1px_0_rgba(245,158,11,0.12)]"
+        >
+          <BarChart2 className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <div className="text-left">
+            <p className="text-amber-200 text-xs font-headline uppercase tracking-widest leading-tight">Gainz</p>
+            <p className="text-[9px] text-amber-700 leading-tight">PRs &amp; lifetime stats</p>
+          </div>
         </button>
       </div>
 
@@ -190,7 +284,7 @@ export function KhetDashboard() {
         />
       ))}
 
-      {/* Mobility & Recovery — below strength program cards */}
+      {/* Mobility & Recovery */}
       <div className="space-y-3">
         <KhetMobility />
       </div>
@@ -198,6 +292,11 @@ export function KhetDashboard() {
       {/* Core & Abs Module */}
       <div className="space-y-3">
         <KhetCore />
+      </div>
+
+      {/* Endurance Engine */}
+      <div className="space-y-3">
+        <KhetCardio />
       </div>
 
       {/* Program Wizard — create */}
@@ -218,8 +317,12 @@ export function KhetDashboard() {
       {/* Workout Diary */}
       {diaryOpen && <WorkoutDiary onClose={() => setDiaryOpen(false)} />}
       {/* Standalone quick-logs */}
-      {standaloneCardioOpen && <StandaloneCardioPanel onClose={() => setStandaloneCardioOpen(false)} />}
+      {standaloneCardioOpen && <QuickLogCardio onClose={() => setStandaloneCardioOpen(false)} />}
       {standaloneAbsOpen && <StandaloneAbsPanel onClose={() => setStandaloneAbsOpen(false)} />}
+      {/* Program wizards launched from Create New Program menu */}
+      <MobilityProgramWizard open={mobilityWizardOpen} onClose={() => setMobilityWizardOpen(false)} />
+      <CoreProgramWizard open={coreWizardOpen} onClose={() => setCoreWizardOpen(false)} />
+      <CardioProgramWizard open={cardioProgramWizardOpen} onClose={() => setCardioProgramWizardOpen(false)} />
     </div>
   );
 }

@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { encryptData, decryptData, bufferToBase64, base64ToBuffer } from '@/lib/crypto';
-import type { WorkoutProgram, WorkoutSession, ProgramProgress, ExercisePR, GlobalStats, FoundationalPR, KhetUserSettings, KhetManualPR, WeightUnit } from '@/lib/khet-types';
+import type { WorkoutProgram, WorkoutSession, ProgramProgress, ExercisePR, GlobalStats, FoundationalPR, KhetUserSettings, KhetManualPR, WeightUnit, DistanceUnit } from '@/lib/khet-types';
 import { FOUNDATIONAL_MOVEMENTS } from '@/lib/khet-types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { localDateStr } from '@/lib/utils';
@@ -33,6 +33,7 @@ interface UseKhetReturn {
   programs: WorkoutProgram[];
   loading: boolean;
   weightUnit: WeightUnit;
+  distanceUnit: DistanceUnit;
   addProgram: (data: Omit<WorkoutProgram, 'id'>) => Promise<string>;
   updateProgram: (id: string, data: Partial<WorkoutProgram>) => Promise<void>;
   deleteProgram: (id: string) => Promise<void>;
@@ -158,8 +159,9 @@ export function useKhet(): UseKhetReturn {
   const [programs, setPrograms] = useState<WorkoutProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('lbs');
+  const [distanceUnit, setDistanceUnit] = useState<DistanceUnit>('miles');
 
-  // Load weight unit preference from settings on mount
+  // Load unit preferences from settings on mount
   useEffect(() => {
     if (!user || !masterKey) return;
     const q = query(collection(db, 'khetSettings'), where('userId', '==', user.uid), limit(1));
@@ -176,6 +178,7 @@ export function useKhet(): UseKhetReturn {
         parsed = raw;
       }
       if (parsed.weightUnit) setWeightUnit(parsed.weightUnit);
+      if (parsed.distanceUnit) setDistanceUnit(parsed.distanceUnit);
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, masterKey]);
@@ -814,7 +817,7 @@ export function useKhet(): UseKhetReturn {
           return { userId: user.uid, ...JSON.parse(plain) };
         } catch { /* fallback to raw */ }
       }
-      return { userId: user.uid, bodyWeight: raw.bodyWeight, weightUnit: raw.weightUnit, maintenanceCalories: raw.maintenanceCalories, gymName: raw.gymName };
+      return { userId: user.uid, bodyWeight: raw.bodyWeight, weightUnit: raw.weightUnit, distanceUnit: raw.distanceUnit, maintenanceCalories: raw.maintenanceCalories, gymName: raw.gymName };
     } catch (err) {
       console.error('[Khet] getUserSettings error:', err);
       return null;
@@ -838,8 +841,9 @@ export function useKhet(): UseKhetReturn {
       } else {
         await updateDoc(snap.docs[0].ref, firestoreDoc);
       }
-      // Keep reactive weightUnit in sync
+      // Keep reactive unit state in sync
       if (data.weightUnit) setWeightUnit(data.weightUnit);
+      if (data.distanceUnit) setDistanceUnit(data.distanceUnit);
     } catch (err) {
       console.error('[Khet] updateUserSettings error:', err);
     }
@@ -945,5 +949,6 @@ export function useKhet(): UseKhetReturn {
     deleteManualPR,
     getDiaryEntries,
     weightUnit,
+    distanceUnit,
   };
 }

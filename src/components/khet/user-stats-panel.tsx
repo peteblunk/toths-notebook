@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, User, Flame, MapPin, Save } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { cn } from '@/lib/utils';
-import type { KhetUserSettings, WeightUnit } from '@/lib/khet-types';
+import type { KhetUserSettings, WeightUnit, DistanceUnit } from '@/lib/khet-types';
 
 interface UserStatsPanelProps {
   onClose: () => void;
@@ -16,6 +16,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
   const [saving, setSaving] = useState(false);
 
   const [weightUnit, setWeightUnitLocal] = useState<WeightUnit>('lbs');
+  const [distanceUnit, setDistanceUnitLocal] = useState<DistanceUnit>('miles');
   const [bodyWeight, setBodyWeight] = useState('');
   const [maintenanceCalories, setMaintenanceCalories] = useState('');
   const [gymName, setGymName] = useState('');
@@ -24,6 +25,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
     getUserSettings().then((s) => {
       if (s) {
         setWeightUnitLocal(s.weightUnit ?? 'lbs');
+        setDistanceUnitLocal(s.distanceUnit ?? 'miles');
         if (s.bodyWeight) setBodyWeight(String(s.bodyWeight));
         if (s.maintenanceCalories) setMaintenanceCalories(String(s.maintenanceCalories));
         if (s.gymName) setGymName(s.gymName);
@@ -35,7 +37,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
 
   const handleSave = async () => {
     setSaving(true);
-    const data: Partial<KhetUserSettings> = { weightUnit };
+    const data: Partial<KhetUserSettings> = { weightUnit, distanceUnit };
     const bw = parseFloat(bodyWeight);
     if (!isNaN(bw) && bw > 0) data.bodyWeight = bw;
     const mc = parseInt(maintenanceCalories, 10);
@@ -108,6 +110,33 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
                 </div>
                 <p className="text-[9px] text-zinc-600">
                   Sets the unit label displayed during workouts. Enter all weights consistently in this unit.
+                </p>
+              </div>
+
+              {/* Distance Unit Toggle */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                  <User className="w-3 h-3" />
+                  Distance Unit
+                </label>
+                <div className="flex rounded-lg overflow-hidden border border-zinc-800">
+                  {(['miles', 'km'] as DistanceUnit[]).map((unit) => (
+                    <button
+                      key={unit}
+                      onClick={() => setDistanceUnitLocal(unit)}
+                      className={cn(
+                        'flex-1 py-2.5 text-sm font-headline uppercase tracking-widest transition-all',
+                        distanceUnit === unit
+                          ? 'bg-cyan-600 text-black'
+                          : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300',
+                      )}
+                    >
+                      {unit}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] text-zinc-600">
+                  Used for pace and distance in cardio sessions.
                 </p>
               </div>
 

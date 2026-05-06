@@ -60,9 +60,29 @@ export default function ArchivesPage() {
     if (!chronicles.length) return;
     const decryptAll = async () => {
       const newMap: Record<string, any> = {};
+      // Helper: decrypt a victoriesLog / retainedNunLog that may contain
+      // structured { text, iv, isEncrypted } items from the automated seal.
+      const decryptTitleList = async (list: any[]): Promise<string[]> => {
+        if (!Array.isArray(list)) return [];
+        return Promise.all(list.map(async (item: any) => {
+          if (typeof item === 'string') return item;          // legacy plain string
+          if (!item.isEncrypted || !item.iv) return item.text ?? '';
+          if (!masterKey) return '\uD83D\uDD12 Unlock vault to read';
+          try {
+            const ivUint8 = new Uint8Array(base64ToBuffer(item.iv));
+            return await decryptData(masterKey, base64ToBuffer(item.text), ivUint8);
+          } catch {
+            return '\uD83D\uDD12 Key mismatch';
+          }
+        }));
+      };
+
       for (const entry of chronicles) {
         if (!entry.isEncrypted || !entry.iv) {
-          newMap[entry.id] = entry;
+          // Auto-seal entries: attempt per-item decryption of structured title lists
+          const victoriesLog = await decryptTitleList(entry.victoriesLog ?? []);
+          const retainedNunLog = await decryptTitleList(entry.retainedNunLog ?? []);
+          newMap[entry.id] = { ...entry, victoriesLog, retainedNunLog };
           continue;
         }
         if (!masterKey) {

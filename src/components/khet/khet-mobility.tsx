@@ -11,7 +11,6 @@ import {
   Calendar,
   ChevronRight,
   BarChart2,
-  Pencil,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,6 +18,7 @@ import { useMobility } from '@/hooks/use-mobility';
 import { useToast } from '@/hooks/use-toast';
 import { BanishmentPortal } from '@/components/banishment-portal';
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
+import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { MobilityProgramWizard } from './mobility-program-wizard';
 import { MobilityExerciseEditor } from './mobility-exercise-editor';
 import type { MobilityProgram, MobilityExercise } from '@/lib/mobility-types';
@@ -275,7 +275,7 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
             className="p-1.5 rounded transition-colors text-zinc-500 hover:text-blue-400 hover:bg-zinc-800"
             title="Edit exercises"
           >
-            <Pencil className="w-4 h-4" />
+            <CyberStylus className="w-5 h-5" />
           </button>
         </div>
       </div>

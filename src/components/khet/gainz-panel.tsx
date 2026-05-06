@@ -4,17 +4,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import {
   X, Trophy, Flame, Clock, Zap, BarChart2, TrendingUp,
-  Dumbbell, CheckCircle2, Weight, Pencil, Trash2, Plus, Calendar, Activity,
+  Dumbbell, CheckCircle2, Weight, Trash2, Plus, Calendar, Activity,
 } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useMobility } from '@/hooks/use-mobility';
 import { useCore } from '@/hooks/use-core';
+import { useCardio } from '@/hooks/use-cardio';
+import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { cn, localDateStr } from '@/lib/utils';
 import type { GlobalStats, FoundationalPR, KhetUserSettings, WeekStats } from '@/lib/khet-types';
 import { FOUNDATIONAL_MOVEMENTS } from '@/lib/khet-types';
 import type { WeightUnit } from '@/lib/khet-types';
 import type { MobilityStats } from '@/lib/mobility-types';
 import type { CoreStats, CoreFitnessLevel } from '@/lib/core-types';
+import type { CardioStats } from '@/lib/endurance-types';
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -415,7 +418,7 @@ function PRCard({ pr, bodyWeight, weightUnit = 'lbs', onEdit }: { pr: Foundation
               className="w-6 h-6 rounded flex items-center justify-center text-zinc-600 hover:text-cyan-300 hover:bg-zinc-800 transition-colors"
               title="Edit / Override PR"
             >
-              <Pencil className="w-3 h-3" />
+              <CyberStylus className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -652,12 +655,14 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
   const { getGlobalStats, getUserSettings, setManualPR, deleteManualPR } = useKhet();
   const { getMobilityStats } = useMobility();
   const { getCoreStats } = useCore();
+  const { getCardioStats } = useCardio();
   const [stats, setStats] = useState<GlobalStats | null>(null);
   const [mobilityStats, setMobilityStats] = useState<MobilityStats | null>(null);
   const [coreStats, setCoreStats] = useState<CoreStats | null>(null);
+  const [cardioStats, setCardioStats] = useState<CardioStats | null>(null);
   const [settings, setSettings] = useState<KhetUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'power' | 'hall' | 'mobility' | 'core'>('power');
+  const [tab, setTab] = useState<'power' | 'hall' | 'mobility' | 'core' | 'cardio'>('power');
   const [editingPR, setEditingPR] = useState<FoundationalPR | null>(null);
   const [addingPR, setAddingPR] = useState(false);
 
@@ -666,14 +671,15 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    Promise.all([getGlobalStats(), getUserSettings(), getMobilityStats(), getCoreStats()]).then(([s, cfg, mob, core]) => {
+    Promise.all([getGlobalStats(), getUserSettings(), getMobilityStats(), getCoreStats(), getCardioStats()]).then(([s, cfg, mob, core, cardio]) => {
       setStats(s);
       setSettings(cfg);
       setMobilityStats(mob);
       setCoreStats(core);
+      setCardioStats(cardio);
       setLoading(false);
     });
-  }, [getGlobalStats, getUserSettings, getMobilityStats, getCoreStats]);
+  }, [getGlobalStats, getUserSettings, getMobilityStats, getCoreStats, getCardioStats]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -726,6 +732,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             { id: 'hall',     label: 'Hall of PRs', icon: Trophy },
             { id: 'mobility', label: 'Mobility', icon: Activity },
             { id: 'core',     label: 'Core', icon: Flame },
+            { id: 'cardio',   label: 'Cardio', icon: Zap },
           ] as const).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -790,6 +797,17 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
                 </p>
               </div>
             )
+          ) : tab === 'cardio' ? (
+            cardioStats ? (
+              <CardioDashboard stats={cardioStats} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 gap-3">
+                <Zap className="w-10 h-10 text-zinc-700" />
+                <p className="text-zinc-500 text-sm text-center">
+                  Complete your first cardio session to unlock this chronicle.
+                </p>
+              </div>
+            )
           ) : null}
         </div>
 
@@ -803,6 +821,98 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
           />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Cardio Dashboard tab
+// ─────────────────────────────────────────────────────────────
+function CardioDashboard({ stats }: { stats: CardioStats }) {
+  const hours   = Math.floor(stats.totalMinutes / 60);
+  const minutes = stats.totalMinutes % 60;
+  const timeLabel = stats.totalMinutes > 0
+    ? `${hours > 0 ? `${hours}h ` : ''}${minutes}m`
+    : '—';
+
+  const STAT_TILES = [
+    { label: 'Total Sessions',   value: String(stats.totalSessions) },
+    { label: 'Total Time',       value: timeLabel },
+    { label: 'Total Calories',   value: stats.totalCalories > 0 ? `${stats.totalCalories.toLocaleString()} kcal` : '—' },
+    { label: 'Best Session',     value: stats.maxCaloriesSession > 0 ? `${stats.maxCaloriesSession} kcal` : '—' },
+    { label: 'Best Avg BPM',     value: stats.bestAvgBPM > 0 ? String(stats.bestAvgBPM) : '—' },
+    { label: 'Current Streak',   value: `${stats.currentStreakWeeks}w` },
+    { label: 'Longest Streak',   value: `${stats.longestStreakWeeks}w` },
+  ];
+
+  // Simple 90-day heatmap (red palette)
+  const weeks: typeof stats.heatmap[] = [];
+  for (let i = 0; i < stats.heatmap.length; i += 7) weeks.push(stats.heatmap.slice(i, i + 7));
+
+  return (
+    <div className="space-y-4">
+      {/* Stat grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {STAT_TILES.map(({ label, value }) => (
+          <div
+            key={label}
+            className="rounded-lg border border-red-900/40 bg-red-950/10 px-3 py-2.5 flex items-start gap-2"
+          >
+            <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-red-500" />
+            <div className="min-w-0">
+              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline mt-0.5 leading-tight text-red-200">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Heatmap */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 space-y-1">
+        <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">90-Day Cardio Heat Map</p>
+        <div className="flex gap-0.5">
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex flex-col gap-0.5">
+              {week.map((day) => (
+                <div
+                  key={day.date}
+                  title={`${day.date}: ${day.count} session${day.count !== 1 ? 's' : ''}`}
+                  className={cn(
+                    'w-3 h-3 rounded-sm transition-colors',
+                    day.count === 0 && 'bg-zinc-800',
+                    day.count === 1 && 'bg-red-700',
+                    day.count >= 2 && 'bg-red-400',
+                  )}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
+          <span className="text-[9px] text-zinc-600">None</span>
+          <div className="w-2.5 h-2.5 rounded-sm bg-red-700 ml-2" />
+          <span className="text-[9px] text-zinc-600">1</span>
+          <div className="w-2.5 h-2.5 rounded-sm bg-red-400 ml-2" />
+          <span className="text-[9px] text-zinc-600">2+</span>
+        </div>
+      </div>
+
+      {/* By program breakdown */}
+      {stats.programBreakdown.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          {stats.programBreakdown.map(({ programName, sessions }) => (
+            <div
+              key={programName}
+              className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
+            >
+              <span className="text-xs text-zinc-400 truncate">{programName}</span>
+              <span className="text-xs font-headline text-red-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

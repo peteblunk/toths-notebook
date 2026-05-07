@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -28,6 +28,19 @@ import {
   type MobilitySlot,
 } from '@/lib/mobility-types';
 import mobilityExercisesData from '@/../public/docs/mobility-exercises.json';
+import {
+  buildMobilityDraftKey,
+  loadRawDraft,
+  clearRawDraft,
+  useLocalDraft,
+} from '@/hooks/use-session-persistence';
+
+// Shape of the persisted mobility draft
+interface MobilityDraft {
+  completedKeys: string[];
+  levelUpMode: boolean;
+  startTime: number;
+}
 
 const ALL_EXERCISES = mobilityExercisesData as MobilityExercise[];
 
@@ -468,13 +481,64 @@ export default function MobilitySessionPage() {
     return result;
   })();
 
-  const [completedKeys, setCompletedKeys] = useState<Set<string>>(new Set());
+  // ── Draft hydration — restore in-progress state from localStorage ──
+  const draftKey = buildMobilityDraftKey(programId, sessionIndexParam);
+  const [completedKeys, setCompletedKeys] = useState<Set<string>>(
+    () => new Set(loadRawDraft<MobilityDraft>(draftKey)?.completedKeys ?? []),
+  );
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeTimer, setActiveTimer] = useState<{ holdSeconds: number; label: string; side: 'left' | 'right' | 'both' } | null>(null);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [levelUpMode, setLevelUpMode] = useState(false);
-  const startTimeRef = useRef<number>(Date.now());
+  const [levelUpMode, setLevelUpMode] = useState<boolean>(
+    () => loadRawDraft<MobilityDraft>(draftKey)?.levelUpMode ?? false,
+  );
+  const startTimeRef = useRef<number>(
+    loadRawDraft<MobilityDraft>(draftKey)?.startTime ?? Date.now(),
+  );
+
+  // ── Persistence: debounced draft writes ──
+  const mobilityDraftData = useMemo(
+    () => ({
+      completedKeys: Array.from(completedKeys),
+      levelUpMode,
+      startTime: startTimeRef.current,
+    }),
+    [completedKeys, levelUpMode],
+  );
+  const { persistNow: persistMobilityDraft } = useLocalDraft(draftKey, mobilityDraftData);
+  const isDirty = completedKeys.size > 0;
+
+  // ── Browser-level guard: warn on tab close / hard refresh ──
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      persistMobilityDraft();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, persistMobilityDraft]);
+
+  // ── App-level guard: intercept back-button navigation ──
+  useEffect(() => {
+    if (!isDirty) return;
+    const handlePopState = () => {
+      if (!isDirty) return;
+      const leave = window.confirm(
+        'You have unsaved mobility progress. Leave without sealing the session?',
+      );
+      if (!leave) {
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        persistMobilityDraft();
+      }
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isDirty, persistMobilityDraft]);
 
   const totalItems = levelUpMode ? items.length * 2 : items.length;
   const doneCount = levelUpMode
@@ -596,6 +660,7 @@ export default function MobilitySessionPage() {
         },
         program.id,
       );
+      clearRawDraft(draftKey);
       router.push('/khet/dashboard');
     } catch {
       setSaving(false);

@@ -83,7 +83,7 @@ export function StandaloneCardioPanel({ onClose }: StandaloneCardioPanelProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Type</label>
+            <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Type</label>
             <Select value={type} onValueChange={(v) => setType(v as CardioType)}>
               <SelectTrigger className="h-10 bg-black border-zinc-700 text-sm text-white">
                 <SelectValue />
@@ -96,7 +96,7 @@ export function StandaloneCardioPanel({ onClose }: StandaloneCardioPanelProps) {
             </Select>
           </div>
           <div>
-            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Duration (min) *</label>
+            <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Duration (min) *</label>
             <Input type="number" min={0} value={duration} placeholder="0"
               onChange={(e) => setDuration(e.target.value)}
               className="h-10 bg-black border-zinc-700 text-sm text-white placeholder:text-zinc-700" />
@@ -104,13 +104,13 @@ export function StandaloneCardioPanel({ onClose }: StandaloneCardioPanelProps) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Distance ({distanceUnit})</label>
+            <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Distance ({distanceUnit})</label>
             <Input type="number" min={0} step={0.1} value={distance} placeholder="0"
               onChange={(e) => setDistance(e.target.value)}
               className="h-10 bg-black border-zinc-700 text-sm text-white placeholder:text-zinc-700" />
           </div>
           <div>
-            <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Calories (kcal)</label>
+            <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Calories (kcal)</label>
             <Input type="number" min={0} value={calories} placeholder="0"
               onChange={(e) => setCalories(e.target.value)}
               className="h-10 bg-black border-zinc-700 text-sm text-white placeholder:text-zinc-700" />

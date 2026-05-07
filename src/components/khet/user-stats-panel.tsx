@@ -66,7 +66,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
             <h2 className="font-headline text-amber-300 text-base uppercase tracking-[0.2em]">
               Athlete Profile
             </h2>
-            <p className="text-[10px] text-zinc-500 mt-0.5">Body stats & training preferences</p>
+            <p className="text-sm text-zinc-400 mt-0.5">Body stats &amp; training preferences</p>
           </div>
           <button
             onClick={onClose}
@@ -88,7 +88,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
             <>
               {/* Weight Unit Toggle */}
               <div className="space-y-2">
-                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                <label className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
                   <User className="w-3 h-3" />
                   Weight Unit
                 </label>
@@ -115,7 +115,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
 
               {/* Distance Unit Toggle */}
               <div className="space-y-2">
-                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                <label className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
                   <User className="w-3 h-3" />
                   Distance Unit
                 </label>
@@ -142,7 +142,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
 
               {/* Body Weight */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                <label className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
                   <User className="w-3 h-3" />
                   Body Weight ({weightUnit})
                 </label>
@@ -162,7 +162,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
 
               {/* Maintenance Calories */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                <label className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
                   <Flame className="w-3 h-3" />
                   Maintenance Calories (kcal / day)
                 </label>
@@ -179,7 +179,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
 
               {/* Gym Name */}
               <div className="space-y-1.5">
-                <label className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+                <label className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
                   <MapPin className="w-3 h-3" />
                   Gym / Training Location
                 </label>

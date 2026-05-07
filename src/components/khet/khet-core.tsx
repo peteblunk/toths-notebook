@@ -40,6 +40,19 @@ import {
   type CoreSessionLog,
 } from '@/lib/core-types';
 import { useAuth } from '@/components/auth-provider';
+import {
+  buildCoreDraftKey,
+  loadRawDraft,
+  clearRawDraft,
+  useLocalDraft,
+} from '@/hooks/use-session-persistence';
+
+// Shape of the persisted core session draft
+interface CoreDraft {
+  completedSets: Record<string, number[]>; // Set<number> serialised as number[]
+  performance: Record<string, { weight?: number; reps?: number; seconds?: number }>;
+  startTime: number;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -206,13 +219,26 @@ interface SessionLoggerProps {
 
 function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerProps) {
   const { user } = useAuth();
-  const [completedSets, setCompletedSets] = useState<Record<string, Set<number>>>({});
+
+  // ── Draft hydration — restore in-progress sets/performance from localStorage ──
+  const draftKey = buildCoreDraftKey(program.id, session.index);
+  const [completedSets, setCompletedSets] = useState<Record<string, Set<number>>>(
+    () => {
+      const d = loadRawDraft<CoreDraft>(draftKey);
+      if (!d?.completedSets) return {};
+      return Object.fromEntries(
+        Object.entries(d.completedSets).map(([k, v]) => [k, new Set(v)]),
+      );
+    },
+  );
   const [performance, setPerformance] = useState<
     Record<string, { weight?: number; reps?: number; seconds?: number }>
-  >({});
+  >(() => loadRawDraft<CoreDraft>(draftKey)?.performance ?? {});
   const [cuesModal, setCuesModal] = useState<CoreExercise | null>(null);
   const [saving, setSaving] = useState(false);
-  const [startTime] = useState(() => Date.now());
+  const [startTime] = useState<number>(
+    () => loadRawDraft<CoreDraft>(draftKey)?.startTime ?? Date.now(),
+  );
 
   const exercises = session.slots
     .map((slot) => {
@@ -253,6 +279,32 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
   const totalSetsAll = exercises.reduce((acc, { slot }) => acc + slot.sets, 0);
   const completedSetsAll = exercises.reduce((acc, { ex }) => acc + getSetsCompleted(ex.id), 0);
 
+  // ── Persistence: debounced draft writes ──
+  const coreDraftData = useMemo(
+    () => ({
+      completedSets: Object.fromEntries(
+        Object.entries(completedSets).map(([k, v]) => [k, Array.from(v)]),
+      ),
+      performance,
+      startTime,
+    }),
+    [completedSets, performance, startTime],
+  );
+  const { persistNow: persistCoreDraft } = useLocalDraft(draftKey, coreDraftData);
+  const isCoreDirty = completedSetsAll > 0;
+
+  // Browser-level guard: warn on tab close / hard refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isCoreDirty) return;
+      e.preventDefault();
+      persistCoreDraft();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isCoreDirty, persistCoreDraft]);
+
   const handleComplete = async () => {
     setSaving(true);
     try {
@@ -273,6 +325,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
         completed: true,
       };
       await onComplete(log);
+      clearRawDraft(draftKey);
     } finally {
       setSaving(false);
     }
@@ -288,7 +341,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
             <h2 className="font-headline text-orange-300 text-base uppercase tracking-widest">
               {session.label}
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-sm text-zinc-400 mt-0.5">
               Week {session.week} · {program.name} · ~{session.estimatedMinutes}m
             </p>
           </div>
@@ -392,7 +445,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
                   <div className={cn('mt-3', slot.type === 'time' ? 'flex flex-col gap-0' : 'flex gap-2')}>
                     {slot.type === 'weighted' && (
                       <div className="flex-1">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-wider block mb-1">Weight (lbs)</label>
+                        <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Weight (lbs)</label>
                         <input
                           type="number"
                           min={0}
@@ -405,7 +458,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
                     )}
                     {slot.type === 'reps' && (
                       <div className="flex-1">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-wider block mb-1">Reps Performed</label>
+                        <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Reps Performed</label>
                         <input
                           type="number"
                           min={0}
@@ -424,7 +477,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
                     )}
                     {slot.type === 'time' && (
                       <div className="flex-1 mt-2">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-wider block mb-1">Seconds Held</label>
+                        <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Seconds Held</label>
                         <input
                           type="number"
                           min={0}
@@ -777,7 +830,7 @@ function CoreEditModal({ program, onClose, onSave }: CoreEditModalProps) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 flex-shrink-0">
           <div>
             <h2 className="font-headline text-orange-300 text-base uppercase tracking-widest">Edit Exercises</h2>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-[240px]">{program.name}</p>
+            <p className="text-sm text-zinc-400 mt-0.5 truncate max-w-[240px]">{program.name}</p>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
             <X className="w-5 h-5" />
@@ -785,7 +838,7 @@ function CoreEditModal({ program, onClose, onSave }: CoreEditModalProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <p className="text-xs text-zinc-500 leading-relaxed">
+          <p className="text-sm text-zinc-400 leading-relaxed">
             Drag to reorder · Stylus to swap · Trash to remove · Add any exercise below.
           </p>
 

@@ -515,7 +515,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         {/* Movement selector (only for truly new) */}
         {isNew && (
           <div>
-            <label className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-1 block">Movement</label>
+            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Movement</label>
             <select
               value={movement}
               onChange={(e) => setMovement(e.target.value)}
@@ -530,7 +530,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-1 block">Weight (kg)</label>
+            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Weight (kg)</label>
             <input
               type="number"
               min="0"
@@ -542,7 +542,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
             />
           </div>
           <div>
-            <label className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-1 block">Reps</label>
+            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Reps</label>
             <input
               type="number"
               min="1"
@@ -556,7 +556,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         </div>
 
         <div>
-          <label className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-1 block">Date</label>
+          <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Date</label>
           <input
             type="date"
             value={date}
@@ -566,7 +566,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         </div>
 
         <div>
-          <label className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-1 block">Notes (optional)</label>
+          <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Notes (optional)</label>
           <input
             type="text"
             value={notes}

@@ -106,7 +106,7 @@ function MobilityEditModal({ program, onClose, onSave }: MobilityEditModalProps)
             <h2 className="font-headline text-blue-300 text-base uppercase tracking-widest">
               Edit Exercises
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-[240px]">{program.name}</p>
+            <p className="text-sm text-zinc-400 mt-0.5 truncate max-w-[240px]">{program.name}</p>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
             <X className="w-5 h-5" />
@@ -115,7 +115,7 @@ function MobilityEditModal({ program, onClose, onSave }: MobilityEditModalProps)
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <p className="text-xs text-zinc-500 leading-relaxed">
+          <p className="text-sm text-zinc-400 leading-relaxed">
             Changes apply across all 6 weeks. Hold times still scale with progression automatically.
           </p>
           <MobilityExerciseEditor

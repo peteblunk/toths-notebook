@@ -23,6 +23,7 @@ import { GhostLogPanel } from '@/components/khet/ghost-log';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
+import { useSessionPersistence, clearDraft } from '@/hooks/use-session-persistence';
 import type { WorkoutSession, WorkoutProgram, Exercise } from '@/lib/khet-types';
 import { cn, localDateStr } from '@/lib/utils';
 import Link from 'next/link';
@@ -136,6 +137,51 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
   const [ghostOpen, setGhostOpen] = useState(false);
   const [exerciseDb, setExerciseDb] = useState<Exercise[]>([]);
 
+  // ── Persistence: debounced localStorage writes + dirty-state tracking ──
+  const { persistNow, isDirty } = useSessionPersistence({
+    programId: program.id,
+    dayIndex,
+    state,
+    anySetCompleted,
+  });
+
+  // ── Browser-level guard: warn on tab close / hard refresh ──
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      // Flush any pending debounced write before the page unloads
+      persistNow();
+      // Modern browsers ignore custom messages but still show a confirmation
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, persistNow]);
+
+  // ── App-level guard: intercept Next.js soft navigations ──
+  useEffect(() => {
+    if (!isDirty) return;
+    // next/navigation does not expose a beforePopState API, so we intercept
+    // clicks on the history stack via the popstate event instead.
+    const handlePopState = () => {
+      if (!isDirty) return;
+      const leave = window.confirm(
+        'You have unsaved workout data. Leave without sealing the session?'
+      );
+      if (!leave) {
+        // Push the state back so the URL reverts
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        persistNow();
+      }
+    };
+    // Push a sentinel entry so popstate fires on the first back press
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isDirty, persistNow]);
+
   // Load exercise database for cues lookup
   useEffect(() => {
     fetch('/docs/full_expanded_exercises.json')
@@ -171,6 +217,10 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
         linkedRitualId: program.linkedRitualId ?? null,
       };
       await completeSessionAndSync(sessionData);
+
+      // Draft persisted successfully — remove the local draft so it doesn't
+      // pre-populate the next time this (program, day) pair is opened.
+      clearDraft(program.id, dayIndex);
 
       // If this session completes the final day of a deload week, show the recharge message
       const today = localDateStr();

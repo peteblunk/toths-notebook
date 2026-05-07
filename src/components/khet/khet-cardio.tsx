@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { format, parseISO, differenceInCalendarDays, startOfWeek } from 'date-fns';
 import {
   Zap, Plus, TrendingUp, Calendar, X, Flame, Activity,
@@ -13,6 +13,26 @@ import { useCardio } from '@/hooks/use-cardio';
 import { useKhet } from '@/hooks/use-khet';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
+import {
+  buildCardioDraftKey,
+  loadRawDraft,
+  clearRawDraft,
+  useLocalDraft,
+} from '@/hooks/use-session-persistence';
+
+// Shape of the persisted cardio session draft
+type CardioSegmentState = { exerciseId: string; exerciseName: string; minutes: string; done: boolean };
+interface CardioDraft {
+  segments: CardioSegmentState[];
+  bpm: string;
+  rpe: string;
+  distance: string;
+  notes: string;
+  finisherDone: boolean;
+  finisherTally: number;
+  caloriesOverride: number | null;
+  logPhase: 'active' | 'post';
+}
 import { BanishmentPortal } from '@/components/banishment-portal';
 import { CardioProgramWizard } from './cardio-program-wizard';
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
@@ -402,26 +422,42 @@ interface SessionLoggerProps {
 
 function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSave }: SessionLoggerProps) {
   const { distanceUnit } = useKhet();
-  const [logPhase, setLogPhase] = useState<'active' | 'post'>('active');
+
+  // ── Draft hydration — restore in-progress form state from localStorage ──
+  const draftKey = buildCardioDraftKey(program.id, session.index);
+  const initEx = CARDIO_EXERCISES.find((e) => e.id === session.slot.exerciseId) ?? CARDIO_EXERCISES[0];
+
+  const [logPhase, setLogPhase] = useState<'active' | 'post'>(
+    () => loadRawDraft<CardioDraft>(draftKey)?.logPhase ?? 'active',
+  );
   const exercisesRef = useRef<HTMLDivElement>(null);
 
-  const initEx = CARDIO_EXERCISES.find((e) => e.id === session.slot.exerciseId) ?? CARDIO_EXERCISES[0];
-  const [segments, setSegments] = useState<{ exerciseId: string; exerciseName: string; minutes: string; done: boolean }[]>([
-    { exerciseId: initEx.id, exerciseName: initEx.name, minutes: String(session.estimatedMinutes), done: false },
-  ]);
+  const [segments, setSegments] = useState<CardioSegmentState[]>(
+    () =>
+      loadRawDraft<CardioDraft>(draftKey)?.segments ?? [
+        { exerciseId: initEx.id, exerciseName: initEx.name, minutes: String(session.estimatedMinutes), done: false },
+      ],
+  );
   const [swapIdx, setSwapIdx] = useState<number | null>(null);
   const [addingEx, setAddingEx] = useState(false);
   const [activeTimerIdx, setActiveTimerIdx] = useState<number | null>(null);
 
-  const [bpm, setBpm] = useState('');
-  const [rpe, setRpe] = useState('');
-  const [distance, setDistance] = useState('');
-  const [notes, setNotes] = useState('');
+  const [bpm, setBpm] = useState(() => loadRawDraft<CardioDraft>(draftKey)?.bpm ?? '');
+  const [rpe, setRpe] = useState(() => loadRawDraft<CardioDraft>(draftKey)?.rpe ?? '');
+  const [distance, setDistance] = useState(() => loadRawDraft<CardioDraft>(draftKey)?.distance ?? '');
+  const [notes, setNotes] = useState(() => loadRawDraft<CardioDraft>(draftKey)?.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [segmentErrors, setSegmentErrors] = useState<boolean[]>([]);
-  const [finisherDone, setFinisherDone] = useState(false);
-  const [caloriesOverride, setCaloriesOverride] = useState<number | null>(null);
+  const [finisherDone, setFinisherDone] = useState(
+    () => loadRawDraft<CardioDraft>(draftKey)?.finisherDone ?? false,
+  );
+  const [finisherTally, setFinisherTally] = useState(
+    () => loadRawDraft<CardioDraft>(draftKey)?.finisherTally ?? 0,
+  );
+  const [caloriesOverride, setCaloriesOverride] = useState<number | null>(
+    () => loadRawDraft<CardioDraft>(draftKey)?.caloriesOverride ?? null,
+  );
 
   const totalMinutes = segments.reduce((acc, s) => acc + (parseInt(s.minutes) || 0), 0);
 
@@ -441,6 +477,28 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
     : 0;
   const grandTotalCalories = totalCalories + (finisherDone ? finisherCals : 0);
   const effectiveCalories = caloriesOverride !== null ? caloriesOverride : grandTotalCalories;
+
+  // ── Persistence: debounced draft writes ──
+  const cardioDraftData = useMemo(
+    () => ({ segments, bpm, rpe, distance, notes, finisherDone, finisherTally, caloriesOverride, logPhase }),
+    [segments, bpm, rpe, distance, notes, finisherDone, finisherTally, caloriesOverride, logPhase],
+  );
+  const { persistNow: persistCardioDraft } = useLocalDraft(draftKey, cardioDraftData);
+  const isCardioDirty =
+    segments.some((s) => s.done) || !!bpm || !!rpe || !!distance || !!notes ||
+    finisherDone || finisherTally > 0 || logPhase === 'post';
+
+  // Browser-level guard: warn on tab close / hard refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isCardioDirty) return;
+      e.preventDefault();
+      persistCardioDraft();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isCardioDirty, persistCardioDraft]);
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -491,6 +549,7 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
         maxFinisherDone: session.maxFinisher ? finisherDone : undefined,
         finisherCalories: (session.maxFinisher && finisherDone && finisherCals > 0) ? finisherCals : undefined,
       });
+      clearRawDraft(draftKey);
     } catch (err) {
       console.error('[handleSave] unexpected error:', err);
     } finally {
@@ -689,7 +748,7 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
                       <span className="text-sm font-headline text-red-200">{session.maxFinisher.exerciseName}</span>
                       <span className="text-[9px] font-headline uppercase text-red-400 border border-red-900/50 rounded-full px-1.5 py-0.5 bg-red-950/30">Max Mode</span>
                     </div>
-                    <p className="text-[9px] text-zinc-500 mt-0.5">
+                    <p className="text-xs text-zinc-400 mt-0.5">
                       {session.maxFinisher.rounds} rounds × {session.maxFinisher.repsPerRound} reps
                       {finisherCals > 0 && ` · ~${finisherCals} kcal`}
                     </p>
@@ -703,6 +762,40 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
                   )}
                 >
                   <Check className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {/* Tally counter */}
+              <div className="px-3 pb-3 flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-2">
+                  <button
+                    onClick={() => setFinisherTally((n) => Math.max(0, n - 1))}
+                    className="w-8 h-8 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-300 text-lg font-headline flex items-center justify-center active:scale-90 transition-all"
+                  >−</button>
+                  <div className="flex-1 text-center">
+                    <p className="text-xl font-headline text-red-200 tabular-nums leading-none">
+                      {finisherTally}
+                      <span className="text-sm text-zinc-500"> / {session.maxFinisher.rounds}</span>
+                    </p>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-0.5">Rounds Done</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = Math.min(finisherTally + 1, session.maxFinisher!.rounds);
+                      setFinisherTally(next);
+                      if (next >= session.maxFinisher!.rounds) setFinisherDone(true);
+                    }}
+                    className="w-8 h-8 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-300 text-lg font-headline flex items-center justify-center active:scale-90 transition-all"
+                  >+</button>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = Math.min(finisherTally + 1, session.maxFinisher!.rounds);
+                    setFinisherTally(next);
+                    if (next >= session.maxFinisher!.rounds) setFinisherDone(true);
+                  }}
+                  className="flex-shrink-0 px-4 py-2 rounded-lg border border-red-700/60 bg-red-950/30 text-red-200 text-xs font-headline uppercase tracking-widest active:scale-[0.97] transition-all"
+                >
+                  Tally Round
                 </button>
               </div>
               <div className="px-3 pb-2.5">
@@ -721,7 +814,7 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
               <RPEInfoPopover targetRPE={session.slot.targetRPE} />
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500 leading-snug">{session.slot.notes}</p>
+          <p className="text-xs text-zinc-400 leading-snug">{session.slot.notes}</p>
           {session.slot.interval && (
             <div className="flex gap-3 pt-1">
               <div className="text-center"><p className="text-lg font-headline text-red-300">{session.slot.interval.workSeconds}s</p><p className="text-[9px] text-zinc-600">Work</p></div>
@@ -747,28 +840,28 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
         {/* POST */}
         {logPhase === 'post' && (
           <div className="space-y-4">
-            <p className="text-xs font-headline uppercase tracking-[0.3em] text-zinc-300 text-center">Log Your Results</p>
+            <p className="text-sm font-headline uppercase tracking-[0.3em] text-zinc-300 text-center">Log Your Results</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Avg BPM</label>
+                <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Avg BPM</label>
                 <input type="number" min={0} value={bpm} placeholder="e.g. 148" onChange={(e) => setBpm(e.target.value)}
                   className="w-full h-10 bg-black border border-zinc-700 rounded px-3 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-red-500" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-400">RPE (1–10)</label>
+                  <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300">RPE (1–10)</label>
                   <RPEInfoPopover targetRPE={session.slot.targetRPE} />
                 </div>
                 <input type="number" min={1} max={10} value={rpe} placeholder={String(session.slot.targetRPE)} onChange={(e) => setRpe(e.target.value)}
                   className="w-full h-10 bg-black border border-zinc-700 rounded px-3 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-red-500" />
               </div>
               <div>
-                <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Distance ({distanceUnit})</label>
+                <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Distance ({distanceUnit})</label>
                 <input type="number" min={0} step={0.1} value={distance} placeholder="0" onChange={(e) => setDistance(e.target.value)}
                   className="w-full h-10 bg-black border border-zinc-700 rounded px-3 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-red-500" />
               </div>
               <div>
-                <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-400 block mb-1">Calories</label>
+                <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Calories</label>
                 <input
                   type="number" min={0}
                   value={caloriesOverride !== null ? caloriesOverride : grandTotalCalories || ''}
@@ -779,12 +872,12 @@ function SessionLogger({ program, session, ghostLog, bodyWeightKg, onClose, onSa
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-headline uppercase tracking-[0.2em] text-zinc-500 block mb-1">Notes</label>
+              <label className="text-xs font-headline uppercase tracking-[0.2em] text-zinc-300 block mb-1">Notes</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did it feel? Any PRs?" rows={2}
                 className="w-full bg-black border border-zinc-700 rounded px-3 py-2 text-sm text-white placeholder:text-zinc-700 resize-none focus:outline-none focus:border-red-500" />
             </div>
             {bodyWeightKg < 40 && (
-              <p className="text-[9px] text-zinc-700 text-center">For calorie estimates, set your body weight in Athlete Profile or in the program wizard.</p>
+              <p className="text-xs text-zinc-500 text-center">For calorie estimates, set your body weight in Athlete Profile or in the program wizard.</p>
             )}
           </div>
         )}

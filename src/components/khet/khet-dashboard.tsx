@@ -133,7 +133,7 @@ export function KhetDashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-headline uppercase tracking-widest text-amber-300">Strength Program</p>
-                  <p className="text-[10px] text-zinc-500">Mass Displacement Engine — PPL, Upper/Lower, Full Body</p>
+                  <p className="text-sm text-zinc-400">Mass Displacement Engine — PPL, Upper/Lower, Full Body</p>
                 </div>
               </button>
 
@@ -147,7 +147,7 @@ export function KhetDashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-headline uppercase tracking-widest text-blue-300">Mobility Program</p>
-                  <p className="text-[10px] text-zinc-500">Flexibility, joint health &amp; recovery — 6-week progressions</p>
+                  <p className="text-sm text-zinc-400">Flexibility, joint health &amp; recovery — 6-week progressions</p>
                 </div>
               </button>
 
@@ -161,7 +161,7 @@ export function KhetDashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-headline uppercase tracking-widest text-orange-300">Core Program</p>
-                  <p className="text-[10px] text-zinc-500">Strength, endurance &amp; stability — 4 to 12 weeks</p>
+                  <p className="text-sm text-zinc-400">Strength, endurance &amp; stability — 4 to 12 weeks</p>
                 </div>
               </button>
 
@@ -175,7 +175,7 @@ export function KhetDashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-headline uppercase tracking-widest text-red-300">Cardio / Endurance Program</p>
-                  <p className="text-[10px] text-zinc-500">Intervals, Zone 2, VO₂ Max — science-based engine</p>
+                  <p className="text-sm text-zinc-400">Intervals, Zone 2, VO₂ Max — science-based engine</p>
                 </div>
               </button>
             </div>
@@ -196,7 +196,7 @@ export function KhetDashboard() {
           <User className="w-5 h-5 text-cyan-400 flex-shrink-0" />
           <div className="text-left">
             <p className="text-cyan-200 text-xs font-headline uppercase tracking-widest leading-tight">Athlete</p>
-            <p className="text-[9px] text-cyan-700 leading-tight">Profile &amp; settings</p>
+            <p className="text-xs text-cyan-600 leading-tight">Profile &amp; settings</p>
           </div>
         </button>
 
@@ -208,7 +208,7 @@ export function KhetDashboard() {
           <BookOpen className="w-5 h-5 text-violet-400 flex-shrink-0" />
           <div className="text-left">
             <p className="text-violet-200 text-xs font-headline uppercase tracking-widest leading-tight">Diary</p>
-            <p className="text-[9px] text-violet-700 leading-tight">All sessions logged</p>
+            <p className="text-xs text-violet-600 leading-tight">All sessions logged</p>
           </div>
         </button>
 
@@ -220,7 +220,7 @@ export function KhetDashboard() {
           <Activity className="w-5 h-5 text-red-400 flex-shrink-0" />
           <div className="text-left">
             <p className="text-red-200 text-xs font-headline uppercase tracking-widest leading-tight">Log Cardio</p>
-            <p className="text-[9px] text-red-800 leading-tight">Quick session entry</p>
+            <p className="text-xs text-red-700 leading-tight">Quick session entry</p>
           </div>
         </button>
 
@@ -232,7 +232,7 @@ export function KhetDashboard() {
           <FlameKindling className="w-5 h-5 text-orange-400 flex-shrink-0" />
           <div className="text-left">
             <p className="text-orange-200 text-xs font-headline uppercase tracking-widest leading-tight">Log Abs</p>
-            <p className="text-[9px] text-orange-700 leading-tight">Core &amp; abs session</p>
+            <p className="text-xs text-orange-600 leading-tight">Core &amp; abs session</p>
           </div>
         </button>
 
@@ -244,7 +244,7 @@ export function KhetDashboard() {
           <BarChart2 className="w-5 h-5 text-amber-400 flex-shrink-0" />
           <div className="text-left">
             <p className="text-amber-200 text-xs font-headline uppercase tracking-widest leading-tight">Gainz</p>
-            <p className="text-[9px] text-amber-700 leading-tight">PRs &amp; lifetime stats</p>
+            <p className="text-xs text-amber-600 leading-tight">PRs &amp; lifetime stats</p>
           </div>
         </button>
       </div>

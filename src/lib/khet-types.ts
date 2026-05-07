@@ -62,6 +62,8 @@ export interface ProgramExercise {
   sets: number;        // suggested set count
   goalReps: string;    // e.g. "8–12" or "5"
   notes?: string;
+  /** When true, Tally Mode is auto-enabled for this exercise (high-rep bodyweight / HIIT) */
+  isHighVolume?: boolean;
 }
 
 /** One training day within a program (e.g. "Push A") */
@@ -238,12 +240,138 @@ export interface KhetUserSettings {
   weightUnit?: WeightUnit;
   /** Preferred distance unit — defaults to 'miles' when not set */
   distanceUnit?: DistanceUnit;
+
+  // ── Core stats ──────────────────────────────────────────────
   /** Body weight in the user's chosen weightUnit */
   bodyWeight?: number;
   /** Daily maintenance calorie target */
   maintenanceCalories?: number;
   /** Gym name / training location */
   gymName?: string;
+
+  // ── Body Composition ────────────────────────────────────────
+  /** Height — cm when distanceUnit=km, inches when miles */
+  height?: number;
+  /** Estimated body fat percentage */
+  estimatedBodyFat?: number;
+  /** Resting heart rate in BPM */
+  restingHeartRate?: number;
+
+  // ── Aesthetic Measurements ──────────────────────────────────
+  /** Neck circumference in the user's length unit */
+  neckCircumference?: number;
+  /** Waist circumference in the user's length unit */
+  waistCircumference?: number;
+  /** Hip circumference in the user's length unit */
+  hipCircumference?: number;
+  /** Chest circumference in the user's length unit */
+  chestCircumference?: number;
+  /** Bicep circumference (dominant arm snapshot) in the user's length unit */
+  bicepCircumference?: number;
+  /** Thigh circumference in the user's length unit */
+  thighCircumference?: number;
+  /** Calf circumference in the user's length unit */
+  calfCircumference?: number;
+
+  // ── Gym Specs / Tactical ────────────────────────────────────
+  /** Free-text injury limitations / notes */
+  injuryLog?: string;
+  /** Available equipment tags */
+  equipmentAccess?: string[];
+  /** ISO date string — when the user started their sober streak */
+  sobrietyStartDate?: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Measurement Logs — time-series body composition tracking
+// Stored in Firestore collection: measurementLogs
+// ─────────────────────────────────────────────────────────────
+
+/** Measurement categories for time-series tracking */
+export type MeasurementCategory =
+  | 'WEIGHT'
+  | 'BODY_FAT'
+  | 'NECK'
+  | 'WAIST'
+  | 'HIPS'
+  | 'RESTING_HR'
+  | 'HEIGHT'
+  | 'CHEST'
+  | 'BICEP_L'
+  | 'BICEP_R'
+  | 'THIGH_L'
+  | 'THIGH_R'
+  | 'CALF';
+
+/** Human-readable label for each category */
+export const MEASUREMENT_LABELS: Record<MeasurementCategory, string> = {
+  WEIGHT:     'Body Weight',
+  BODY_FAT:   'Body Fat',
+  NECK:       'Neck',
+  WAIST:      'Waist',
+  HIPS:       'Hips',
+  RESTING_HR: 'Resting HR',
+  HEIGHT:     'Height',
+  CHEST:      'Chest',
+  BICEP_L:    'Bicep (L)',
+  BICEP_R:    'Bicep (R)',
+  THIGH_L:    'Thigh (L)',
+  THIGH_R:    'Thigh (R)',
+  CALF:       'Calf',
+};
+
+/** All available measurement categories in display order */
+export const MEASUREMENT_CATEGORIES: MeasurementCategory[] = [
+  'WEIGHT', 'BODY_FAT', 'NECK', 'WAIST', 'HIPS', 'RESTING_HR', 'HEIGHT',
+  'CHEST', 'BICEP_L', 'BICEP_R', 'THIGH_L', 'THIGH_R', 'CALF',
+];
+
+/** Units suffix for each category given weight preference */
+export function getMeasurementUnit(
+  category: MeasurementCategory,
+  weightUnit: WeightUnit,
+): string {
+  switch (category) {
+    case 'WEIGHT':     return weightUnit;
+    case 'BODY_FAT':   return '%';
+    case 'RESTING_HR': return 'BPM';
+    case 'HEIGHT':     return weightUnit === 'lbs' ? 'in' : 'cm';
+    default:           return weightUnit === 'lbs' ? 'in' : 'cm'; // circumferences
+  }
+}
+
+/**
+ * Per-day delta thresholds for "impossible change" validation.
+ * If the absolute delta per day exceeds these, the user is asked to confirm.
+ */
+export const MEASUREMENT_OUTLIER_THRESHOLDS: Record<MeasurementCategory, number> = {
+  WEIGHT:     15,   // lbs or kg — 15 units per day is a red flag
+  BODY_FAT:   5,    // 5% per day
+  NECK:       3,    // in / cm
+  WAIST:      4,
+  HIPS:       4,
+  RESTING_HR: 30,   // BPM
+  HEIGHT:     2,    // in / cm
+  CHEST:      4,
+  BICEP_L:    2,
+  BICEP_R:    2,
+  THIGH_L:    3,
+  THIGH_R:    3,
+  CALF:       2,
+};
+
+/** A single time-series measurement entry stored in measurementLogs collection */
+export interface MeasurementLog {
+  id: string;
+  userId: string;
+  /** ISO date string YYYY-MM-DD — the date the measurement was taken */
+  timestamp: string;
+  category: MeasurementCategory;
+  value: number;
+  /** The unit string at time of entry (e.g. 'lbs', 'kg', 'in', 'cm', '%', 'BPM') */
+  unit: string;
+  /** Optional user note */
+  notes?: string;
 }
 
 /** A manually entered personal record stored in khetManualPRs */

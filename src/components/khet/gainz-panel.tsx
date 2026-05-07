@@ -10,6 +10,7 @@ import { useKhet } from '@/hooks/use-khet';
 import { useMobility } from '@/hooks/use-mobility';
 import { useCore } from '@/hooks/use-core';
 import { useCardio } from '@/hooks/use-cardio';
+import { AthleteStatsPanel } from '@/components/khet/measurement-history';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { cn, localDateStr } from '@/lib/utils';
 import type { GlobalStats, FoundationalPR, KhetUserSettings, WeekStats } from '@/lib/khet-types';
@@ -662,7 +663,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
   const [cardioStats, setCardioStats] = useState<CardioStats | null>(null);
   const [settings, setSettings] = useState<KhetUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'power' | 'hall' | 'mobility' | 'core' | 'cardio'>('power');
+  const [tab, setTab] = useState<'power' | 'hall' | 'mobility' | 'core' | 'cardio' | 'athlete'>('power');
   const [editingPR, setEditingPR] = useState<FoundationalPR | null>(null);
   const [addingPR, setAddingPR] = useState(false);
 
@@ -733,6 +734,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             { id: 'mobility', label: 'Mobility', icon: Activity },
             { id: 'core',     label: 'Core', icon: Flame },
             { id: 'cardio',   label: 'Cardio', icon: Zap },
+            { id: 'athlete',  label: 'Athlete Stats', icon: TrendingUp },
           ] as const).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -808,6 +810,8 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
                 </p>
               </div>
             )
+          ) : tab === 'athlete' ? (
+            <AthleteStatsPanel weightUnit={weightUnit} />
           ) : null}
         </div>
 

@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { encryptData, decryptData, bufferToBase64, base64ToBuffer } from '@/lib/crypto';
-import type { WorkoutProgram, WorkoutSession, ProgramProgress, ExercisePR, GlobalStats, FoundationalPR, KhetUserSettings, KhetManualPR, WeightUnit, DistanceUnit } from '@/lib/khet-types';
+import type { WorkoutProgram, WorkoutSession, ProgramProgress, ExercisePR, GlobalStats, FoundationalPR, KhetUserSettings, KhetManualPR, WeightUnit, DistanceUnit, MeasurementLog, MeasurementCategory } from '@/lib/khet-types';
 import { FOUNDATIONAL_MOVEMENTS } from '@/lib/khet-types';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { localDateStr } from '@/lib/utils';
@@ -49,6 +49,11 @@ interface UseKhetReturn {
   setManualPR: (data: Omit<KhetManualPR, 'id' | 'userId'>) => Promise<void>;
   deleteManualPR: (movement: string) => Promise<void>;
   getDiaryEntries: (limitCount?: number) => Promise<WorkoutSession[]>;
+  // ── Measurement Logs ──────────────────────────────────────────
+  getMeasurementLogs: (options?: { category?: MeasurementCategory; limitCount?: number }) => Promise<MeasurementLog[]>;
+  logMeasurement: (entry: { timestamp: string; category: MeasurementCategory; value: number; unit: string; notes?: string }) => Promise<{ wasOverwrite: boolean; existingId?: string }>;
+  overwriteMeasurement: (id: string, value: number, notes?: string) => Promise<void>;
+  getLatestMeasurements: () => Promise<Partial<Record<MeasurementCategory, MeasurementLog>>>;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -817,7 +822,30 @@ export function useKhet(): UseKhetReturn {
           return { userId: user.uid, ...JSON.parse(plain) };
         } catch { /* fallback to raw */ }
       }
-      return { userId: user.uid, bodyWeight: raw.bodyWeight, weightUnit: raw.weightUnit, distanceUnit: raw.distanceUnit, maintenanceCalories: raw.maintenanceCalories, gymName: raw.gymName };
+      return {
+        userId: user.uid,
+        bodyWeight: raw.bodyWeight,
+        weightUnit: raw.weightUnit,
+        distanceUnit: raw.distanceUnit,
+        maintenanceCalories: raw.maintenanceCalories,
+        gymName: raw.gymName,
+        // Body Composition
+        height: raw.height,
+        estimatedBodyFat: raw.estimatedBodyFat,
+        restingHeartRate: raw.restingHeartRate,
+        // Aesthetic Measurements
+        neckCircumference: raw.neckCircumference,
+        waistCircumference: raw.waistCircumference,
+        hipCircumference: raw.hipCircumference,
+        chestCircumference: raw.chestCircumference,
+        bicepCircumference: raw.bicepCircumference,
+        thighCircumference: raw.thighCircumference,
+        calfCircumference: raw.calfCircumference,
+        // Gym Specs / Tactical
+        injuryLog: raw.injuryLog,
+        equipmentAccess: raw.equipmentAccess,
+        sobrietyStartDate: raw.sobrietyStartDate,
+      };
     } catch (err) {
       console.error('[Khet] getUserSettings error:', err);
       return null;
@@ -930,6 +958,127 @@ export function useKhet(): UseKhetReturn {
     }
   }, [user]);
 
+  // ── MEASUREMENT LOGS ──────────────────────────────────────
+
+  /**
+   * Fetch measurement logs for the current user.
+   * Returns results sorted descending by timestamp (most recent first).
+   */
+  const getMeasurementLogs = useCallback(async (
+    options?: { category?: MeasurementCategory; limitCount?: number },
+  ): Promise<MeasurementLog[]> => {
+    if (!user) return [];
+    try {
+      const constraints: Parameters<typeof query>[1][] = [
+        where('userId', '==', user.uid),
+        orderBy('timestamp', 'desc'),
+      ];
+      if (options?.category) constraints.push(where('category', '==', options.category));
+      if (options?.limitCount) constraints.push(limit(options.limitCount));
+      const q = query(collection(db, 'measurementLogs'), ...constraints);
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() } as MeasurementLog));
+    } catch (err) {
+      console.error('[Khet] getMeasurementLogs error:', err);
+      return [];
+    }
+  }, [user]);
+
+  /**
+   * Log a new measurement entry.
+   * Returns { wasOverwrite: false } if it was a new entry, or
+   * { wasOverwrite: true, existingId } if a log already exists for
+   * the same user + category + timestamp (caller should confirm before calling overwriteMeasurement).
+   */
+  const logMeasurement = useCallback(async (entry: {
+    timestamp: string;
+    category: MeasurementCategory;
+    value: number;
+    unit: string;
+    notes?: string;
+  }): Promise<{ wasOverwrite: boolean; existingId?: string }> => {
+    if (!user) throw new Error('Not authenticated');
+    try {
+      // Check for existing entry on same date + category
+      const existingQ = query(
+        collection(db, 'measurementLogs'),
+        where('userId', '==', user.uid),
+        where('category', '==', entry.category),
+        where('timestamp', '==', entry.timestamp),
+        limit(1),
+      );
+      const existingSnap = await getDocs(existingQ);
+      if (!existingSnap.empty) {
+        return { wasOverwrite: true, existingId: existingSnap.docs[0].id };
+      }
+      // New entry
+      const docData: Omit<MeasurementLog, 'id'> = {
+        userId: user.uid,
+        timestamp: entry.timestamp,
+        category: entry.category,
+        value: entry.value,
+        unit: entry.unit,
+        ...(entry.notes ? { notes: entry.notes } : {}),
+      };
+      await addDoc(collection(db, 'measurementLogs'), docData);
+      return { wasOverwrite: false };
+    } catch (err) {
+      console.error('[Khet] logMeasurement error:', err);
+      throw err;
+    }
+  }, [user]);
+
+  /** Overwrite the value (and optional notes) of an existing measurement log entry. */
+  const overwriteMeasurement = useCallback(async (
+    id: string,
+    value: number,
+    notes?: string,
+  ): Promise<void> => {
+    try {
+      const updates: Record<string, unknown> = { value };
+      if (notes !== undefined) updates.notes = notes;
+      await updateDoc(doc(db, 'measurementLogs', id), updates);
+    } catch (err) {
+      console.error('[Khet] overwriteMeasurement error:', err);
+      throw err;
+    }
+  }, []);
+
+  /**
+   * Fetch the single most-recent log entry for every category.
+   * Uses orderBy('timestamp','desc').limit(1) per category for accuracy.
+   * Returns a partial record — categories with no data are absent.
+   */
+  const getLatestMeasurements = useCallback(async (): Promise<Partial<Record<MeasurementCategory, MeasurementLog>>> => {
+    if (!user) return {};
+    const CATEGORIES: MeasurementCategory[] = [
+      'WEIGHT', 'BODY_FAT', 'NECK', 'WAIST', 'HIPS', 'RESTING_HR', 'HEIGHT',
+      'CHEST', 'BICEP_L', 'BICEP_R', 'THIGH_L', 'THIGH_R', 'CALF',
+    ];
+    try {
+      const results = await Promise.all(
+        CATEGORIES.map(async (cat) => {
+          const q = query(
+            collection(db, 'measurementLogs'),
+            where('userId', '==', user.uid),
+            where('category', '==', cat),
+            orderBy('timestamp', 'desc'),
+            limit(1),
+          );
+          const snap = await getDocs(q);
+          if (snap.empty) return [cat, null] as const;
+          return [cat, { id: snap.docs[0].id, ...snap.docs[0].data() } as MeasurementLog] as const;
+        }),
+      );
+      return Object.fromEntries(
+        results.filter(([, v]) => v !== null),
+      ) as Partial<Record<MeasurementCategory, MeasurementLog>>;
+    } catch (err) {
+      console.error('[Khet] getLatestMeasurements error:', err);
+      return {};
+    }
+  }, [user]);
+
   return {
     programs,
     loading,
@@ -948,6 +1097,10 @@ export function useKhet(): UseKhetReturn {
     setManualPR,
     deleteManualPR,
     getDiaryEntries,
+    getMeasurementLogs,
+    logMeasurement,
+    overwriteMeasurement,
+    getLatestMeasurements,
     weightUnit,
     distanceUnit,
   };

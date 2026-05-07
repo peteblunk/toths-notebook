@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { ArrowLeftRight, Plus, Minus, ChevronDown, ChevronUp, Snowflake, Info } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ArrowLeftRight, Plus, Minus, ChevronDown, ChevronUp, Snowflake, Info, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +20,8 @@ interface ExerciseRowProps {
   isDeloading?: boolean;
   deloadStrategy?: DeloadStrategy;
   cues?: string[];
+  /** Initial tally increment size (default: 10). User can adjust live in the session. */
+  defaultRoundSize?: number;
 }
 
 export function ExerciseRow({
@@ -29,6 +31,7 @@ export function ExerciseRow({
   isDeloading = false,
   deloadStrategy = 'reduce-volume',
   cues,
+  defaultRoundSize = 10,
 }: ExerciseRowProps) {
   const { state, dispatch } = useKhetSession();
   const { weightUnit } = useKhet();
@@ -36,6 +39,25 @@ export function ExerciseRow({
   const [notesOpen, setNotesOpen] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
   const [cuesOpen, setCuesOpen] = useState(false);
+
+  // ── Tally Mode ────────────────────────────────────────────────
+  const [tallyMode, setTallyMode] = useState(programExercise.isHighVolume ?? false);
+  const [roundSize, setRoundSize] = useState(defaultRoundSize);
+  const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const lastTapRef = useRef<number>(0);
+
+  const handleTally = useCallback((setIdx: number) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 250) return; // 250ms debounce
+    lastTapRef.current = now;
+    const currentReps = log.sets[setIdx]?.reps || 0;
+    dispatch({ type: 'UPDATE_SET', exerciseIdx, setIdx, updates: { reps: currentReps + roundSize } });
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(50);
+    }
+    setFlashIdx(setIdx);
+    setTimeout(() => setFlashIdx((prev) => (prev === setIdx ? null : prev)), 300);
+  }, [log.sets, roundSize, dispatch, exerciseIdx]);
 
   const allSetsComplete =
     log.sets.length > 0 && log.sets.every((s) => s.completed);
@@ -159,6 +181,36 @@ export function ExerciseRow({
             Alternate
           </button>
         </div>
+        {/* Row 3: Tally mode toggle */}
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <button
+            onClick={() => setTallyMode((v) => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-headline uppercase tracking-wider transition-all flex-shrink-0',
+              tallyMode
+                ? 'border-cyan-500/60 bg-cyan-950/30 text-cyan-300'
+                : 'border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-400',
+            )}
+            title="Toggle Tally Mode for high-rep counting"
+          >
+            <Hash className="w-3 h-3" />
+            {tallyMode ? 'Tally On' : 'Tally'}
+          </button>
+          {tallyMode && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-500 font-headline uppercase tracking-wider">+/tap:</span>
+              <button
+                onClick={() => setRoundSize((r) => Math.max(1, r - 5))}
+                className="w-6 h-6 rounded border border-zinc-700 text-zinc-400 flex items-center justify-center text-xs font-headline active:scale-90 transition-all"
+              >−</button>
+              <span className="text-sm font-headline text-cyan-300 tabular-nums w-6 text-center">{roundSize}</span>
+              <button
+                onClick={() => setRoundSize((r) => r + 5)}
+                className="w-6 h-6 rounded border border-zinc-700 text-zinc-400 flex items-center justify-center text-xs font-headline active:scale-90 transition-all"
+              >+</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Column Headers ── */}
@@ -219,7 +271,10 @@ export function ExerciseRow({
                   updates: { reps: parseInt(e.target.value) || 0 },
                 })
               }
-              className="h-7 text-sm text-center bg-black border-zinc-700 focus:border-cyan-500 text-white placeholder:text-zinc-700"
+              className={cn(
+                'h-7 text-sm text-center bg-black border-zinc-700 focus:border-cyan-500 text-white placeholder:text-zinc-700 transition-all duration-150',
+                flashIdx === setIdx && 'border-cyan-400 bg-cyan-950/30 scale-105',
+              )}
             />
             <Input
               type="number"
@@ -257,6 +312,31 @@ export function ExerciseRow({
           );
         })}
       </div>
+
+      {/* ── Tally Button (full-width strip per set when Tally Mode is on) ── */}
+      {tallyMode && (
+        <div className="space-y-1.5 mt-1.5">
+          {log.sets.map((s, setIdx) => {
+            if (isDeloading && setIdx >= deloadActiveSets) return null;
+            return (
+              <button
+                key={setIdx}
+                onClick={() => handleTally(setIdx)}
+                className={cn(
+                  'w-full rounded-lg border font-headline text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.97] transition-all',
+                  s.completed
+                    ? 'border-amber-700/30 bg-amber-950/10 text-amber-400/60'
+                    : 'border-cyan-800/40 bg-cyan-950/15 text-cyan-300 active:bg-cyan-950/30',
+                )}
+                style={{ minHeight: '48px' }}
+              >
+                <Hash className="w-3.5 h-3.5" />
+                Set {setIdx + 1} +{roundSize} reps
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Add / Remove Set ── */}
       <div className="flex items-center gap-2 mt-2">

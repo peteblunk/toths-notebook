@@ -12,15 +12,32 @@ import { format, differenceInCalendarDays } from 'date-fns';
 
 export type HardMode75 = 'super' | 'easy';
 
+/** Persistent definition — lives on the program, not on a daily log */
+export interface CustomObjectiveDefinition {
+  id: string;
+  label: string;
+  /** If true, failing this objective triggers a Day 1 reset in Super Hard mode */
+  criticalFailure: boolean;
+}
+
+/** Merged view of definition + today's completion state — used by the UI */
+export interface CustomObjective extends CustomObjectiveDefinition {
+  completed: boolean;
+}
+
 export interface DayLog75 {
   date: string;            // YYYY-MM-DD
   indoorWorkout: boolean;
   outdoorWorkout: boolean;
-  waterOz: number;         // running daily total (target: 128)
-  readPages: boolean;      // 10 pages non-fiction
+  waterOz: number;         // running daily total (target: 128) — plain water only
+  readPages: boolean;      // 10 pages non-fiction physical book
+  isPhysicalBook: boolean; // true = physical book (required for Hard Mode strictness)
   pictureTaken: boolean;
   noCheatMeals: boolean;
-  complete: boolean;       // all 6 tasks done for the day
+  soberProtocol: boolean;  // alcohol & substance abstinence — hard requirement for success
+  /** id → completed for this specific day */
+  customObjectiveResults?: Record<string, boolean>;
+  complete: boolean;       // all core tasks done for the day
 }
 
 export interface HardMode75Completion {
@@ -35,6 +52,8 @@ export interface HardMode75Data {
   startDate: string | null; // YYYY-MM-DD
   days: Record<string, DayLog75>;
   completions: HardMode75Completion[];
+  /** Custom objective definitions — persist for the entire run */
+  customObjectives?: CustomObjectiveDefinition[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -95,19 +114,27 @@ const EMPTY_DAY = (date: string): DayLog75 => ({
   outdoorWorkout: false,
   waterOz: 0,
   readPages: false,
+  isPhysicalBook: false,
   pictureTaken: false,
   noCheatMeals: false,
+  soberProtocol: false,
+  customObjectiveResults: {},
   complete: false,
 });
 
-function isDayComplete(day: DayLog75): boolean {
+function isDayComplete(day: DayLog75, programObjectives: CustomObjectiveDefinition[]): boolean {
+  const criticalCustomFailed = programObjectives.some(
+    (o) => o.criticalFailure && !(day.customObjectiveResults?.[o.id] ?? false)
+  );
   return (
     day.indoorWorkout &&
     day.outdoorWorkout &&
     day.waterOz >= 128 &&
     day.readPages &&
     day.pictureTaken &&
-    day.noCheatMeals
+    day.noCheatMeals &&
+    day.soberProtocol &&
+    !criticalCustomFailed
   );
 }
 
@@ -179,7 +206,14 @@ export function use75Hard() {
 
   // ── Derived values ──────────────────────────────────────────
 
+  const programObjectives: CustomObjectiveDefinition[] = data?.customObjectives ?? [];
   const todayLog: DayLog75 = data?.days[today] ?? EMPTY_DAY(today);
+
+  /** Merged list of definitions + today's completion state — ready for the UI */
+  const todayObjectives: CustomObjective[] = programObjectives.map((def) => ({
+    ...def,
+    completed: todayLog.customObjectiveResults?.[def.id] ?? false,
+  }));
 
   const daysCompleted = data
     ? Object.values(data.days).filter((d) => d.complete).length
@@ -221,7 +255,7 @@ export function use75Hard() {
   // ── Mutations ──────────────────────────────────────────────
 
   const startProtocol = useCallback(
-    async (mode: HardMode75) => {
+    async (mode: HardMode75, initialObjectives: CustomObjectiveDefinition[] = []) => {
       if (!user) return;
       const ref = doc(db, 'hardMode75', user.uid);
       // Preserve existing completions (badges) when restarting
@@ -230,6 +264,7 @@ export function use75Hard() {
         mode,
         startDate: today,
         days: {},
+        customObjectives: initialObjectives,
       }).catch(async () => {
         // Doc doesn't exist yet — create it
         await setDoc(ref, {
@@ -239,6 +274,7 @@ export function use75Hard() {
           startDate: today,
           days: {},
           completions: [],
+          customObjectives: initialObjectives,
         });
       });
     },
@@ -253,13 +289,13 @@ export function use75Hard() {
 
   const logItem = useCallback(
     async (
-      field: keyof Omit<DayLog75, 'date' | 'waterOz' | 'complete'>,
+      field: keyof Omit<DayLog75, 'date' | 'waterOz' | 'complete' | 'customObjectiveResults'>,
       value: boolean
     ) => {
       if (!user || !data?.active) return;
-      const current = data.days[today] ?? EMPTY_DAY(today);
+      const current: DayLog75 = { ...EMPTY_DAY(today), ...data.days[today] };
       const updated: DayLog75 = { ...current, [field]: value };
-      updated.complete = isDayComplete(updated);
+      updated.complete = isDayComplete(updated, data.customObjectives ?? []);
       const ref = doc(db, 'hardMode75', user.uid);
       await updateDoc(ref, { [`days.${today}`]: updated });
     },
@@ -269,10 +305,10 @@ export function use75Hard() {
   const addWater = useCallback(
     async (oz: number) => {
       if (!user || !data?.active) return;
-      const current = data.days[today] ?? EMPTY_DAY(today);
+      const current: DayLog75 = { ...EMPTY_DAY(today), ...data.days[today] };
       const newOz = Math.min(current.waterOz + oz, 256);
       const updated: DayLog75 = { ...current, waterOz: newOz };
-      updated.complete = isDayComplete(updated);
+      updated.complete = isDayComplete(updated, data.customObjectives ?? []);
       const ref = doc(db, 'hardMode75', user.uid);
       await updateDoc(ref, { [`days.${today}`]: updated });
     },
@@ -281,17 +317,57 @@ export function use75Hard() {
 
   const resetWater = useCallback(async () => {
     if (!user || !data?.active) return;
-    const current = data.days[today] ?? EMPTY_DAY(today);
+    const current: DayLog75 = { ...EMPTY_DAY(today), ...data.days[today] };
     const updated: DayLog75 = { ...current, waterOz: 0 };
-    updated.complete = isDayComplete(updated);
+    updated.complete = isDayComplete(updated, data.customObjectives ?? []);
     const ref = doc(db, 'hardMode75', user.uid);
     await updateDoc(ref, { [`days.${today}`]: updated });
   }, [user, data, today]);
+
+  // ── Custom objectives mutations ────────────────────────────
+
+  /** Add a new objective definition to the program — persists across all future days */
+  const addCustomObjective = useCallback(
+    async (label: string, criticalFailure: boolean = false) => {
+      if (!user || !data) return;
+      const newDef: CustomObjectiveDefinition = {
+        id: `obj-${Date.now()}`,
+        label: label.trim(),
+        criticalFailure,
+      };
+      const ref = doc(db, 'hardMode75', user.uid);
+      await updateDoc(ref, {
+        customObjectives: [...(data.customObjectives ?? []), newDef],
+      });
+    },
+    [user, data]
+  );
+
+  /** Toggle today's completion result for a specific objective */
+  const toggleCustomObjective = useCallback(
+    async (id: string, completed: boolean) => {
+      if (!user || !data?.active) return;
+      const current: DayLog75 = { ...EMPTY_DAY(today), ...data.days[today] };
+      const updated: DayLog75 = {
+        ...current,
+        customObjectiveResults: {
+          ...(current.customObjectiveResults ?? {}),
+          [id]: completed,
+        },
+      };
+      updated.complete = isDayComplete(updated, data.customObjectives ?? []);
+      const ref = doc(db, 'hardMode75', user.uid);
+      await updateDoc(ref, { [`days.${today}`]: updated });
+    },
+    [user, data, today]
+  );
 
   return {
     data,
     loading,
     todayLog,
+    todayObjectives,
+    programObjectives,
     daysCompleted,
     effectiveDays,
     missedDays,
@@ -303,5 +379,7 @@ export function use75Hard() {
     logItem,
     addWater,
     resetWater,
+    addCustomObjective,
+    toggleCustomObjective,
   };
 }

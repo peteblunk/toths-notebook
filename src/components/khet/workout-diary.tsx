@@ -455,7 +455,8 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
                         )}
                       </div>
                       {entry.notes && (
-                        <div className="rounded-lg border border-red-900/20 bg-red-950/10 px-3 py-2">
+                        <div className="rounded-lg border border-red-900/30 bg-red-950/10 px-3 py-2.5">
+                          <p className="text-sm font-headline uppercase tracking-widest text-red-400 mb-1">Notes</p>
                           <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{entry.notes}</p>
                         </div>
                       )}

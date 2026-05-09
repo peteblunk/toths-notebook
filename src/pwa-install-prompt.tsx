@@ -57,6 +57,14 @@ function PwaPromptVessel() {
                 <p className="text-slate-400 text-sm md:text-base font-mono tracking-widest uppercase opacity-70">
                   Universal System Integration Required
                 </p>
+                <a
+                  href="https://ibislabs.cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-1 text-[10px] text-cyan-500/60 hover:text-cyan-300 transition-colors tracking-[0.35em] uppercase font-headline"
+                >
+                  Powered by Ibis Labs
+                </a>
               </div>
 
               {isIOS ? (

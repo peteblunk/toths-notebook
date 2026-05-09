@@ -16,6 +16,7 @@ import * as bip39 from 'bip39';
 import { useAuth } from '@/components/auth-provider'; // Import our custom auth hook
 import { DuamatefHead } from '@/components/icons/DuamatefHead';
 import { Eye, EyeOff } from 'lucide-react';
+import { IbisLogoEtch } from '@/components/ibis-logo-etch';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -197,9 +198,26 @@ useEffect(() => {
           {/* ── RETURNING SCRIBE (Sign In) ── */}
           {mode === 'signin' && (
             <div className="p-8 space-y-6 bg-gray-800 rounded-xl shadow-lg border border-cyan-500/30">
-              <div className="text-center space-y-1">
-                <h1 className="text-4xl font-bold text-cyan-400 font-display tracking-wider">Thoth's Notebook</h1>
-                <p className="text-gray-400 text-sm">Enter the archives of wisdom</p>
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl md:text-4xl text-cyan-100 font-headline tracking-[0.2em] uppercase font-bold drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+                  Thoth's Notebook
+                </h1>
+                <div className="flex justify-center py-2">
+                  <IbisLogoEtch size={140} />
+                </div>
+                <a
+                  href="https://ibislabs.cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex flex-col items-center gap-0.5 group"
+                >
+                  <span className="text-[10px] text-cyan-400/80 group-hover:text-cyan-200 transition-colors tracking-[0.4em] uppercase font-headline">
+                    Powered by
+                  </span>
+                  <span className="text-sm text-cyan-300 group-hover:text-cyan-100 transition-colors tracking-[0.3em] uppercase font-headline font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                    Ibis Labs LLC
+                  </span>
+                </a>
               </div>
 
               <form className="space-y-5" onSubmit={handleSignIn}>
@@ -243,19 +261,19 @@ useEffect(() => {
                 </button>
               </form>
 
-              <p className="text-center text-xs text-gray-600">
+              <p className="text-center text-sm text-gray-400">
                 Forgot your password?{' '}
                 <button
                   type="button"
                   onClick={() => { setMode('recover'); setError(null); }}
-                  className="text-amber-500 hover:text-amber-300 transition-colors underline"
+                  className="text-amber-400 hover:text-amber-200 transition-colors underline font-bold"
                 >
                   Restore with recovery phrase
                 </button>
               </p>
 
               <div className="pt-2 border-t border-gray-700 text-center">
-                <p className="text-sm text-gray-500 mb-3">New to Thoth's Notebook?</p>
+                <p className="text-base text-gray-300 font-bold mb-3">New to Thoth's Notebook?</p>
                 <button
                   onClick={() => { setMode('signup'); setError(null); }}
                   className="w-full px-4 py-2 text-sm font-bold text-amber-400 border border-amber-500/40 rounded-md hover:bg-amber-500/10 transition-colors tracking-wider uppercase"
@@ -344,21 +362,21 @@ useEffect(() => {
             <div className="p-8 space-y-6 bg-gray-800 rounded-xl shadow-lg border border-amber-500/30">
               <div className="text-center space-y-1">
                 <h1 className="text-3xl font-bold text-amber-400 font-display tracking-wider">Reset Password</h1>
-                <p className="text-gray-400 text-sm">We&apos;ll send a reset link to your email</p>
+                <p className="text-gray-300 text-base">We&apos;ll send a reset link to your email</p>
               </div>
 
               {recoverySent ? (
                 <div className="space-y-4 text-center">
-                  <p className="text-lime-400 text-sm bg-lime-950/30 border border-lime-500/30 rounded-lg p-4">
+                  <p className="text-lime-300 text-base bg-lime-950/30 border border-lime-500/30 rounded-lg p-4">
                     ✓ Reset email sent. Check your inbox — and your <span className="font-bold">spam/junk folder</span> — for a message from noreply@thoths-notebook.firebaseapp.com.
                   </p>
-                  <p className="text-xs text-gray-500 leading-relaxed">
+                  <p className="text-sm text-gray-300 leading-relaxed">
                     After resetting your login password, sign in and you&apos;ll be prompted to enter your
-                    <span className="text-amber-400"> 24 recovery words</span> to restore your encryption key.
+                    <span className="text-amber-300 font-bold"> 24 recovery words</span> to restore your encryption key.
                   </p>
                   <button
                     onClick={() => { setMode('signin'); setRecoverySent(false); setError(null); }}
-                    className="text-sm text-cyan-500 hover:text-cyan-300 transition-colors"
+                    className="text-base text-cyan-400 hover:text-cyan-200 transition-colors font-bold"
                   >
                     ← Back to sign in
                   </button>
@@ -366,7 +384,7 @@ useEffect(() => {
               ) : (
                 <form className="space-y-5" onSubmit={handleRecoverWithPhrase}>
                   <div>
-                    <label className="text-sm font-bold text-gray-400 block">Sacred Email</label>
+                    <label className="text-sm font-bold text-gray-300 block">Sacred Email</label>
                     <input
                       type="email"
                       value={recoveryEmail}
@@ -376,9 +394,9 @@ useEffect(() => {
                       className="w-full px-4 py-2 mt-2 text-gray-100 bg-gray-700 border border-gray-600 rounded-md focus:border-amber-400 focus:outline-none"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 leading-relaxed">
+                  <p className="text-sm text-gray-300 leading-relaxed">
                     After resetting your login password, sign back in — you&apos;ll be prompted to enter your
-                    <span className="text-amber-400"> 24 recovery words</span> to restore your encryption key.
+                    <span className="text-amber-300 font-bold"> 24 recovery words</span> to restore your encryption key.
                   </p>
 
                   {error && <p className="text-sm text-red-400 text-center bg-red-900/30 p-2 rounded-md italic">{error}</p>}
@@ -395,7 +413,7 @@ useEffect(() => {
                     <button
                       type="button"
                       onClick={() => { setMode('signin'); setError(null); }}
-                      className="text-sm text-cyan-500 hover:text-cyan-300 transition-colors"
+                      className="text-base text-cyan-400 hover:text-cyan-200 transition-colors font-bold"
                     >
                       ← Back to sign in
                     </button>

@@ -298,6 +298,11 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
             </Tooltip>
           </div>
         </div>
+        <div className="text-center pb-2 bg-black/20 pt-2">
+          <a href="https://www.ibislabs.cloud" target="_blank" rel="noopener noreferrer" className="text-[10px] text-cyan-300 font-bold hover:text-cyan-100 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.9)] transition-all uppercase tracking-[0.2em] font-headline drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]">
+            A product of Ibis Labs LLC
+          </a>
+        </div>
       </SidebarFooter>
     </div>
   );

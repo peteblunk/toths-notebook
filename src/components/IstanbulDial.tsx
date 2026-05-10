@@ -78,10 +78,19 @@ const HeroGlyphs = {
     )
 };
 
-export function IstanbulDial() {
+export function IstanbulDial({ 
+  secretCode = [1, 7, 8, 11], 
+  onUnlock,
+  successTitle = "Stash Revealed",
+  successMessage = "\"The screenshot is in the 'Old Receipts' folder.\""
+}: { 
+  secretCode?: number[], 
+  onUnlock?: () => void,
+  successTitle?: string,
+  successMessage?: string
+}) {
   const [sequence, setSequence] = useState<number[]>([]);
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const SECRET_CODE = [1, 7, 8, 11]; 
 
   const handlePress = (id: number) => {
     if (sequence.length < 4 && !isUnlocked) {
@@ -90,9 +99,10 @@ export function IstanbulDial() {
       if (window.navigator.vibrate) window.navigator.vibrate(40);
 
       if (newSeq.length === 4) {
-        if (JSON.stringify(newSeq) === JSON.stringify(SECRET_CODE)) {
+        if (JSON.stringify(newSeq) === JSON.stringify(secretCode)) {
           setIsUnlocked(true);
           if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 200]);
+          onUnlock?.();
         } else {
           setTimeout(() => setSequence([]), 600);
         }
@@ -126,8 +136,8 @@ export function IstanbulDial() {
         </>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center p-6">
-          <h4 className="font-headline text-amber-400 text-[10px] tracking-widest uppercase mb-4">Stash Revealed</h4>
-          <p className="text-cyan-100 italic text-sm">"The screenshot is in the 'Old Receipts' folder."</p>
+          <h4 className="font-headline text-amber-400 text-[10px] tracking-widest uppercase mb-4">{successTitle}</h4>
+          <p className="text-cyan-100 italic text-sm">{successMessage}</p>
         </motion.div>
       )}
     </div>

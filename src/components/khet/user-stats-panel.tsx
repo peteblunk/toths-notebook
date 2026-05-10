@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   X, User, Flame, MapPin, Save, ChevronDown, ChevronUp,
-  Activity, Ruler, Shield, Dumbbell, Wine,
+  Activity, Ruler, Shield, Dumbbell, Wine, Zap
 } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { KhetUserSettings, WeightUnit, DistanceUnit } from '@/lib/khet-types';
+import { IstanbulDial } from '@/components/IstanbulDial';
 
 // ─────────────────────────────────────────────────────────────
 // Equipment options
@@ -116,6 +117,45 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // ── Easter Egg: Torsion System ────────────────────────────
+  const [torsionTaps, setTorsionTaps] = useState(0);
+  const [showKeypad, setShowKeypad] = useState(false);
+  const [torsionRevealed, setTorsionRevealed] = useState(false);
+  const [torsionEnabledLocal, setTorsionEnabledLocal] = useState(false);
+
+  useEffect(() => {
+    const isEnabled = localStorage.getItem('khet-torsion-enabled') === 'true';
+    setTorsionEnabledLocal(isEnabled);
+  }, []);
+
+  const handleTorsionTap = () => {
+    const newTaps = torsionTaps + 1;
+    setTorsionTaps(newTaps);
+    if (newTaps >= 4) {
+      setShowKeypad(true);
+      setTorsionTaps(0);
+    }
+  };
+
+  const handleTorsionUnlock = () => {
+    setTorsionRevealed(true);
+    setTimeout(() => {
+        setShowKeypad(false);
+    }, 2000);
+  };
+
+  const handleTorsionToggle = () => {
+    const next = !torsionEnabledLocal;
+    setTorsionEnabledLocal(next);
+    localStorage.setItem('khet-torsion-enabled', next ? 'true' : 'false');
+    window.dispatchEvent(new Event('storage'));
+    if (next) {
+        toast({ title: 'Torsion System Enabled', description: 'Access granted.' });
+    } else {
+        toast({ title: 'Torsion System Disabled', description: 'Systems powered down.' });
+    }
+  };
 
   // ── Preferences ───────────────────────────────────────────
   const [weightUnit, setWeightUnitLocal] = useState<WeightUnit>('lbs');
@@ -302,6 +342,23 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
+      {/* Keypad Overlay */}
+      {showKeypad && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="relative w-full max-w-sm">
+            <button onClick={() => setShowKeypad(false)} className="absolute -top-12 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-700 text-zinc-400">
+              <X className="w-4 h-4" />
+            </button>
+            <IstanbulDial 
+              secretCode={[2, 11, 4, 6]} 
+              onUnlock={handleTorsionUnlock}
+              successTitle="Access Granted"
+              successMessage="Torsion System online."
+            />
+          </div>
+        </div>
+      )}
+
       {/* Panel */}
       <div className="relative mt-auto w-full max-h-[92dvh] bg-[#060810] border-t border-zinc-800 rounded-t-2xl flex flex-col overflow-hidden">
         {/* Handle */}
@@ -312,9 +369,15 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0">
           <div>
-            <h2 className="font-headline text-amber-300 text-base uppercase tracking-[0.2em]">
-              Athlete Profile
-            </h2>
+            <div className="flex items-center gap-2">
+              <User
+                className="w-4 h-4 text-amber-500 cursor-pointer hover:text-amber-400 transition-colors"
+                onClick={handleTorsionTap}
+              />
+              <h2 className="font-headline text-amber-300 text-base uppercase tracking-[0.2em]">
+                Athlete Profile
+              </h2>
+            </div>
             <p className="text-sm text-zinc-400 mt-0.5">Body stats &amp; training preferences</p>
           </div>
           <button
@@ -336,7 +399,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
           ) : (
             <>
               {/* ── Units & Core Stats ────────────────────────── */}
-              <ProfileSection icon={<User className="w-4 h-4" />} title="Units & Core Stats" color="amber" defaultOpen>
+              <ProfileSection icon={<Activity className="w-4 h-4" />} title="Units & Core Stats" color="amber" defaultOpen>
                 <Field label="Weight Unit" hint="Sets the unit label for all strength workouts.">
                   <div className="flex rounded-lg overflow-hidden border border-zinc-800">
                     {(['lbs', 'kg'] as WeightUnit[]).map((unit) => (
@@ -517,6 +580,30 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
                   );
                 })()}
               </ProfileSection>
+
+              {/* ── Torsion System (Hidden) ──────────────────── */}
+              {torsionRevealed && (
+                <ProfileSection icon={<Zap className="w-4 h-4" />} title="Torsion System" color="violet" defaultOpen>
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="text-sm font-headline uppercase tracking-widest text-violet-300">Torsion Protocol</p>
+                      <p className="text-sm text-zinc-300 mt-1">Enable advanced diagnostic routines</p>
+                    </div>
+                    <button
+                      onClick={handleTorsionToggle}
+                      className={cn(
+                        "w-12 h-6 rounded-full transition-colors relative flex-shrink-0",
+                        torsionEnabledLocal ? "bg-violet-600" : "bg-zinc-800"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                        torsionEnabledLocal ? "translate-x-6" : "translate-x-0"
+                      )} />
+                    </button>
+                  </div>
+                </ProfileSection>
+              )}
 
               {/* ── Save ─────────────────────────────────────── */}
               <button

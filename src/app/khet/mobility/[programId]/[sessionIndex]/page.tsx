@@ -573,8 +573,9 @@ export default function MobilitySessionPage() {
   const handleTimerComplete = useCallback(() => {
     if (!activeKey) return;
     // In Level-Up Mode: mark r1 first, then r2 when timer fires again
+    const isCompletingR2 = levelUpMode && completedKeys.has(activeKey + '__r1');
     const markKey = levelUpMode
-      ? (completedKeys.has(activeKey + '__r1') ? activeKey + '__r2' : activeKey + '__r1')
+      ? (isCompletingR2 ? activeKey + '__r2' : activeKey + '__r1')
       : activeKey;
     setCompletedKeys((prev) => new Set([...prev, markKey]));
     // Auto-activate next incomplete item
@@ -590,7 +591,15 @@ export default function MobilitySessionPage() {
         it.slot,
         it.exercise.sides === 'bilateral' ? 'both' : it.sideIndex === 0 ? 'left' : 'right',
       );
-      if (levelUpMode) return !completedKeys.has(k + '__r1') && !it.slot.isDynamic;
+      if (levelUpMode) {
+        if (isCompletingR2) {
+          // second pass: advance to next item that has r1 done but r2 not yet done
+          return completedKeys.has(k + '__r1') && !completedKeys.has(k + '__r2') && !it.slot.isDynamic;
+        } else {
+          // first pass: advance to next item without r1 done
+          return !completedKeys.has(k + '__r1') && !it.slot.isDynamic;
+        }
+      }
       return !completedKeys.has(k) && !it.slot.isDynamic;
     });
     if (next) {

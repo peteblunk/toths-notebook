@@ -21,3 +21,4 @@
 - Use ancient Egyptian symbols, hieroglyphs, and themed icons (e.g., Eye of Horus, Ankh, Scarab Beetle) to represent task categories and actions.
 - Design the layout with clear sections for each category (Daily Rituals, Responsibilities, Missions, Expeditions), using visual dividers inspired by Egyptian borders.
 - Incorporate subtle animations and transitions, such as sliding panels or animated icons upon task completion, to provide a sense of interactivity and gamification. Ability to tick off the tasks.
+- Readability: We want to avoid very small and faint text. Generally, we always want text that is minimum size of 14px and bright. We also don't want faded buttons that only brighten on hover, because we are a mobile-first app.

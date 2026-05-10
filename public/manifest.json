@@ -1,7 +1,7 @@
 {
   "name": "Thoth's Notebook",
   "short_name": "Thoth's Notebook",
-  "description": "Manage your tasks with the wisdom of the ancients.",
+  "description": "Manage your tasks with the wisdom of the ancients. A product of Ibis Labs LLC.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",

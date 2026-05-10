@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format, differenceInDays, parseISO } from 'date-fns';
@@ -50,6 +50,7 @@ import { MobilityProgramWizard } from './mobility-program-wizard';
 import { CoreProgramWizard } from './core-program-wizard';
 import { KhetCardio } from './khet-cardio';
 import { CardioProgramWizard } from './cardio-program-wizard';
+import { KhetTorsionSystem } from './khet-torsion-system';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -66,6 +67,19 @@ export function KhetDashboard() {
   const [mobilityWizardOpen, setMobilityWizardOpen] = useState(false);
   const [coreWizardOpen, setCoreWizardOpen] = useState(false);
   const [cardioProgramWizardOpen, setCardioProgramWizardOpen] = useState(false);
+  const [torsionEnabled, setTorsionEnabled] = useState(false);
+
+  useEffect(() => {
+    // Only read localStorage on the client to prevent hydration mismatch
+    setTorsionEnabled(localStorage.getItem('khet-torsion-enabled') === 'true');
+    // Listen for storage changes in case it's toggled in UserStatsPanel
+    const onStorageChange = () => {
+      setTorsionEnabled(localStorage.getItem('khet-torsion-enabled') === 'true');
+    };
+    window.addEventListener('storage', onStorageChange);
+    // Also set an interval or just rely on state updating when UserStatsPanel is closed
+    // Better: We just check when UserStatsPanel closes or when dashboard mounts
+  }, [userStatsOpen]); // re-check when userStatsOpen changes
 
   const handleDelete = async (id: string) => {
     try {
@@ -298,6 +312,12 @@ export function KhetDashboard() {
       <div className="space-y-3">
         <KhetCardio />
       </div>
+
+      {torsionEnabled && (
+        <div className="space-y-3">
+          <KhetTorsionSystem />
+        </div>
+      )}
 
       {/* Program Wizard — create */}
       <ProgramWizard

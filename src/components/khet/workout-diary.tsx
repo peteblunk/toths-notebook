@@ -14,11 +14,26 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 import { db } from '@/lib/firebase';
 
 // ── Unified diary entry ────────────────────────────────────
+/** Returns the "logical date" (YYYY-MM-DD) for grouping.
+ * Sessions completed between midnight and 03:00 (device local time)
+ * are attributed to the previous calendar day. */
+function logicalDate(date: string, completedAt?: string): string {
+  if (!completedAt) return date;
+  const d = new Date(completedAt);
+  if (d.getHours() < 3) {
+    // Roll back to the previous day
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  return date;
+}
+
 type DiaryEntryType = 'khet' | 'mobility' | 'core' | 'cardio';
 interface DiaryEntry {
   id: string;
   type: DiaryEntryType;
   date: string;
+  completedAt?: string;
   programName: string;
   label: string;
   durationMinutes?: number;
@@ -71,6 +86,7 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
         id: s.id,
         type: 'khet',
         date: s.date,
+        completedAt: s.completedAt,
         programName: s.programName,
         label: s.dayLabel,
         durationMinutes: s.durationMinutes,
@@ -93,6 +109,7 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
           id: s.id,
           type: 'mobility',
           date: s.date,
+          completedAt: s.completedAt,
           programName: s.programName,
           label: s.label,
           durationMinutes: s.durationMinutes,
@@ -114,6 +131,7 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
           id: s.id,
           type: 'core',
           date: s.date,
+          completedAt: s.completedAt,
           programName: s.programName,
           label: s.label,
           durationMinutes: s.durationMinutes,
@@ -136,6 +154,7 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
           id: s.id,
           type: 'cardio',
           date: s.date,
+          completedAt: s.completedAt,
           programName: s.programName,
           label: s.label,
           durationMinutes: s.durationMinutes,
@@ -150,9 +169,13 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
         };
       });
 
-      // Merge + sort newest first
+      // Merge + sort newest first (use completedAt when available for accurate ordering)
       const all = [...khetEntries, ...mobEntries, ...coreEntries, ...cardioEntries];
-      all.sort((a, b) => b.date.localeCompare(a.date));
+      all.sort((a, b) => {
+        const aKey = a.completedAt ?? a.date;
+        const bKey = b.completedAt ?? b.date;
+        return bKey.localeCompare(aKey);
+      });
       setEntries(all);
       setLoading(false);
     };
@@ -160,13 +183,16 @@ export function WorkoutDiary({ onClose }: WorkoutDiaryProps) {
     load();
   }, [user, getDiaryEntries]);
 
-  // Group entries by date (entries already sorted newest-first)
+  // Group entries by logical date (entries already sorted newest-first).
+  // Sessions completed between midnight and 03:00 local time are grouped
+  // with the previous calendar day.
   const grouped = entries.reduce<{ date: string; items: DiaryEntry[] }[]>((acc, entry) => {
+    const key = logicalDate(entry.date, entry.completedAt);
     const last = acc[acc.length - 1];
-    if (last && last.date === entry.date) {
+    if (last && last.date === key) {
       last.items.push(entry);
     } else {
-      acc.push({ date: entry.date, items: [entry] });
+      acc.push({ date: key, items: [entry] });
     }
     return acc;
   }, []);

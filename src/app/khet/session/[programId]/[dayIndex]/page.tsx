@@ -16,8 +16,6 @@ import { useAuth } from '@/components/auth-provider';
 import { useKhet } from '@/hooks/use-khet';
 import { KhetSessionProvider, useKhetSession } from '@/components/khet/khet-context';
 import { ExerciseRow } from '@/components/khet/exercise-row';
-import { CardioTracker } from '@/components/khet/cardio-tracker';
-import { AbsTracker } from '@/components/khet/abs-tracker';
 import { VolumeDashboard } from '@/components/khet/volume-dashboard';
 import { GhostLogPanel } from '@/components/khet/ghost-log';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -205,8 +203,6 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
         dayLabel: day.label,
         date: localDateStr(),
         exerciseLogs: state.exerciseLogs,
-        cardioLog: state.cardioEnabled ? state.cardioLog : undefined,
-        absLogs: state.absEnabled && state.absLogs.length > 0 ? state.absLogs : undefined,
         notes: state.notes,
         completed: true,
         totalVolume,
@@ -339,12 +335,6 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
 
       {/* Volume dashboard */}
       <VolumeDashboard lifetimeVolume={program.lifetimeVolume} />
-
-      {/* Cardio section */}
-      <CardioTracker />
-
-      {/* Abs section */}
-      <AbsTracker />
 
       {/* Session notes */}
       <div>

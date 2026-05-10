@@ -39,7 +39,7 @@ function Heatmap({ days }: { days: GlobalStats['heatmap'] }) {
 
   return (
     <div className="space-y-1">
-      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+      <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">
         90-Day Training Heat Map
       </p>
       <div className="flex gap-0.5">
@@ -62,11 +62,11 @@ function Heatmap({ days }: { days: GlobalStats['heatmap'] }) {
       </div>
       <div className="flex items-center gap-1.5 pt-0.5">
         <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
-        <span className="text-[9px] text-zinc-600">None</span>
+        <span className="text-sm text-zinc-400">None</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-amber-600 ml-2" />
-        <span className="text-[9px] text-zinc-600">1</span>
+        <span className="text-sm text-zinc-400">1</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-amber-400 ml-2" />
-        <span className="text-[9px] text-zinc-600">2+</span>
+        <span className="text-sm text-zinc-400">2+</span>
       </div>
     </div>
   );
@@ -80,7 +80,7 @@ function MobilityHeatmap({ days }: { days: MobilityStats['heatmap'] }) {
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
   return (
     <div className="space-y-1">
-      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+      <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">
         90-Day Mobility Heat Map
       </p>
       <div className="flex gap-0.5">
@@ -105,11 +105,11 @@ function MobilityHeatmap({ days }: { days: MobilityStats['heatmap'] }) {
       </div>
       <div className="flex items-center gap-1.5 pt-0.5">
         <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
-        <span className="text-[9px] text-zinc-600">None</span>
+        <span className="text-sm text-zinc-400">None</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 ml-2" />
-        <span className="text-[9px] text-zinc-600">Done</span>
+        <span className="text-sm text-zinc-400">Done</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-blue-700 ml-2" />
-        <span className="text-[9px] text-zinc-600">Level-Up ⚡</span>
+        <span className="text-sm text-zinc-400">Level-Up ⚡</span>
       </div>
     </div>
   );
@@ -140,6 +140,31 @@ function MobilityDashboard({ stats }: { stats: MobilityStats }) {
 
   return (
     <div className="space-y-4">
+      {/* Week calendar */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-2">Days Trained This Week</p>
+        <div className="flex gap-1.5 justify-between">
+          {stats.weekDays.map((d) => {
+            const isToday = d.date === format(new Date(), 'yyyy-MM-dd');
+            return (
+              <div key={d.date} className="flex flex-col items-center gap-1">
+                <div className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline transition-all',
+                  d.sessions > 0
+                    ? 'bg-blue-500/20 border border-blue-500/60 text-blue-300 shadow-[0_0_8px_rgba(96,165,250,0.3)]'
+                    : isToday
+                    ? 'border border-zinc-600 text-zinc-300 bg-zinc-800/50'
+                    : 'border border-zinc-800 text-zinc-400',
+                )}>
+                  {d.sessions > 0 ? '✓' : d.label[0]}
+                </div>
+                <span className={cn('text-sm font-headline', isToday ? 'text-zinc-300' : 'text-zinc-400')}>{d.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-2">
         {STAT_TILES.map(({ label, value, levelUp }) => (
@@ -154,7 +179,7 @@ function MobilityDashboard({ stats }: { stats: MobilityStats }) {
           >
             <Activity className={cn('w-3.5 h-3.5 flex-shrink-0 mt-0.5', levelUp ? 'text-blue-300' : 'text-blue-500')} />
             <div className="min-w-0">
-              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 leading-tight">{label}</p>
               <p className={cn('text-sm font-headline mt-0.5 leading-tight', levelUp ? 'text-blue-100' : 'text-blue-200')}>{value}</p>
             </div>
           </div>
@@ -170,7 +195,7 @@ function MobilityDashboard({ stats }: { stats: MobilityStats }) {
       {stats.currentStreakWeeks >= 4 && (
         <div className="rounded-lg border border-blue-600/40 bg-blue-950/10 p-3 flex items-center gap-2">
           <Flame className="w-4 h-4 text-blue-400 flex-shrink-0" />
-          <p className="text-xs text-blue-200">
+          <p className="text-sm text-blue-200">
             <strong>{stats.currentStreakWeeks}-week streak</strong> — Consistency carves the body.
           </p>
         </div>
@@ -179,14 +204,14 @@ function MobilityDashboard({ stats }: { stats: MobilityStats }) {
       {/* Per-program breakdown */}
       {stats.programBreakdown.length > 1 && (
         <div className="space-y-1.5">
-          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">By Program</p>
           {stats.programBreakdown.map(({ programName, sessions }) => (
             <div
               key={programName}
               className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
             >
-              <span className="text-xs text-zinc-400 truncate">{programName}</span>
-              <span className="text-xs font-headline text-blue-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+              <span className="text-sm text-zinc-300 truncate">{programName}</span>
+              <span className="text-sm font-headline text-blue-300 flex-shrink-0 ml-2">{sessions} sessions</span>
             </div>
           ))}
         </div>
@@ -203,7 +228,7 @@ function CoreHeatmap({ days }: { days: CoreStats['heatmap'] }) {
   for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
   return (
     <div className="space-y-1">
-      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+      <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">
         90-Day Core Heat Map
       </p>
       <div className="flex gap-0.5">
@@ -226,11 +251,11 @@ function CoreHeatmap({ days }: { days: CoreStats['heatmap'] }) {
       </div>
       <div className="flex items-center gap-1.5 pt-0.5">
         <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
-        <span className="text-[9px] text-zinc-600">None</span>
+        <span className="text-sm text-zinc-400">None</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-orange-600 ml-2" />
-        <span className="text-[9px] text-zinc-600">1</span>
+        <span className="text-sm text-zinc-400">1</span>
         <div className="w-2.5 h-2.5 rounded-sm bg-orange-400 ml-2" />
-        <span className="text-[9px] text-zinc-600">2+</span>
+        <span className="text-sm text-zinc-400">2+</span>
       </div>
     </div>
   );
@@ -273,7 +298,7 @@ function LevelRoadmap({ breakdown }: { breakdown: CoreStats['programBreakdown'] 
 
   return (
     <div className="space-y-2">
-      <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">Level Progression</p>
+      <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">Level Progression</p>
       <div className="flex items-center gap-0">
         {CORE_LEVELS.map((lvl, i) => {
           const achieved = i <= achievedIdx;
@@ -282,15 +307,15 @@ function LevelRoadmap({ breakdown }: { breakdown: CoreStats['programBreakdown'] 
             <div key={lvl} className="flex items-center flex-1">
               <div className="flex flex-col items-center flex-1">
                 <div className={cn(
-                  'w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-headline transition-all',
+                  'w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-headline transition-all',
                   achieved ? LEVEL_COLORS[lvl] : LEVEL_DIM[lvl],
                   isCurrent && 'shadow-[0_0_10px_rgba(249,115,22,0.5)] ring-1 ring-orange-400',
                 )}>
                   {i + 1}
                 </div>
                 <p className={cn(
-                  'text-[8px] font-headline uppercase tracking-wider mt-1 text-center',
-                  achieved ? 'text-zinc-300' : 'text-zinc-700',
+                  'text-sm font-headline uppercase tracking-wider mt-1 text-center',
+                  achieved ? 'text-zinc-300' : 'text-zinc-500',
                 )}>{lvl}</p>
               </div>
               {i < CORE_LEVELS.length - 1 && (
@@ -303,7 +328,7 @@ function LevelRoadmap({ breakdown }: { breakdown: CoreStats['programBreakdown'] 
           );
         })}
       </div>
-      <p className="text-[9px] text-zinc-600 text-center">
+      <p className="text-sm text-zinc-400 text-center">
         {total} total sessions — {total < 10 ? `${10 - total} to Intermediate` : total < 30 ? `${30 - total} to Advanced` : total < 60 ? `${60 - total} to Elite` : 'Elite tier reached'}
       </p>
     </div>
@@ -329,6 +354,31 @@ function CoreDashboard({ stats }: { stats: CoreStats }) {
 
   return (
     <div className="space-y-4">
+      {/* Week calendar */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-2">Days Trained This Week</p>
+        <div className="flex gap-1.5 justify-between">
+          {stats.weekDays.map((d) => {
+            const isToday = d.date === format(new Date(), 'yyyy-MM-dd');
+            return (
+              <div key={d.date} className="flex flex-col items-center gap-1">
+                <div className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline transition-all',
+                  d.sessions > 0
+                    ? 'bg-orange-500/20 border border-orange-500/60 text-orange-300 shadow-[0_0_8px_rgba(249,115,22,0.3)]'
+                    : isToday
+                    ? 'border border-zinc-600 text-zinc-300 bg-zinc-800/50'
+                    : 'border border-zinc-800 text-zinc-400',
+                )}>
+                  {d.sessions > 0 ? '✓' : d.label[0]}
+                </div>
+                <span className={cn('text-sm font-headline', isToday ? 'text-zinc-300' : 'text-zinc-400')}>{d.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-2">
         {STAT_TILES.map(({ label, value }) => (
@@ -338,7 +388,7 @@ function CoreDashboard({ stats }: { stats: CoreStats }) {
           >
             <Flame className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-orange-500" />
             <div className="min-w-0">
-              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 leading-tight">{label}</p>
               <p className="text-sm font-headline mt-0.5 leading-tight text-orange-200">{value}</p>
             </div>
           </div>
@@ -359,7 +409,7 @@ function CoreDashboard({ stats }: { stats: CoreStats }) {
       {stats.currentStreakWeeks >= 4 && (
         <div className="rounded-lg border border-orange-600/40 bg-orange-950/10 p-3 flex items-center gap-2">
           <Flame className="w-4 h-4 text-orange-400 flex-shrink-0" />
-          <p className="text-xs text-orange-200">
+          <p className="text-sm text-orange-200">
             <strong>{stats.currentStreakWeeks}-week streak</strong> — The core is forged in consistency.
           </p>
         </div>
@@ -368,14 +418,14 @@ function CoreDashboard({ stats }: { stats: CoreStats }) {
       {/* Per-program breakdown */}
       {stats.programBreakdown.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">By Program</p>
           {stats.programBreakdown.map(({ programName, sessions }) => (
             <div
               key={programName}
               className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
             >
-              <span className="text-xs text-zinc-400 truncate">{programName}</span>
-              <span className="text-xs font-headline text-orange-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+              <span className="text-sm text-zinc-300 truncate">{programName}</span>
+              <span className="text-sm font-headline text-orange-300 flex-shrink-0 ml-2">{sessions} sessions</span>
             </div>
           ))}
         </div>
@@ -402,21 +452,21 @@ function PRCard({ pr, bodyWeight, weightUnit = 'lbs', onEdit }: { pr: Foundation
     <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 space-y-1">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <p className="text-xs font-headline text-cyan-300 truncate">{pr.movement}</p>
+          <p className="text-sm font-headline text-cyan-300 truncate">{pr.movement}</p>
           {pr.isManual && (
-            <span className="flex-shrink-0 text-[8px] font-headline uppercase tracking-wider text-violet-400 border border-violet-700/50 rounded px-1 py-0.5">
+            <span className="flex-shrink-0 text-sm font-headline uppercase tracking-wider text-violet-400 border border-violet-700/50 rounded px-1 py-0.5">
               Manual
             </span>
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className="text-[9px] font-headline uppercase tracking-wider text-zinc-600 border border-zinc-800 rounded px-1.5 py-0.5">
+          <span className="text-sm font-headline uppercase tracking-wider text-zinc-400 border border-zinc-700 rounded px-1.5 py-0.5">
             {CATEGORY_LABELS[pr.category]}
           </span>
           {onEdit && (
             <button
               onClick={() => onEdit(pr)}
-              className="w-6 h-6 rounded flex items-center justify-center text-zinc-600 hover:text-cyan-300 hover:bg-zinc-800 transition-colors"
+              className="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-cyan-300 hover:bg-zinc-800 transition-colors"
               title="Edit / Override PR"
             >
               <CyberStylus className="w-4 h-4" />
@@ -431,7 +481,7 @@ function PRCard({ pr, bodyWeight, weightUnit = 'lbs', onEdit }: { pr: Foundation
             <span className="text-xl font-headline text-amber-300">
               {pr.bestReps}
             </span>
-            <span className="text-xs text-zinc-500 ml-1">
+            <span className="text-sm text-zinc-400 ml-1">
               {isPlank ? 'sec' : 'reps'}
             </span>
           </div>
@@ -439,9 +489,9 @@ function PRCard({ pr, bodyWeight, weightUnit = 'lbs', onEdit }: { pr: Foundation
           <>
             <div>
               <span className="text-xl font-headline text-amber-300">{pr.bestWeight}</span>
-              <span className="text-xs text-zinc-500 ml-1">{weightUnit} × {pr.bestReps}</span>
+              <span className="text-sm text-zinc-400 ml-1">{weightUnit} × {pr.bestReps}</span>
             </div>
-            <div className="text-xs text-zinc-400">
+            <div className="text-sm text-zinc-300">
               E1RM <span className="text-emerald-400 font-headline">{pr.best1RM} {weightUnit}</span>
             </div>
           </>
@@ -450,14 +500,14 @@ function PRCard({ pr, bodyWeight, weightUnit = 'lbs', onEdit }: { pr: Foundation
 
       {/* Power-to-weight for Big 3 when body weight known */}
       {!isCali && bodyWeight && bodyWeight > 0 && (
-        <div className="text-[10px] text-zinc-600">
+        <div className="text-sm text-zinc-400">
           {(pr.bestWeight / bodyWeight).toFixed(2)}× bodyweight
         </div>
       )}
 
-      <div className="text-[9px] text-zinc-700">
+      <div className="text-sm text-zinc-400">
         {pr.bestDate ? format(parseISO(pr.bestDate), 'MMM d, yyyy') : '—'}
-        {pr.bestProgramName && <> · <span className="text-zinc-600">{pr.bestProgramName}</span></>}
+        {pr.bestProgramName && <> · <span className="text-zinc-400">{pr.bestProgramName}</span></>}
       </div>
     </div>
   );
@@ -505,7 +555,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
     <div className="absolute inset-0 z-10 bg-black/80 flex items-end rounded-t-2xl">
       <div className="w-full bg-[#0c0e1a] border-t border-zinc-800 rounded-t-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-headline uppercase tracking-widest text-amber-300">
+          <p className="text-sm font-headline uppercase tracking-widest text-amber-300">
             {isNew ? 'Log Manual PR' : `Override PR · ${initial!.movement}`}
           </p>
           <button onClick={onClose} className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white">
@@ -516,7 +566,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         {/* Movement selector (only for truly new) */}
         {isNew && (
           <div>
-            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Movement</label>
+            <label className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Movement</label>
             <select
               value={movement}
               onChange={(e) => setMovement(e.target.value)}
@@ -531,7 +581,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Weight (kg)</label>
+            <label className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Weight (kg)</label>
             <input
               type="number"
               min="0"
@@ -543,7 +593,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
             />
           </div>
           <div>
-            <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Reps</label>
+            <label className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Reps</label>
             <input
               type="number"
               min="1"
@@ -557,7 +607,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         </div>
 
         <div>
-          <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Date</label>
+          <label className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Date</label>
           <input
             type="date"
             value={date}
@@ -567,7 +617,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
         </div>
 
         <div>
-          <label className="text-xs font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Notes (optional)</label>
+          <label className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-1 block">Notes (optional)</label>
           <input
             type="text"
             value={notes}
@@ -581,7 +631,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 py-2 rounded border border-cyan-600/50 bg-cyan-950/20 text-cyan-300 text-xs font-headline uppercase tracking-wider hover:bg-cyan-950/40 transition-all disabled:opacity-50"
+            className="flex-1 py-2 rounded border border-cyan-600/50 bg-cyan-950/20 text-cyan-300 text-sm font-headline uppercase tracking-wider hover:bg-cyan-950/40 transition-all disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save PR'}
           </button>
@@ -589,7 +639,7 @@ function ManualPRForm({ initial, onSave, onDelete, onClose }: ManualPRFormProps)
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="px-3 py-2 rounded border border-red-900/50 bg-red-950/20 text-red-400 text-xs font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
+              className="px-3 py-2 rounded border border-red-900/50 bg-red-950/20 text-red-400 text-sm font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
             >
               {deleting ? '…' : <Trash2 className="w-3.5 h-3.5" />}
             </button>
@@ -620,18 +670,18 @@ function PowerToWeight({ prs, bodyWeight, weightUnit = 'lbs' }: { prs: Foundatio
   return (
     <div className="rounded-lg border border-zinc-800 bg-gradient-to-br from-zinc-950 to-[#0a0f1e] p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">
           Big 3 Power-to-Weight
         </p>
-        <span className={cn('text-xs font-headline uppercase tracking-wider', tier.color)}>
+        <span className={cn('text-sm font-headline uppercase tracking-wider', tier.color)}>
           {tier.label}
         </span>
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-3xl font-headline text-amber-300">{ratio.toFixed(2)}</span>
-        <span className="text-sm text-zinc-500">× bodyweight</span>
+        <span className="text-sm text-zinc-300">× bodyweight</span>
       </div>
-      <p className="text-[10px] text-zinc-600">
+      <p className="text-sm text-zinc-400">
         E1RM Total: {fmt(totalBig3, 1)} {weightUnit} ÷ {bodyWeight} {weightUnit} BW
       </p>
       {/* Progress bar toward next tier */}
@@ -716,7 +766,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             <h2 className="font-headline text-amber-300 text-base uppercase tracking-[0.2em]">
               ⚡ Gainz
             </h2>
-            <p className="text-[10px] text-zinc-500 mt-0.5">Lifetime Training Statistics</p>
+            <p className="text-sm text-zinc-300 mt-0.5">Lifetime Training Statistics</p>
           </div>
           <button
             onClick={onClose}
@@ -729,21 +779,19 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
         {/* Tabs */}
         <div className="flex gap-1 px-4 pb-3 flex-shrink-0 flex-wrap">
           {([  
-            { id: 'power',    label: 'Power',    icon: BarChart2 },
-            { id: 'hall',     label: 'Hall of PRs', icon: Trophy },
-            { id: 'mobility', label: 'Mobility', icon: Activity },
-            { id: 'core',     label: 'Core', icon: Flame },
-            { id: 'cardio',   label: 'Cardio', icon: Zap },
-            { id: 'athlete',  label: 'Athlete Stats', icon: TrendingUp },
-          ] as const).map(({ id, label, icon: Icon }) => (
+            { id: 'power',    label: 'Power',         icon: BarChart2,  base: 'border-amber-800/60 text-amber-400',   active: 'border-amber-400/80 bg-amber-950/50 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)] ring-1 ring-amber-500/30' },
+            { id: 'cardio',   label: 'Cardio',        icon: Zap,        base: 'border-red-800/60 text-red-400',       active: 'border-red-400/80 bg-red-950/50 text-red-200 shadow-[0_0_10px_rgba(239,68,68,0.3)] ring-1 ring-red-500/30' },
+            { id: 'core',     label: 'Core',          icon: Flame,      base: 'border-orange-800/60 text-orange-400', active: 'border-orange-400/80 bg-orange-950/50 text-orange-200 shadow-[0_0_10px_rgba(249,115,22,0.3)] ring-1 ring-orange-500/30' },
+            { id: 'mobility', label: 'Mobility',      icon: Activity,   base: 'border-blue-800/60 text-blue-400',     active: 'border-blue-400/80 bg-blue-950/50 text-blue-200 shadow-[0_0_10px_rgba(96,165,250,0.3)] ring-1 ring-blue-500/30' },
+            { id: 'athlete',  label: 'Athlete Stats', icon: TrendingUp, base: 'border-emerald-800/60 text-emerald-400', active: 'border-emerald-400/80 bg-emerald-950/50 text-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.3)] ring-1 ring-emerald-500/30' },
+            { id: 'hall',     label: 'Hall of PRs',   icon: Trophy,     base: 'border-cyan-800/60 text-cyan-400',     active: 'border-cyan-400/80 bg-cyan-950/50 text-cyan-200 shadow-[0_0_10px_rgba(34,211,238,0.3)] ring-1 ring-cyan-500/30' },
+          ] as const).map(({ id, label, icon: Icon, base, active }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-headline uppercase tracking-wider transition-all',
-                tab === id
-                  ? 'border-amber-500/60 bg-amber-950/20 text-amber-300'
-                  : 'border-zinc-800 text-zinc-500 hover:text-zinc-300',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-headline uppercase tracking-wider transition-all',
+                tab === id ? active : base,
               )}
             >
               <Icon className="w-3 h-3" />
@@ -756,14 +804,14 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
         <div className="flex-1 overflow-y-auto px-4 pb-10">
           {loading ? (
             <div className="flex items-center justify-center h-40">
-              <p className="text-zinc-600 text-xs font-headline uppercase tracking-widest animate-pulse">
+              <p className="text-zinc-300 text-sm font-headline uppercase tracking-widest animate-pulse">
                 Scanning the Akashic Record…
               </p>
             </div>
           ) : !stats ? (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
               <Dumbbell className="w-10 h-10 text-zinc-700" />
-              <p className="text-zinc-500 text-sm text-center">
+              <p className="text-zinc-300 text-sm text-center">
                 Complete your first session to unlock the Gainz Chronicle.
               </p>
             </div>
@@ -783,7 +831,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             ) : (
               <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Activity className="w-10 h-10 text-zinc-700" />
-                <p className="text-zinc-500 text-sm text-center">
+                <p className="text-zinc-300 text-sm text-center">
                   Complete your first mobility session to unlock this chronicle.
                 </p>
               </div>
@@ -794,7 +842,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             ) : (
               <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Flame className="w-10 h-10 text-zinc-700" />
-                <p className="text-zinc-500 text-sm text-center">
+                <p className="text-zinc-300 text-sm text-center">
                   Complete your first core session to unlock this chronicle.
                 </p>
               </div>
@@ -805,7 +853,7 @@ export function GainzPanel({ onClose }: GainzPanelProps) {
             ) : (
               <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Zap className="w-10 h-10 text-zinc-700" />
-                <p className="text-zinc-500 text-sm text-center">
+                <p className="text-zinc-300 text-sm text-center">
                   Complete your first cardio session to unlock this chronicle.
                 </p>
               </div>
@@ -855,6 +903,31 @@ function CardioDashboard({ stats }: { stats: CardioStats }) {
 
   return (
     <div className="space-y-4">
+      {/* Week calendar */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-2">Days Trained This Week</p>
+        <div className="flex gap-1.5 justify-between">
+          {stats.weekDays.map((d) => {
+            const isToday = d.date === format(new Date(), 'yyyy-MM-dd');
+            return (
+              <div key={d.date} className="flex flex-col items-center gap-1">
+                <div className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline transition-all',
+                  d.sessions > 0
+                    ? 'bg-red-500/20 border border-red-500/60 text-red-300 shadow-[0_0_8px_rgba(239,68,68,0.3)]'
+                    : isToday
+                    ? 'border border-zinc-600 text-zinc-300 bg-zinc-800/50'
+                    : 'border border-zinc-800 text-zinc-400',
+                )}>
+                  {d.sessions > 0 ? '✓' : d.label[0]}
+                </div>
+                <span className={cn('text-sm font-headline', isToday ? 'text-zinc-300' : 'text-zinc-400')}>{d.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-2">
         {STAT_TILES.map(({ label, value }) => (
@@ -864,7 +937,7 @@ function CardioDashboard({ stats }: { stats: CardioStats }) {
           >
             <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-red-500" />
             <div className="min-w-0">
-              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 leading-tight">{label}</p>
               <p className="text-sm font-headline mt-0.5 leading-tight text-red-200">{value}</p>
             </div>
           </div>
@@ -873,7 +946,7 @@ function CardioDashboard({ stats }: { stats: CardioStats }) {
 
       {/* Heatmap */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 space-y-1">
-        <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">90-Day Cardio Heat Map</p>
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">90-Day Cardio Heat Map</p>
         <div className="flex gap-0.5">
           {weeks.map((week, wi) => (
             <div key={wi} className="flex flex-col gap-0.5">
@@ -894,25 +967,25 @@ function CardioDashboard({ stats }: { stats: CardioStats }) {
         </div>
         <div className="flex items-center gap-1.5 pt-0.5">
           <div className="w-2.5 h-2.5 rounded-sm bg-zinc-800" />
-          <span className="text-[9px] text-zinc-600">None</span>
+          <span className="text-sm text-zinc-400">None</span>
           <div className="w-2.5 h-2.5 rounded-sm bg-red-700 ml-2" />
-          <span className="text-[9px] text-zinc-600">1</span>
+          <span className="text-sm text-zinc-400">1</span>
           <div className="w-2.5 h-2.5 rounded-sm bg-red-400 ml-2" />
-          <span className="text-[9px] text-zinc-600">2+</span>
+          <span className="text-sm text-zinc-400">2+</span>
         </div>
       </div>
 
       {/* By program breakdown */}
       {stats.programBreakdown.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500">By Program</p>
+          <p className="text-sm font-headline uppercase tracking-widest text-zinc-300">By Program</p>
           {stats.programBreakdown.map(({ programName, sessions }) => (
             <div
               key={programName}
               className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950/40"
             >
-              <span className="text-xs text-zinc-400 truncate">{programName}</span>
-              <span className="text-xs font-headline text-red-300 flex-shrink-0 ml-2">{sessions} sessions</span>
+              <span className="text-sm text-zinc-300 truncate">{programName}</span>
+              <span className="text-sm font-headline text-red-300 flex-shrink-0 ml-2">{sessions} sessions</span>
             </div>
           ))}
         </div>
@@ -939,10 +1012,10 @@ function PowerDashboard({ stats }: { stats: GlobalStats }) {
             key={id}
             onClick={() => setMode(id)}
             className={cn(
-              'flex-1 py-2 rounded-lg border text-xs font-headline uppercase tracking-widest transition-all',
+              'flex-1 py-2 rounded-lg border text-sm font-headline uppercase tracking-widest transition-all',
               mode === id
                 ? 'border-amber-500/60 bg-amber-950/20 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                : 'border-zinc-800 text-zinc-500 hover:text-zinc-300',
+                : 'border-zinc-600 text-zinc-300',
             )}
           >
             {label}
@@ -985,7 +1058,6 @@ function AllTimeStats({ stats }: { stats: GlobalStats }) {
     { label: 'Total Volume',      value: `${fmt(Math.round(stats.totalVolumeKg / 1000), 1)}t`, icon: Weight },
     { label: 'Total Reps',        value: fmt(stats.totalReps), icon: TrendingUp },
     { label: 'Time in the Gym',   value: timeLabel,         icon: Clock },
-    { label: 'Cardio Cals Burned',value: fmt(stats.totalCardioCals), icon: Flame },
     { label: 'Current Streak',    value: `${stats.currentStreakWeeks}w`, icon: Zap },
     { label: 'Longest Streak',    value: `${stats.longestStreakWeeks}w`, icon: Trophy },
   ];
@@ -1001,7 +1073,7 @@ function AllTimeStats({ stats }: { stats: GlobalStats }) {
           >
             <Icon className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 leading-tight">{label}</p>
               <p className="text-sm font-headline text-amber-200 mt-0.5 leading-tight">{value}</p>
             </div>
           </div>
@@ -1017,7 +1089,7 @@ function AllTimeStats({ stats }: { stats: GlobalStats }) {
       {stats.currentStreakWeeks >= 4 && (
         <div className="rounded-lg border border-amber-600/40 bg-amber-950/10 p-3 flex items-center gap-2">
           <Flame className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-200">
+          <p className="text-sm text-amber-200">
             <strong>{stats.currentStreakWeeks}-week streak</strong> — The ritual holds. The stone reshapes.
           </p>
         </div>
@@ -1041,7 +1113,6 @@ function ThisWeekStats({ week }: { week: WeekStats }) {
     { label: 'Volume',       value: week.volumeKg > 0 ? `${fmt(Math.round(week.volumeKg / 1000), 1)}t` : '—', icon: Weight },
     { label: 'Total Reps',   value: week.reps > 0 ? fmt(week.reps) : '—',                icon: TrendingUp },
     { label: 'Time',         value: timeLabel,                                             icon: Clock },
-    { label: 'Cardio Cals',  value: week.cardioCals > 0 ? fmt(week.cardioCals) : '—',    icon: Flame },
   ];
 
   const weekRangeLabel = `${format(parseISO(week.weekStart), 'MMM d')} – ${format(parseISO(week.weekEnd), 'MMM d')}`;
@@ -1051,30 +1122,30 @@ function ThisWeekStats({ week }: { week: WeekStats }) {
       {/* Week range label */}
       <div className="flex items-center gap-2">
         <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-        <span className="text-xs text-zinc-400 font-headline uppercase tracking-widest">{weekRangeLabel}</span>
+        <span className="text-sm text-zinc-300 font-headline uppercase tracking-widest">{weekRangeLabel}</span>
       </div>
 
       {/* Day-of-week indicator */}
       <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-        <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 mb-2">Days Trained This Week</p>
+        <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 mb-2">Days Trained This Week</p>
         <div className="flex gap-1.5 justify-between">
           {week.days.map((d) => {
             const isToday = d.date === format(new Date(), 'yyyy-MM-dd');
             return (
               <div key={d.date} className="flex flex-col items-center gap-1">
                 <div className={cn(
-                  'w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-headline transition-all',
+                  'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline transition-all',
                   d.sessions > 0
                     ? 'bg-amber-500/20 border border-amber-500/60 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
                     : isToday
                     ? 'border border-zinc-600 text-zinc-300 bg-zinc-800/50'
-                    : 'border border-zinc-800 text-zinc-600',
+                    : 'border border-zinc-800 text-zinc-400',
                 )}>
                   {d.sessions > 0 ? '✓' : d.label[0]}
                 </div>
                 <span className={cn(
-                  'text-[9px] font-headline',
-                  isToday ? 'text-zinc-300' : 'text-zinc-600',
+                  'text-sm font-headline',
+                  isToday ? 'text-zinc-300' : 'text-zinc-400',
                 )}>{d.label}</span>
               </div>
             );
@@ -1091,7 +1162,7 @@ function ThisWeekStats({ week }: { week: WeekStats }) {
           >
             <Icon className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-500 leading-tight">{label}</p>
+              <p className="text-sm font-headline uppercase tracking-widest text-zinc-300 leading-tight">{label}</p>
               <p className="text-sm font-headline text-amber-200 mt-0.5 leading-tight">{value}</p>
             </div>
           </div>
@@ -1100,8 +1171,8 @@ function ThisWeekStats({ week }: { week: WeekStats }) {
 
       {week.sessions === 0 && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-center">
-          <p className="text-zinc-500 text-xs">No sessions logged yet this week.</p>
-          <p className="text-zinc-700 text-[10px] mt-1">Week resets every Monday.</p>
+          <p className="text-zinc-300 text-sm">No sessions logged yet this week.</p>
+          <p className="text-zinc-400 text-sm mt-1">Week resets every Monday.</p>
         </div>
       )}
     </div>
@@ -1137,7 +1208,7 @@ function HallOfPRs({ stats, bodyWeight, weightUnit, onEditPR, onAddPR }: HallOfP
         if (prs.length === 0) return null;
         return (
           <div key={cat} className="space-y-2">
-            <p className="text-[9px] font-headline uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-1.5">
+            <p className="text-sm font-headline uppercase tracking-[0.3em] text-zinc-300 flex items-center gap-1.5">
               <Trophy className="w-3 h-3 text-amber-500" />
               {CATEGORY_LABELS[cat]}
             </p>
@@ -1151,7 +1222,7 @@ function HallOfPRs({ stats, bodyWeight, weightUnit, onEditPR, onAddPR }: HallOfP
       {stats.foundationalPRs.length === 0 && (
         <div className="flex flex-col items-center justify-center h-32 gap-2">
           <Trophy className="w-8 h-8 text-zinc-700" />
-          <p className="text-zinc-600 text-sm text-center">
+          <p className="text-zinc-300 text-sm text-center">
             Log sessions with Bench Press, Squat, Deadlift, and others to populate your Hall of PRs.
           </p>
         </div>
@@ -1160,7 +1231,7 @@ function HallOfPRs({ stats, bodyWeight, weightUnit, onEditPR, onAddPR }: HallOfP
       {/* Add manual PR */}
       <button
         onClick={onAddPR}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-zinc-700 text-zinc-500 text-xs font-headline uppercase tracking-wider hover:border-cyan-700 hover:text-cyan-400 transition-all"
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-zinc-500 text-zinc-300 text-sm font-headline uppercase tracking-wider hover:border-cyan-400 hover:text-cyan-300 transition-all"
       >
         <Plus className="w-3.5 h-3.5" />
         Log Manual PR

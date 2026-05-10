@@ -44,6 +44,7 @@ export interface WorkoutSession {
   dayIndex: number;
   dayLabel: string;
   date: string;        // ISO date string (YYYY-MM-DD)
+  completedAt?: string; // ISO timestamp when session was saved (for late-night grouping)
   exerciseLogs: ExerciseLog[];
   cardioLog?: CardioLog;
   absLogs?: ExerciseLog[];
@@ -195,7 +196,6 @@ export interface WeekStats {
   volumeKg: number;
   reps: number;
   minutes: number;
-  cardioCals: number;
   weekStart: string; // ISO date of Monday
   weekEnd: string;   // ISO date of Sunday
   /** Mon–Sun, 7 entries */
@@ -214,8 +214,6 @@ export interface GlobalStats {
   totalReps: number;
   /** Sum of durationMinutes across sessions that have it */
   totalMinutes: number;
-  /** Sum of cardioLog.calories across all sessions */
-  totalCardioCals: number;
   /** Current consecutive weeks hitting ≥1 session */
   currentStreakWeeks: number;
   longestStreakWeeks: number;
@@ -442,10 +440,6 @@ export interface CardioPR {
 
 export interface ActiveSessionState {
   exerciseLogs: ExerciseLog[];
-  cardioEnabled: boolean;
-  cardioLog: CardioLog;
-  absEnabled: boolean;
-  absLogs: ExerciseLog[];
   notes: string;
   startDate: string;
 }
@@ -455,13 +449,5 @@ export type SessionAction =
   | { type: 'ADD_SET'; exerciseIdx: number }
   | { type: 'REMOVE_SET'; exerciseIdx: number }
   | { type: 'SWAP_EXERCISE'; exerciseIdx: number; newExercise: ProgramExercise }
-  | { type: 'TOGGLE_CARDIO' }
-  | { type: 'SET_CARDIO'; log: Partial<CardioLog> }
-  | { type: 'TOGGLE_ABS' }
-  | { type: 'ADD_ABS_EXERCISE'; exercise: { exerciseId: string; name: string } }
-  | { type: 'REMOVE_ABS_EXERCISE'; absIdx: number }
-  | { type: 'UPDATE_ABS_SET'; absIdx: number; setIdx: number; updates: Partial<SetLog> }
-  | { type: 'ADD_ABS_SET'; absIdx: number }
-  | { type: 'REMOVE_ABS_SET'; absIdx: number }
   | { type: 'SET_NOTES'; notes: string }
   | { type: 'SET_EXERCISE_NOTES'; exerciseIdx: number; notes: string };

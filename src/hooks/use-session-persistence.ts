@@ -37,8 +37,6 @@ export function loadDraft(programId: string, dayIndex: number): ActiveSessionSta
     // Minimal structural validation — ensure required fields exist
     if (
       !Array.isArray(parsed.exerciseLogs) ||
-      typeof parsed.cardioEnabled !== 'boolean' ||
-      typeof parsed.absEnabled !== 'boolean' ||
       typeof parsed.startDate !== 'string'
     ) {
       return null;

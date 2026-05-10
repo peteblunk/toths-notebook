@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  X, User, Flame, MapPin, Save, ChevronDown, ChevronUp,
-  Activity, Ruler, Shield, Dumbbell, Wine, Zap
+  X, User, Save, ChevronDown, ChevronUp,
+  Activity, Shield, Dumbbell, Wine, Zap
 } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useToast } from '@/hooks/use-toast';
@@ -166,18 +166,7 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
   const [maintenanceCalories, setMaintenanceCalories] = useState('');
   const [gymName, setGymName] = useState('');
 
-  // ── Body Composition ──────────────────────────────────────
-  const [height, setHeight] = useState('');
-  const [estimatedBodyFat, setEstimatedBodyFat] = useState('');
-  const [restingHeartRate, setRestingHeartRate] = useState('');
 
-  // ── Aesthetic Measurements ────────────────────────────────
-  const [neckCircumference, setNeckCircumference] = useState('');
-  const [waistCircumference, setWaistCircumference] = useState('');
-  const [hipCircumference, setHipCircumference] = useState('');  const [chestCircumference, setChestCircumference] = useState('');
-  const [bicepCircumference, setBicepCircumference] = useState('');
-  const [thighCircumference, setThighCircumference] = useState('');
-  const [calfCircumference, setCalfCircumference] = useState('');
   // ── Gym Specs / Tactical ──────────────────────────────────
   const [injuryLog, setInjuryLog] = useState('');
   const [equipmentAccess, setEquipmentAccess] = useState<string[]>([]);
@@ -192,9 +181,6 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
     const draft = {
       weightUnit, distanceUnit,
       bodyWeight, maintenanceCalories, gymName,
-      height, estimatedBodyFat, restingHeartRate,
-      neckCircumference, waistCircumference, hipCircumference,
-      chestCircumference, bicepCircumference, thighCircumference, calfCircumference,
       injuryLog, equipmentAccess, sobrietyStartDate,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -202,9 +188,6 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
   }, [
     weightUnit, distanceUnit,
     bodyWeight, maintenanceCalories, gymName,
-    height, estimatedBodyFat, restingHeartRate,
-    neckCircumference, waistCircumference, hipCircumference,
-    chestCircumference, bicepCircumference, thighCircumference, calfCircumference,
     injuryLog, equipmentAccess, sobrietyStartDate,
   ]);
 
@@ -223,16 +206,6 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
         setBodyWeight(           draft.bodyWeight            ?? (s.bodyWeight            ? String(s.bodyWeight)            : ''));
         setMaintenanceCalories(  draft.maintenanceCalories   ?? (s.maintenanceCalories   ? String(s.maintenanceCalories)   : ''));
         setGymName(              draft.gymName               ?? (s.gymName               ?? ''));
-        setHeight(               draft.height                ?? (s.height                ? String(s.height)                : ''));
-        setEstimatedBodyFat(     draft.estimatedBodyFat      ?? (s.estimatedBodyFat      ? String(s.estimatedBodyFat)      : ''));
-        setRestingHeartRate(     draft.restingHeartRate      ?? (s.restingHeartRate      ? String(s.restingHeartRate)      : ''));
-        setNeckCircumference(    draft.neckCircumference     ?? (s.neckCircumference     ? String(s.neckCircumference)     : ''));
-        setWaistCircumference(   draft.waistCircumference    ?? (s.waistCircumference    ? String(s.waistCircumference)    : ''));
-        setHipCircumference(     draft.hipCircumference      ?? (s.hipCircumference      ? String(s.hipCircumference)      : ''));
-        setChestCircumference(   draft.chestCircumference    ?? (s.chestCircumference    ? String(s.chestCircumference)    : ''));
-        setBicepCircumference(   draft.bicepCircumference    ?? (s.bicepCircumference    ? String(s.bicepCircumference)    : ''));
-        setThighCircumference(   draft.thighCircumference    ?? (s.thighCircumference    ? String(s.thighCircumference)    : ''));
-        setCalfCircumference(    draft.calfCircumference     ?? (s.calfCircumference     ? String(s.calfCircumference)     : ''));
         setInjuryLog(            draft.injuryLog             ?? (s.injuryLog             ?? ''));
         setEquipmentAccess(      draft.equipmentAccess       ?? (s.equipmentAccess       ?? []));
         setSobrietyStartDate(    draft.sobrietyStartDate     ?? (s.sobrietyStartDate     ?? ''));
@@ -248,37 +221,13 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
   const handleWeightUnitToggle = async (newUnit: WeightUnit) => {
     if (newUnit === weightUnit) return;
 
-    // Convert a string field using a multiplier, keeping 1 decimal
     const cvt = (str: string, multiplier: number) => {
       const v = parseFloat(str);
       if (isNaN(v) || v <= 0) return str;
       return String(Math.round(v * multiplier * 10) / 10);
     };
 
-    if (newUnit === 'lbs') {
-      // kg → lbs: ×2.20462 | cm → in: ÷2.54
-      setBodyWeight(        cvt(bodyWeight,       2.20462));
-      setHeight(            cvt(height,           1 / 2.54));
-      setNeckCircumference( cvt(neckCircumference, 1 / 2.54));
-      setWaistCircumference(cvt(waistCircumference, 1 / 2.54));
-      setHipCircumference(  cvt(hipCircumference,  1 / 2.54));
-      setChestCircumference(cvt(chestCircumference, 1 / 2.54));
-      setBicepCircumference(cvt(bicepCircumference, 1 / 2.54));
-      setThighCircumference(cvt(thighCircumference, 1 / 2.54));
-      setCalfCircumference( cvt(calfCircumference,  1 / 2.54));
-    } else {
-      // lbs → kg: ÷2.20462 | in → cm: ×2.54
-      setBodyWeight(        cvt(bodyWeight,        1 / 2.20462));
-      setHeight(            cvt(height,            2.54));
-      setNeckCircumference( cvt(neckCircumference, 2.54));
-      setWaistCircumference(cvt(waistCircumference, 2.54));
-      setHipCircumference(  cvt(hipCircumference,  2.54));
-      setChestCircumference(cvt(chestCircumference, 2.54));
-      setBicepCircumference(cvt(bicepCircumference, 2.54));
-      setThighCircumference(cvt(thighCircumference, 2.54));
-      setCalfCircumference( cvt(calfCircumference,  2.54));
-    }
-
+    setBodyWeight(newUnit === 'lbs' ? cvt(bodyWeight, 2.20462) : cvt(bodyWeight, 1 / 2.20462));
     setWeightUnitLocal(newUnit);
     // Immediately persist — unit choice is permanent, not part of Save
     await updateUserSettings({ weightUnit: newUnit });
@@ -302,16 +251,6 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
       bodyWeight:          num(bodyWeight),
       maintenanceCalories: int(maintenanceCalories),
       gymName:             gymName.trim() || undefined,
-      height:              num(height),
-      estimatedBodyFat:    num(estimatedBodyFat),
-      restingHeartRate:    int(restingHeartRate),
-      neckCircumference:   num(neckCircumference),
-      waistCircumference:  num(waistCircumference),
-      hipCircumference:    num(hipCircumference),
-      chestCircumference:  num(chestCircumference),
-      bicepCircumference:  num(bicepCircumference),
-      thighCircumference:  num(thighCircumference),
-      calfCircumference:   num(calfCircumference),
       injuryLog:           injuryLog.trim() || undefined,
       equipmentAccess:     equipmentAccess.length > 0 ? equipmentAccess : undefined,
       sobrietyStartDate:   sobrietyStartDate || undefined,
@@ -328,9 +267,6 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
     toast({ title: 'Profile Updated', description: 'Athlete profile saved successfully.' });
     onClose();
   };
-
-  const measureUnit = weightUnit === 'lbs' ? 'in' : 'cm';
-  const heightUnit  = weightUnit === 'lbs' ? 'in' : 'cm';
 
   const toggleEquipment = (id: string) =>
     setEquipmentAccess((prev) =>
@@ -452,75 +388,9 @@ export function UserStatsPanel({ onClose }: UserStatsPanelProps) {
                 </Field>
               </ProfileSection>
 
-              {/* ── Body Composition ──────────────────────────── */}
-              <ProfileSection icon={<Activity className="w-4 h-4" />} title="Body Composition" color="cyan">
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label={`Height (${heightUnit})`}>
-                    <NumericInput value={height} onChange={setHeight}
-                      placeholder={weightUnit === 'lbs' ? 'e.g. 71' : 'e.g. 180'} step={0.5} />
-                  </Field>
-                  <Field label="Body Fat (%)">
-                    <NumericInput value={estimatedBodyFat} onChange={setEstimatedBodyFat}
-                      placeholder="e.g. 15" step={0.5} />
-                  </Field>
-                  <Field label="Resting HR (BPM)">
-                    <NumericInput value={restingHeartRate} onChange={setRestingHeartRate}
-                      placeholder="e.g. 58" />
-                  </Field>
-                </div>
-                <p className="text-sm text-zinc-400 leading-snug">
-                  Source of truth for power-to-weight ratio and VO₂ max estimates in Gainz &amp; Goals.
-                </p>
-              </ProfileSection>
 
-              {/* ── Aesthetic Measurements ────────────────────── */}
-              <ProfileSection icon={<Ruler className="w-4 h-4" />} title="Aesthetic Measurements" color="violet">
-                <p className="text-sm text-zinc-400 leading-snug">
-                  All measurements in {weightUnit === 'lbs' ? 'inches' : 'centimeters'} — auto-switches with your unit preference.
-                </p>
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label={`Neck (${measureUnit})`}
-                    hint="Base of neck, relaxed">
-                    <NumericInput value={neckCircumference} onChange={setNeckCircumference}
-                      placeholder={weightUnit === 'lbs' ? '15' : '38'} step={0.5} />
-                  </Field>
-                  <Field label={`Waist (${measureUnit})`}
-                    hint="Narrowest point, exhale">
-                    <NumericInput value={waistCircumference} onChange={setWaistCircumference}
-                      placeholder={weightUnit === 'lbs' ? '32' : '81'} step={0.5} />
-                  </Field>
-                  <Field label={`Hips (${measureUnit})`}
-                    hint="Widest point, feet together">
-                    <NumericInput value={hipCircumference} onChange={setHipCircumference}
-                      placeholder={weightUnit === 'lbs' ? '38' : '97'} step={0.5} />
-                  </Field>
-                </div>
-                <Field label={`Chest (${measureUnit})`}
-                  hint="At nipple line, arms relaxed at sides">
-                  <NumericInput value={chestCircumference} onChange={setChestCircumference}
-                    placeholder={weightUnit === 'lbs' ? '40' : '102'} step={0.5} />
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label={`Bicep (${measureUnit})`}
-                    hint="Flexed peak, dominant arm">
-                    <NumericInput value={bicepCircumference} onChange={setBicepCircumference}
-                      placeholder={weightUnit === 'lbs' ? '14' : '36'} step={0.5} />
-                  </Field>
-                  <Field label={`Thigh (${measureUnit})`}
-                    hint="Standing, widest upper thigh">
-                    <NumericInput value={thighCircumference} onChange={setThighCircumference}
-                      placeholder={weightUnit === 'lbs' ? '23' : '58'} step={0.5} />
-                  </Field>
-                  <Field label={`Calf (${measureUnit})`}
-                    hint="Standing, widest point of calf">
-                    <NumericInput value={calfCircumference} onChange={setCalfCircumference}
-                      placeholder={weightUnit === 'lbs' ? '14' : '36'} step={0.5} />
-                  </Field>
-                </div>
-                <p className="text-sm text-zinc-500 leading-snug">
-                  Snapshot values here. Log daily measurements in the Athlete Stats panel for trend tracking and L/R symmetry analysis.
-                </p>
-              </ProfileSection>
+
+
 
               {/* ── Gym Specs ─────────────────────────────────── */}
               <ProfileSection icon={<Dumbbell className="w-4 h-4" />} title="Gym Specs" color="amber">

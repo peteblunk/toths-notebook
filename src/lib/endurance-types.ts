@@ -106,6 +106,7 @@ export interface CardioSessionLog {
   week: number;
   label: string;
   date: string;
+  completedAt?: string; // ISO timestamp when session was saved (for late-night grouping)
   exerciseId: string;
   exerciseName: string;
   durationMinutes: number;
@@ -136,6 +137,7 @@ export interface CardioStats {
   longestStreakWeeks: number;
   heatmap: { date: string; count: number }[];
   programBreakdown: { programName: string; sessions: number }[];
+  weekDays: { date: string; label: string; sessions: number }[];
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -70,6 +70,7 @@ export interface MobilitySessionLog {
   label: string;
   type: 'main' | 'prebed';
   date: string;                  // ISO date YYYY-MM-DD
+  completedAt?: string;          // ISO timestamp when session was saved (for late-night grouping)
   slotsCompleted: string[];      // exerciseIds of completed slots
   durationMinutes: number;
   completed: boolean;
@@ -84,6 +85,7 @@ export interface MobilityStats {
   longestStreakWeeks: number;
   heatmap: { date: string; count: number; hasLevelUp: boolean }[];  // 90 days newest-last
   programBreakdown: { programName: string; sessions: number }[];
+  weekDays: { date: string; label: string; sessions: number }[];
 }
 
 // ─────────────────────────────────────────────────────────────

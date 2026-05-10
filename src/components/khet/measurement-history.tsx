@@ -99,8 +99,25 @@ function DeltaBadge({ delta, unit }: { delta: number | null; unit: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// MeasurementCard — shared component for both tabs
+// Standard bodybuilding measurement cues
 // ─────────────────────────────────────────────────────────────
+const MEASUREMENT_CUES: Record<MeasurementCategory, string> = {
+  WEIGHT:     'First thing in the morning, after using the bathroom, before eating or drinking. Stand centered on the scale, feet together.',
+  HEIGHT:     'Stand barefoot, heels together against a wall, chin level. Measure from floor to the top of the head.',
+  BODY_FAT:   'Use calipers at the same 3–7 sites each time, same time of day. For visual estimates, compare to reference photos under consistent lighting.',
+  RESTING_HR: 'Lie still for 5 minutes. Count beats for a full 60 seconds, or use a reliable monitor. Measure before rising from bed.',
+  NECK:       'Stand upright, head level. Wrap tape around the neck just below the larynx (Adam\'s apple), parallel to the floor. Relax muscles — do not flex.',
+  CHEST:      'Arms relaxed at sides. Wrap tape across the widest part of the chest, over the nipple line, parallel to the floor. Inhale normally, then measure on a normal exhale.',
+  WAIST:      'Feet together, relaxed (no sucking in). Measure at the narrowest point — usually 1–2 inches above the navel. Exhale fully, then take the measurement.',
+  HIPS:       'Feet together. Wrap tape around the widest point of the glutes / hips, parallel to the floor. Weight evenly distributed.',
+  BICEP_L:    'Left arm: flex to peak contraction, palm facing up. Measure around the peak of the bicep at the widest point.',
+  BICEP_R:    'Right arm: flex to peak contraction, palm facing up. Measure around the peak of the bicep at the widest point.',
+  THIGH_L:    'Stand with feet 6 inches apart, weight evenly distributed. Left thigh: measure the widest circumference of the upper thigh, tape parallel to the floor.',
+  THIGH_R:    'Stand with feet 6 inches apart, weight evenly distributed. Right thigh: measure the widest circumference of the upper thigh, tape parallel to the floor.',
+  CALF:       'Stand on the balls of your feet or with heels slightly elevated. Measure the widest point of the calf muscle, tape parallel to the floor. Relax the muscle.',
+};
+
+
 interface MeasurementCardProps {
   category: MeasurementCategory;
   latest: MeasurementLog | null;
@@ -391,8 +408,8 @@ export function LogMeasurementModal({
   };
 
   return (
-    <div className="absolute inset-0 z-20 bg-black/80 flex items-end">
-      <div className="w-full bg-[#0c0e1a] border-t border-zinc-800 rounded-t-2xl p-4 space-y-4">
+    <div className="fixed inset-0 z-[60] bg-black/80 flex items-end">
+      <div className="w-full bg-[#0c0e1a] border-t border-zinc-800 rounded-t-2xl p-4 space-y-4 max-h-[90dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-sm font-headline uppercase tracking-widest text-amber-300">
@@ -502,6 +519,11 @@ export function LogMeasurementModal({
               <label className="text-xs font-headline uppercase tracking-[0.25em] text-zinc-300 block">
                 Value ({unit})
               </label>
+              {/* Measurement cue */}
+              <div className="flex items-start gap-2 rounded-lg border border-zinc-700/50 bg-zinc-900/40 px-3 py-2">
+                <span className="text-zinc-400 text-sm mt-0.5 flex-shrink-0">📐</span>
+                <p className="text-sm text-zinc-300 leading-snug">{MEASUREMENT_CUES[category]}</p>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="number"

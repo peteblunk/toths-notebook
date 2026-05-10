@@ -81,6 +81,7 @@ export interface CoreSessionLog {
   week: number;
   label: string;
   date: string;                  // YYYY-MM-DD
+  completedAt?: string;          // ISO timestamp when session was saved (for late-night grouping)
   slotsCompleted: string[];      // exerciseIds completed
   /** Per-exercise performance data (weight in lbs, reps, or seconds) */
   performanceData: Record<string, { weight?: number; reps?: number; seconds?: number }>;
@@ -95,6 +96,7 @@ export interface CoreStats {
   longestStreakWeeks: number;
   heatmap: { date: string; count: number }[];
   programBreakdown: { programName: string; sessions: number }[];
+  weekDays: { date: string; label: string; sessions: number }[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -809,6 +811,24 @@ export const CORE_EXERCISES: CoreExercise[] = [
     ],
     progression: 'Toes-to-bar single-arm.',
     regression: 'Two-arm hanging leg raise.',
+  },
+  {
+    id: 'glute-bridge-hold',
+    name: 'Glute Bridge Hold',
+    category: 'Full Core',
+    level: 'Beginner',
+    type: 'time',
+    baseSeconds: 30,
+    defaultSets: 3,
+    cues: [
+      'Lie on your back, knees bent 90°, feet flat and hip-width apart.',
+      'Drive through your heels to lift hips until body forms a straight line from knees to shoulders.',
+      'Squeeze your glutes hard at the top — do not hyperextend the lower back.',
+      'Brace your core and breathe steadily throughout the hold.',
+      'Keep knees tracking over toes — resist letting them cave inward.',
+    ],
+    progression: 'Single-leg glute bridge hold.',
+    regression: 'Reduce hold duration or add brief rests between holds.',
   },
   {
     id: 'skin-the-cat',

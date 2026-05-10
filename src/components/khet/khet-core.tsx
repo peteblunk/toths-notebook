@@ -20,6 +20,7 @@ import {
   Search,
   GripVertical,
   Trash2,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCore } from '@/hooks/use-core';
@@ -207,6 +208,26 @@ function CountdownTimer({
 }
 
 // ─────────────────────────────────────────────────────────────
+// Boost Finisher options
+// ─────────────────────────────────────────────────────────────
+
+interface BoostOption {
+  id: string;          // matches CORE_EXERCISES id
+  boostType: string;   // e.g. "Isometric Boost"
+  name: string;
+  timerOnly: boolean;  // true = timer only; false = reps OR 60s AMRAP
+}
+
+const BOOST_OPTIONS: BoostOption[] = [
+  { id: 'plank',            boostType: 'Isometric Boost',  name: 'Plank',             timerOnly: true  },
+  { id: 'russian-twist',    boostType: 'Oblique Boost',    name: 'Russian Twists',    timerOnly: false },
+  { id: 'bicycle-crunch',   boostType: 'Oblique Boost',    name: 'Bicycle Crunches',  timerOnly: false },
+  { id: 'mountain-climber', boostType: 'Metabolic Boost',  name: 'Mountain Climbers', timerOnly: false },
+  { id: 'glute-bridge-hold',boostType: 'Posterior Boost',  name: 'Glute Bridge Hold', timerOnly: false },
+  { id: 'dead-bug',         boostType: 'Stability Boost',  name: 'Dead Bugs',         timerOnly: true  },
+];
+
+// ─────────────────────────────────────────────────────────────
 // SessionLogger — the modal to log a core session
 // ─────────────────────────────────────────────────────────────
 
@@ -239,6 +260,17 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
   const [startTime] = useState<number>(
     () => loadRawDraft<CoreDraft>(draftKey)?.startTime ?? Date.now(),
   );
+
+  // ── Ad-hoc exercises added during this session (not saved to program) ──
+  const [addExOpen, setAddExOpen] = useState(false);
+  const [addedItems, setAddedItems] = useState<{ ex: CoreExercise; sets: number }[]>([]);
+
+  // ── Boost / finisher ──
+  const [boostOpen, setBoostOpen] = useState(false);
+  const [boostChoice, setBoostChoice] = useState<BoostOption | null>(null);
+  const [boostMode, setBoostMode] = useState<'timer' | 'reps'>('timer');
+  const [boostSeconds, setBoostSeconds] = useState(60);
+  const [boostDone, setBoostDone] = useState(false);
 
   const exercises = session.slots
     .map((slot) => {
@@ -274,12 +306,26 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
     }));
   };
 
-  const allDone = exercises.length > 0 &&
-    exercises.every(({ slot, ex }) => isFullyDone(ex.id, slot.sets));
-  const totalSetsAll = exercises.reduce((acc, { slot }) => acc + slot.sets, 0);
-  const completedSetsAll = exercises.reduce((acc, { ex }) => acc + getSetsCompleted(ex.id), 0);
+  // ── Added-exercise derived slots ──
+  const addedItemsWithSlots = addedItems.map(({ ex, sets }) => ({
+    ex,
+    slot: { exerciseId: ex.id, type: ex.type as CoreSlot['type'], sets, targetReps: ex.baseReps, targetSeconds: ex.baseSeconds } as CoreSlot,
+  }));
 
-  // ── Persistence: debounced draft writes ──
+  const allDone =
+    exercises.length > 0 &&
+    exercises.every(({ slot, ex }) => isFullyDone(ex.id, slot.sets)) &&
+    addedItemsWithSlots.every(({ slot, ex }) => isFullyDone(ex.id, slot.sets)) &&
+    (!boostChoice || boostDone);
+  const totalSetsAll =
+    exercises.reduce((acc, { slot }) => acc + slot.sets, 0) +
+    addedItemsWithSlots.reduce((acc, { slot }) => acc + slot.sets, 0) +
+    (boostChoice ? 1 : 0);
+  const completedSetsAll =
+    exercises.reduce((acc, { ex }) => acc + getSetsCompleted(ex.id), 0) +
+    addedItemsWithSlots.reduce((acc, { ex }) => acc + getSetsCompleted(ex.id), 0) +
+    (boostDone ? 1 : 0);
+
   const coreDraftData = useMemo(
     () => ({
       completedSets: Object.fromEntries(
@@ -317,9 +363,15 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
         week: session.week,
         label: session.label,
         date: localDateStr(),
-        slotsCompleted: exercises
-          .filter(({ slot, ex }) => isFullyDone(ex.id, slot.sets))
-          .map(({ ex }) => ex.id),
+        slotsCompleted: [
+          ...exercises
+            .filter(({ slot, ex }) => isFullyDone(ex.id, slot.sets))
+            .map(({ ex }) => ex.id),
+          ...addedItemsWithSlots
+            .filter(({ slot, ex }) => isFullyDone(ex.id, slot.sets))
+            .map(({ ex }) => ex.id),
+          ...(boostChoice && boostDone ? [`boost-${boostChoice.id}`] : []),
+        ],
         performanceData: performance,
         durationMinutes: Math.max(durationMinutes, 1),
         completed: true,
@@ -493,25 +545,272 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
               </div>
             );
           })}
+
+          {/* ── Added-exercise cards ── */}
+          {addedItemsWithSlots.map(({ slot, ex }, idx) => {
+            const done = isFullyDone(ex.id, slot.sets);
+            const partial = isPartial(ex.id, slot.sets);
+            const perf = performance[ex.id] ?? {};
+            return (
+              <div
+                key={`added-${ex.id}-${idx}`}
+                className={cn(
+                  'rounded-xl border p-4 transition-all duration-200',
+                  done
+                    ? 'border-green-500/50 bg-green-950/15 shadow-[0_0_12px_rgba(74,222,128,0.1)]'
+                    : partial
+                      ? 'border-yellow-500/50 bg-yellow-950/10 shadow-[0_0_8px_rgba(234,179,8,0.08)]'
+                      : 'border-zinc-700 bg-zinc-900/60',
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={cn('text-sm font-headline', done ? 'text-green-300' : partial ? 'text-yellow-300' : 'text-zinc-100')}>
+                        {ex.name}
+                      </span>
+                      <span className="text-[9px] font-headline uppercase tracking-wider text-orange-500 border border-orange-800/40 rounded px-1.5 py-0.5">
+                        {ex.category}
+                      </span>
+                      <span className="text-[9px] font-headline uppercase tracking-wider text-cyan-400 border border-cyan-800/40 rounded px-1.5 py-0.5">
+                        added
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className={cn('text-xs', done ? 'text-green-400/70' : partial ? 'text-yellow-400/70' : 'text-zinc-400')}>
+                        {slot.sets} sets
+                        {slot.type === 'time' && slot.targetSeconds
+                          ? ` × ${slot.targetSeconds}s`
+                          : slot.targetReps
+                            ? ` × ${slot.targetReps} reps`
+                            : ''}
+                      </span>
+                      <span className={cn('text-[9px] font-headline uppercase tracking-wider rounded px-1.5 py-0.5 border',
+                        ex.type === 'weighted' ? 'text-amber-400 border-amber-800/40'
+                        : ex.type === 'time' ? 'text-cyan-400 border-cyan-800/40'
+                        : 'text-zinc-400 border-zinc-700',
+                      )}>
+                        {ex.type}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2.5">
+                      {Array.from({ length: slot.sets }, (_, i) => {
+                        const checked = completedSets[ex.id]?.has(i) ?? false;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => toggleSet(ex.id, i)}
+                            className={cn(
+                              'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                              done && checked
+                                ? 'border-green-500 bg-green-500 shadow-[0_0_6px_rgba(74,222,128,0.5)]'
+                                : checked
+                                  ? 'border-yellow-400 bg-yellow-400 shadow-[0_0_4px_rgba(234,179,8,0.4)]'
+                                  : 'border-zinc-600 hover:border-zinc-400 bg-transparent',
+                            )}
+                          >
+                            {checked && <div className="w-2 h-2 rounded-full bg-zinc-950" />}
+                          </button>
+                        );
+                      })}
+                      {done && <Check className="w-3.5 h-3.5 text-green-400 ml-0.5" />}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setCuesModal(ex)}
+                      className="p-1 text-zinc-600 hover:text-orange-400 transition-colors"
+                      title="Form cues"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setAddedItems((prev) => prev.filter((_, i) => i !== idx))}
+                      className="p-1 text-zinc-600 hover:text-red-400 transition-colors"
+                      title="Remove"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {!done && (
+                  <div className={cn('mt-3', slot.type === 'time' ? 'flex flex-col gap-0' : 'flex gap-2')}>
+                    {slot.type === 'weighted' && (
+                      <div className="flex-1">
+                        <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Weight (lbs)</label>
+                        <input type="number" min={0} value={perf.weight ?? ''} onChange={(e) => updatePerf(ex.id, 'weight', Number(e.target.value))} placeholder="0" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-orange-500 transition-colors" />
+                      </div>
+                    )}
+                    {slot.type === 'reps' && (
+                      <div className="flex-1">
+                        <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Reps Performed</label>
+                        <input type="number" min={0} value={perf.reps ?? ''} onChange={(e) => updatePerf(ex.id, 'reps', Number(e.target.value))} placeholder={slot.targetReps?.split('–')[0] ?? '0'} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-orange-500 transition-colors" />
+                      </div>
+                    )}
+                    {slot.type === 'time' && (
+                      <>
+                        <CountdownTimer targetSeconds={slot.targetSeconds ?? 30} onComplete={(secs) => updatePerf(ex.id, 'seconds', secs)} />
+                        <div className="flex-1 mt-2">
+                          <label className="text-xs text-zinc-300 uppercase tracking-wider block mb-1">Seconds Held</label>
+                          <input type="number" min={0} value={perf.seconds ?? ''} onChange={(e) => updatePerf(ex.id, 'seconds', Number(e.target.value))} placeholder={String(slot.targetSeconds ?? 30)} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-orange-500 transition-colors" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* ── Add Exercise + BOOST buttons ── */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => setAddExOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:border-orange-500/50 hover:text-orange-400 transition-all text-xs font-headline uppercase tracking-wider"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Exercise
+            </button>
+            {!boostChoice && (
+              <button
+                onClick={() => setBoostOpen(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-amber-700/40 text-amber-600 hover:border-amber-500/60 hover:text-amber-400 hover:bg-amber-950/10 transition-all text-xs font-headline uppercase tracking-wider"
+              >
+                <Zap className="w-3.5 h-3.5" /> Boost
+              </button>
+            )}
+          </div>
+
+          {/* ── Boost / Finisher card ── */}
+          {boostChoice && (
+            <div className="rounded-xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-950/20 to-zinc-900 p-4 shadow-[0_0_20px_rgba(245,158,11,0.12)]">
+              {/* Boost header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Zap className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <span className="text-[9px] font-headline uppercase tracking-wider text-amber-400">{boostChoice.boostType}</span>
+                  <span className="text-sm font-headline text-amber-200">{boostChoice.name}</span>
+                </div>
+                <button
+                  onClick={() => { setBoostChoice(null); setBoostDone(false); }}
+                  className="p-1 text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0"
+                  title="Remove finisher"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Timer-only boosts (Plank, Dead Bugs) */}
+              {boostChoice.timerOnly && (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <label className="text-xs text-zinc-400 flex-shrink-0">Duration (s)</label>
+                    <input
+                      type="number"
+                      min={10}
+                      max={300}
+                      value={boostSeconds}
+                      onChange={(e) => setBoostSeconds(Math.max(10, Number(e.target.value)))}
+                      className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-amber-500 transition-colors"
+                    />
+                  </div>
+                  <CountdownTimer
+                    key={`boost-timer-${boostSeconds}`}
+                    targetSeconds={boostSeconds}
+                    onComplete={() => setBoostDone(true)}
+                  />
+                </>
+              )}
+
+              {/* Reps-or-timer boosts */}
+              {!boostChoice.timerOnly && (
+                <>
+                  {/* Mode toggle */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => setBoostMode('reps')}
+                      className={cn(
+                        'flex-1 py-1.5 rounded-lg border text-xs font-headline uppercase tracking-wider transition-all',
+                        boostMode === 'reps'
+                          ? 'border-amber-500 bg-amber-950/30 text-amber-300'
+                          : 'border-zinc-700 text-zinc-500 hover:border-zinc-500',
+                      )}
+                    >
+                      Reps
+                    </button>
+                    <button
+                      onClick={() => setBoostMode('timer')}
+                      className={cn(
+                        'flex-1 py-1.5 rounded-lg border text-xs font-headline uppercase tracking-wider transition-all',
+                        boostMode === 'timer'
+                          ? 'border-amber-500 bg-amber-950/30 text-amber-300'
+                          : 'border-zinc-700 text-zinc-500 hover:border-zinc-500',
+                      )}
+                    >
+                      AMRAP
+                    </button>
+                  </div>
+
+                  {boostMode === 'reps' && (
+                    <div>
+                      <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1">Reps Performed</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={performance[`boost-${boostChoice.id}`]?.reps ?? ''}
+                        onChange={(e) => {
+                          updatePerf(`boost-${boostChoice.id}`, 'reps', Number(e.target.value));
+                          if (Number(e.target.value) > 0) setBoostDone(true);
+                        }}
+                        placeholder="0"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {boostMode === 'timer' && (
+                    <>
+                      <p className="text-[9px] text-amber-400/70 uppercase tracking-wider mb-2">AMRAP — max reps until the clock stops</p>
+                      <div className="flex items-center gap-3 mb-3">
+                        <label className="text-xs text-zinc-400 flex-shrink-0">Duration (s)</label>
+                        <input
+                          type="number"
+                          min={10}
+                          max={300}
+                          value={boostSeconds}
+                          onChange={(e) => setBoostSeconds(Math.max(10, Number(e.target.value)))}
+                          className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-amber-500 transition-colors"
+                        />
+                      </div>
+                      <CountdownTimer
+                        key={`boost-amrap-${boostSeconds}-${boostChoice.id}`}
+                        targetSeconds={boostSeconds}
+                        onComplete={() => setBoostDone(true)}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-3 px-5 py-4 border-t border-zinc-800 flex-shrink-0">
-          <div className="text-xs text-zinc-500">
-            {completedSetsAll}/{totalSetsAll} sets
+        {/* Footer — stacked layout prevents overflow on small screens */}
+        <div className="border-t border-zinc-800 flex-shrink-0 px-5 pt-3 pb-5 space-y-2">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-zinc-500">{completedSetsAll}/{totalSetsAll} sets</span>
+            <div className="flex-1" />
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-zinc-200 text-sm font-headline uppercase tracking-wider transition-all"
+            >
+              Cancel
+            </button>
           </div>
-          <div className="flex-1" />
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 hover:text-zinc-200 text-sm font-headline uppercase tracking-wider transition-all"
-          >
-            Cancel
-          </button>
           <button
             onClick={handleComplete}
             disabled={saving || completedSetsAll === 0}
             className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-lg border text-sm font-headline uppercase tracking-widest transition-all',
+              'w-full flex items-center justify-center gap-2 py-3 rounded-lg border text-sm font-headline uppercase tracking-widest transition-all',
               allDone
                 ? 'border-green-500 bg-green-600/25 text-green-200 shadow-[0_0_20px_rgba(74,222,128,0.3)]'
                 : 'border-orange-500 bg-orange-600/20 text-orange-200 shadow-[0_0_12px_rgba(249,115,22,0.25)]',
@@ -525,8 +824,7 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
       </div>
 
       {/* Cues modal */}
-      {cuesModal && (
-        <div
+      {cuesModal && (        <div
           className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
           onClick={() => setCuesModal(null)}
         >
@@ -562,6 +860,64 @@ function SessionLogger({ program, session, onClose, onComplete }: SessionLoggerP
             )}
           </div>
         </div>
+      )}
+
+      {/* Boost picker modal */}
+      {boostOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setBoostOpen(false)}
+        >
+          <div
+            className="w-full max-w-xs bg-zinc-950 border border-amber-500/40 rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.2)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <h3 className="font-headline text-amber-300 text-sm uppercase tracking-widest">Choose Your Finisher</h3>
+              </div>
+              <button onClick={() => setBoostOpen(false)} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 space-y-2">
+              {BOOST_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => {
+                    setBoostChoice(opt);
+                    setBoostMode('timer');
+                    setBoostSeconds(60);
+                    setBoostDone(false);
+                    setBoostOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900 hover:border-amber-500/50 hover:bg-amber-950/10 transition-all text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[9px] font-headline uppercase tracking-wider text-amber-400 mb-0.5">{opt.boostType}</div>
+                    <div className="text-sm text-zinc-100">{opt.name}</div>
+                    <div className="text-[9px] text-zinc-500 mt-0.5">{opt.timerOnly ? '60s hold (editable)' : 'Reps or 60s AMRAP'}</div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Exercise picker */}
+      {addExOpen && (
+        <CoreExPickerModal
+          excludedIds={[]}
+          title="Add to Session"
+          onPick={(ex) => {
+            setAddedItems((prev) => [...prev, { ex, sets: ex.defaultSets }]);
+            setAddExOpen(false);
+          }}
+          onClose={() => setAddExOpen(false)}
+        />
       )}
     </div>
   );
@@ -1239,9 +1595,6 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
                   >
                     {isCompleted && <Check className="w-3 h-3 mr-1 text-green-400" />}
                     {session.label}
-                    <span className="ml-1.5 text-zinc-500 text-[9px] normal-case tracking-normal font-sans">
-                      ~{session.estimatedMinutes}m
-                    </span>
                   </button>
                 );
               })}

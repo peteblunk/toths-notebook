@@ -17,7 +17,7 @@ import {
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import type { MobilityProgram, MobilitySessionLog, MobilityStats } from '@/lib/mobility-types';
-import { format, startOfWeek, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
 
 function getWeekStr(): string {
   return format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -93,7 +93,7 @@ export function useMobility(): UseMobilityReturn {
       if (!user) throw new Error('Not authenticated');
 
       // 1. Save session log
-      await addDoc(collection(db, 'mobilitySessions'), { ...log, userId: user.uid });
+      await addDoc(collection(db, 'mobilitySessions'), { ...log, userId: user.uid, completedAt: new Date().toISOString() });
 
       // 2. Compute weekly log update
       const weekStr = getWeekStr();
@@ -217,7 +217,22 @@ export function useMobility(): UseMobilityReturn {
         .map(([programName, sessions]) => ({ programName, sessions }))
         .sort((a, b) => b.sessions - a.sessions);
 
-      return { totalSessions: logs.length, levelUpSessions, totalMinutes, currentStreakWeeks, longestStreakWeeks, heatmap, programBreakdown };
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const weekEnd   = endOfWeek(new Date(),   { weekStartsOn: 1 });
+      const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weekDayMap: Record<string, number> = {};
+      const wsStr = format(weekStart, 'yyyy-MM-dd');
+      const weStr = format(weekEnd,   'yyyy-MM-dd');
+      for (const log of logs) {
+        if (log.date >= wsStr && log.date <= weStr) weekDayMap[log.date] = (weekDayMap[log.date] ?? 0) + 1;
+      }
+      const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd }).map((d, i) => ({
+        date: format(d, 'yyyy-MM-dd'),
+        label: DAY_LABELS[i],
+        sessions: weekDayMap[format(d, 'yyyy-MM-dd')] ?? 0,
+      }));
+
+      return { totalSessions: logs.length, levelUpSessions, totalMinutes, currentStreakWeeks, longestStreakWeeks, heatmap, programBreakdown, weekDays };
     } catch {
       return null;
     }

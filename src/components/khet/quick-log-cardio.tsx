@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
-import { X, Zap, Flame, Search, Check, ArrowLeftRight, Play, Pause, RotateCcw, Timer, Plus, Info } from 'lucide-react';
+import { X, Zap, Flame, Search, Check, Play, Pause, RotateCcw, Timer, Plus, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -20,6 +20,7 @@ import {
 import { loadRawDraft, clearRawDraft, useLocalDraft } from '@/hooks/use-session-persistence';
 
 const QUICK_LOG_DRAFT_KEY = 'khet_quick_cardio_draft';
+const FAVORITES_KEY       = 'khet_cardio_favorites';
 
 const CATEGORY_ORDER: CardioExerciseCategory[] = ['Machine', 'Bodyweight', 'Outdoor', 'Water'];
 
@@ -53,6 +54,17 @@ const TALLY_EXERCISE_IDS = new Set([
   'burpees', 'box-jumps', 'kettlebell-swings', 'jump-squats',
   'thrusters', 'medicine-ball-slams', 'mountain-climbers',
 ]);
+
+/** Average seconds per rep — used to estimate active work time from rep count for calorie accuracy */
+const TALLY_REP_SECS: Record<string, number> = {
+  'burpees':             6,   // ~10/min
+  'box-jumps':           4,   // ~15/min
+  'kettlebell-swings':   3,   // ~20/min
+  'jump-squats':         3,   // ~20/min
+  'thrusters':           4,   // ~15/min
+  'medicine-ball-slams': 3,   // ~20/min
+  'mountain-climbers':   2,   // ~30/min per leg-drive
+};
 
 type TimerMode = 'stopwatch' | 'hiit';
 
@@ -116,13 +128,14 @@ function RPESelector({ value, onChange }: { value: number | null; onChange: (v: 
   return (
     <div className="space-y-1.5">
       {showInfo && <RPEInfoModal onClose={() => setShowInfo(false)} />}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <label className="text-sm font-headline uppercase tracking-widest text-zinc-200">RPE (1–10)</label>
         <button
           onClick={() => setShowInfo(true)}
           className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-500 bg-zinc-700 text-zinc-200 text-xs font-bold leading-none active:scale-90 transition-all flex-shrink-0"
           aria-label="What is RPE?"
         >i</button>
+        <span className="text-xs text-zinc-400">(improves calorie estimate)</span>
       </div>
       <button
         onClick={() => setOpen((v) => !v)}
@@ -763,23 +776,164 @@ function QuickTimer({ onCapture, forceStop }: { onCapture: (minutes: number) => 
 }
 
 // ─────────────────────────────────────────────────────────────
+// Favorites Modal
+// ─────────────────────────────────────────────────────────────
+function FavoritesModal({
+  favorites,
+  onChange,
+  onClose,
+}: {
+  favorites: string[];
+  onChange: (ids: string[]) => void;
+  onClose: () => void;
+}) {
+  const [local, setLocal] = useState<string[]>(favorites);
+  const toggle = (id: string) =>
+    setLocal((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+
+  const handleSave = () => { onChange(local); onClose(); };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/70" onClick={onClose} />
+      <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-zinc-700 bg-zinc-900 shadow-2xl max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
+          <div>
+            <p className="text-base font-headline uppercase tracking-widest text-white">Choose Favorites</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Starred exercises appear at the top of the picker.</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg border border-zinc-600 bg-zinc-800 text-zinc-200 active:scale-90 transition-all">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/60">
+          {CATEGORY_ORDER.map((cat) => {
+            const exercises = CARDIO_EXERCISES.filter((e) => e.category === cat);
+            return (
+              <div key={cat}>
+                <p className="text-xs font-headline uppercase tracking-widest text-zinc-400 px-4 py-1.5 bg-zinc-900/80 sticky top-0">{cat}</p>
+                {exercises.map((ex) => {
+                  const isFav = local.includes(ex.id);
+                  return (
+                    <button
+                      key={ex.id}
+                      onClick={() => toggle(ex.id)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors active:bg-zinc-800/60',
+                        isFav && 'bg-amber-950/20',
+                      )}
+                    >
+                      <span className={cn('text-lg flex-shrink-0 leading-none', isFav ? 'text-amber-400' : 'text-zinc-600')}>
+                        {isFav ? '★' : '☆'}
+                      </span>
+                      <span className={cn('text-sm font-headline flex-1', isFav ? 'text-amber-200' : 'text-zinc-200')}>{ex.name}</span>
+                      <span className="text-xs text-zinc-500">MET {ex.metModerate}–{ex.metHigh}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="px-4 py-3 border-t border-zinc-800 flex-shrink-0">
+          <button
+            onClick={handleSave}
+            className="w-full h-12 rounded-xl border border-amber-500 bg-amber-950/30 text-amber-100 font-headline uppercase tracking-widest text-sm active:scale-[0.98] transition-all"
+          >
+            Save Favorites {local.length > 0 && `(${local.length})`}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MET Info Modal
+// ─────────────────────────────────────────────────────────────
+function METInfoModal({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/70" onClick={onClose} />
+      <div className="fixed left-4 right-4 bottom-6 z-50 rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl p-5 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-base font-headline uppercase tracking-widest text-white">MET Explained</p>
+          <button onClick={onClose} className="p-2 rounded-lg border border-zinc-600 bg-zinc-800 text-zinc-200 active:scale-90 transition-all">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-sm text-zinc-300 mb-4 leading-relaxed">
+          <strong className="text-white">MET (Metabolic Equivalent of Task):</strong>{' '}
+          A measure of how much energy your body uses during a specific activity compared to resting.
+        </p>
+        <div className="space-y-2">
+          <div className="rounded-lg px-3 py-2.5 bg-zinc-800/40">
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-base font-headline text-amber-300">1.0</span>
+              <span className="text-sm font-headline text-zinc-100">Resting</span>
+            </div>
+            <p className="text-sm text-zinc-400">Sitting quietly or sleeping.</p>
+          </div>
+          <div className="rounded-lg px-3 py-2.5 bg-zinc-800/40">
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-base font-headline text-amber-300">3.0</span>
+              <span className="text-sm font-headline text-zinc-100">Light Activity</span>
+            </div>
+            <p className="text-sm text-zinc-400">A casual stroll (about 2.0 mph), light housework, or basic stretching. You aren&apos;t &ldquo;working out&rdquo; yet, but you aren&apos;t sitting still.</p>
+          </div>
+          <div className="rounded-lg px-3 py-2.5 bg-zinc-800/40">
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-base font-headline text-amber-300">5.0</span>
+              <span className="text-sm font-headline text-zinc-100">Brisk Walking</span>
+            </div>
+            <p className="text-sm text-zinc-400">A very purposeful pace (3.0–3.5 mph).</p>
+          </div>
+          <div className="rounded-lg px-3 py-2.5 bg-zinc-800/40">
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-base font-headline text-amber-300">7.0</span>
+              <span className="text-sm font-headline text-zinc-100">Vigorous Effort</span>
+            </div>
+            <p className="text-sm text-zinc-400">Jogging (about 4.0–4.5 mph), heavy weightlifting.</p>
+          </div>
+          <div className="rounded-lg px-3 py-2.5 bg-zinc-800/40">
+            <div className="flex items-baseline gap-2 mb-0.5">
+              <span className="text-base font-headline text-amber-300">10.0+</span>
+              <span className="text-sm font-headline text-zinc-100">High Intensity</span>
+            </div>
+            <p className="text-sm text-zinc-400">Competitive sports, sprinting, or a 50-burpee finisher.</p>
+          </div>
+        </div>
+        <p className="text-sm text-zinc-400 mt-4 leading-relaxed">
+          It helps us calculate your total energy expenditure with scientific precision.
+        </p>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // ExercisePicker
 // ─────────────────────────────────────────────────────────────
 function ExercisePicker({
   selectedId,
   onSelect,
+  favorites,
 }: {
   selectedId: string;
   onSelect: (id: string, name: string) => void;
+  favorites: string[];
 }) {
   const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(!selectedId);
+  const [open, setOpen] = useState(false);
   const selected = CARDIO_EXERCISES.find((e) => e.id === selectedId);
   const filtered = CARDIO_EXERCISES.filter(
     (e) =>
       e.name.toLowerCase().includes(search.toLowerCase()) ||
       e.category.toLowerCase().includes(search.toLowerCase()),
   );
+  const favFiltered = filtered.filter((e) => favorites.includes(e.id));
+
+  const selectEx = (id: string, name: string) => { onSelect(id, name); setOpen(false); setSearch(''); };
 
   return (
     <div className="space-y-1.5">
@@ -788,7 +942,6 @@ function ExercisePicker({
         className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-zinc-600 bg-zinc-900 text-sm text-zinc-100 font-headline active:scale-[0.98] active:bg-zinc-800 transition-all"
       >
         <span className={selected ? '' : 'text-zinc-400'}>{selected?.name ?? 'Choose exercise…'}</span>
-        <ArrowLeftRight className="w-3.5 h-3.5 text-zinc-400" />
       </button>
 
       {open && (
@@ -806,7 +959,32 @@ function ExercisePicker({
               />
             </div>
           </div>
-          <div className="max-h-52 overflow-y-auto divide-y divide-zinc-800/60">
+          <div className="max-h-64 overflow-y-auto divide-y divide-zinc-800/60">
+            {/* Favorites section — shown at top when any favorites match */}
+            {favFiltered.length > 0 && (
+              <div>
+                <p className="text-xs font-headline uppercase tracking-widest text-amber-400/80 px-4 py-1.5 bg-zinc-900/50">
+                  ★ Favorites
+                </p>
+                {favFiltered.map((ex) => (
+                  <button
+                    key={`fav-${ex.id}`}
+                    onClick={() => selectEx(ex.id, ex.name)}
+                    className={cn(
+                      'w-full flex items-center justify-between px-4 py-3 text-left active:bg-zinc-800/60 transition-colors',
+                      ex.id === selectedId && 'bg-red-950/20',
+                    )}
+                  >
+                    <span className="text-sm text-amber-200 font-headline">{ex.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-zinc-400">MET {ex.metModerate}–{ex.metHigh}</span>
+                      {ex.id === selectedId && <Check className="w-3 h-3 text-red-400" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* All exercises grouped by category */}
             {CATEGORY_ORDER.map((cat) => {
               const exercises = filtered.filter((e) => e.category === cat);
               if (exercises.length === 0) return null;
@@ -816,13 +994,18 @@ function ExercisePicker({
                   {exercises.map((ex) => (
                     <button
                       key={ex.id}
-                      onClick={() => { onSelect(ex.id, ex.name); setOpen(false); setSearch(''); }}
+                      onClick={() => selectEx(ex.id, ex.name)}
                       className={cn(
                         'w-full flex items-center justify-between px-4 py-3 text-left active:bg-zinc-800/60 transition-colors',
                         ex.id === selectedId && 'bg-red-950/20',
                       )}
                     >
-                      <span className="text-sm text-zinc-200 font-headline">{ex.name}</span>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {favorites.includes(ex.id) && (
+                          <span className="text-amber-500 text-xs flex-shrink-0">★</span>
+                        )}
+                        <span className="text-sm text-zinc-200 font-headline">{ex.name}</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-zinc-400">MET {ex.metModerate}–{ex.metHigh}</span>
                         {ex.id === selectedId && <Check className="w-3 h-3 text-red-400" />}
@@ -877,6 +1060,17 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
   const [saving, setSaving]                         = useState(false);
   const [errors, setErrors]                         = useState<Record<string, string>>({});
   const [bodyWeightKg, setBodyWeightKg]             = useState(80);
+  const [showMETInfo, setShowMETInfo]               = useState(false);
+  const [favorites, setFavorites]                   = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) ?? '[]'); } catch { return []; }
+  });
+  const [favModalOpen, setFavModalOpen]             = useState(false);
+
+  const handleFavoritesChange = useCallback((ids: string[]) => {
+    setFavorites(ids);
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
+  }, []);
 
   const durationRef  = useRef<HTMLInputElement>(null);
   const lastTallyRef = useRef<Record<number, number>>({});
@@ -957,7 +1151,21 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
     // Use actual HIIT work minutes if available (active seconds only, not rest)
     // This makes 30s/60s and 40s/20s protocols equally accurate
     const effectiveMins = seg.hiitWorkMins ?? (parseFloat(seg.duration) || 0);
-    return effectiveMins > 0 && bodyWeightKg > 0 ? estimateCaloriesForExercise(ex, bodyWeightKg, effectiveMins, rpeForCalc) : 0;
+    if (bodyWeightKg <= 0) return 0;
+    // For tally exercises: blend time-based + rep-based estimates for maximum accuracy
+    // The rep count tells us how much real work was done; the timer gives total duration
+    if (TALLY_EXERCISE_IDS.has(seg.exerciseId) && seg.repTally > 0) {
+      const secsPerRep = TALLY_REP_SECS[seg.exerciseId] ?? 4;
+      const repWorkMins = (seg.repTally * secsPerRep) / 60;
+      const repEst = estimateCaloriesForExercise(ex, bodyWeightKg, repWorkMins, rpeForCalc);
+      if (effectiveMins > 0) {
+        // Average of timer-based and rep-based for best accuracy
+        const timeEst = estimateCaloriesForExercise(ex, bodyWeightKg, effectiveMins, rpeForCalc);
+        return Math.round((timeEst + repEst) / 2);
+      }
+      return repEst;
+    }
+    return effectiveMins > 0 ? estimateCaloriesForExercise(ex, bodyWeightKg, effectiveMins, rpeForCalc) : 0;
   });
 
   const totalDurationMins  = segments.reduce((sum, s) => sum + (parseFloat(s.duration) || 0), 0);
@@ -1068,6 +1276,14 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#060810]">
+      {showMETInfo && <METInfoModal onClose={() => setShowMETInfo(false)} />}
+      {favModalOpen && (
+        <FavoritesModal
+          favorites={favorites}
+          onChange={handleFavoritesChange}
+          onClose={() => setFavModalOpen(false)}
+        />
+      )}
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-red-900/40 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -1090,13 +1306,24 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-sm font-headline uppercase tracking-widest text-zinc-200">Exercises</label>
-            {errors.duration && (
-              <span className="text-sm text-red-400 font-headline">{errors.duration}</span>
-            )}
+            <button
+              onClick={() => setFavModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-700/60 bg-amber-950/20 text-amber-300 text-xs font-headline uppercase tracking-widest active:scale-95 transition-all"
+            >
+              <span className="text-amber-400">★</span> Favorites
+              {favorites.length > 0 && (
+                <span className="ml-0.5 text-amber-500">({favorites.length})</span>
+              )}
+            </button>
           </div>
+
+          {errors.duration && (
+            <span className="text-sm text-red-400 font-headline">{errors.duration}</span>
+          )}
 
           {segments.map((seg, idx) => {
             const segCals = segmentEstimates[idx] ?? 0;
+            const segEx = CARDIO_EXERCISES.find((e) => e.id === seg.exerciseId) ?? null;
 
             if (seg.done) {
               return (
@@ -1129,17 +1356,24 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
             return (
               <div key={idx} className="rounded-xl border border-blue-900/50 bg-blue-950/10 p-3 space-y-2.5">
                 {/* Exercise name always on top */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-headline text-zinc-400 w-5 flex-shrink-0 text-center">{idx + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <ExercisePicker
-                      selectedId={seg.exerciseId}
-                      onSelect={(id, name) =>
-                        setSegments((prev) => prev.map((s, i) => i === idx ? { ...s, exerciseId: id, exerciseName: name } : s))
-                      }
-                    />
+                <ExercisePicker
+                  selectedId={seg.exerciseId}
+                  favorites={favorites}
+                  onSelect={(id, name) =>
+                    setSegments((prev) => prev.map((s, i) => i === idx ? { ...s, exerciseId: id, exerciseName: name } : s))
+                  }
+                />
+                {/* MET display — visible once an exercise is selected */}
+                {segEx && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-headline uppercase tracking-widest text-zinc-400">MET {segEx.metModerate}–{segEx.metHigh}</span>
+                    <button
+                      onClick={() => setShowMETInfo(true)}
+                      className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-500 bg-zinc-700 text-zinc-200 text-xs font-bold leading-none active:scale-90 transition-all flex-shrink-0"
+                      aria-label="What is MET?"
+                    >i</button>
                   </div>
-                </div>
+                )}
 
                 {/* Stopwatch / HIIT toggle — inline below exercise name */}
                 <div className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-blue-900/50 bg-blue-950/20">
@@ -1304,9 +1538,9 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
                     />
                     <button
                       onClick={() => completeSegment(idx)}
-                      className="w-full h-14 rounded-xl border border-green-500 bg-green-600/25 text-green-100 font-headline uppercase tracking-widest text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-[0_0_14px_rgba(34,197,94,0.2)]"
+                      className="w-full h-14 rounded-xl border border-zinc-500 bg-zinc-700/40 text-zinc-100 font-headline uppercase tracking-widest text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                     >
-                      <Check className="w-5 h-5" /> Complete
+                      <Check className="w-5 h-5" /> Mark Complete
                     </button>
                     <button
                       onClick={() => setSegments((prev) => prev.map((s, i) => i === idx ? { ...s, showMeta: false } : s))}
@@ -1320,6 +1554,9 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
                 {/* ── Tally Mode (auto-shown for high-volume rep exercises) ── */}
                 {TALLY_EXERCISE_IDS.has(seg.exerciseId) && (
                   <div className="rounded-xl border border-red-900/50 bg-red-950/10 p-3 space-y-3">
+                    <p className="text-xs font-headline uppercase tracking-widest text-amber-500/80 flex items-center gap-1.5">
+                      <Timer className="w-3 h-3" /> Use timer to increase calorie accuracy
+                    </p>
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-headline uppercase tracking-widest text-red-400">Round Counter</p>
                       {(seg.roundCount > 0 || seg.repTally > 0) && (
@@ -1354,7 +1591,7 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
                           min={1}
                           maxLength={2}
                           value={![5, 10, 15].includes(seg.roundSize) ? seg.roundSize : ''}
-                          placeholder="—"
+                          placeholder=""
                           onChange={(e) => {
                             const v = parseInt(e.target.value);
                             if (!isNaN(v) && v > 0) setSegments((prev) => prev.map((s, i) => i === idx ? { ...s, roundSize: v } : s));
@@ -1458,7 +1695,7 @@ export function QuickLogCardio({ onClose }: QuickLogCardioProps) {
             <input
               type="number" min={0}
               value={caloriesOverride}
-              placeholder={totalEstimatedCals > 0 ? `${totalEstimatedCals}` : '—'}
+              placeholder={totalEstimatedCals > 0 ? `${totalEstimatedCals}` : ''}
               onChange={(e) => setCaloriesOverride(e.target.value)}
               className="w-full h-11 bg-black border border-zinc-600 rounded-lg px-3 text-sm text-red-300 placeholder:text-zinc-500 focus:outline-none focus:border-red-500 font-headline"
             />

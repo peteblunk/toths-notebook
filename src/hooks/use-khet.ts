@@ -63,7 +63,7 @@ interface UseKhetReturn {
 /** Fields kept plaintext so Firestore can query on them */
 type SessionPlaintext = Pick<
   WorkoutSession,
-  'userId' | 'programId' | 'programName' | 'dayIndex' | 'dayLabel' | 'date' | 'completed' | 'totalVolume' | 'linkedTaskId' | 'linkedRitualId'
+  'userId' | 'programId' | 'programName' | 'dayIndex' | 'dayLabel' | 'date' | 'completedAt' | 'completed' | 'totalVolume' | 'linkedTaskId' | 'linkedRitualId'
 >;
 
 // ─────────────────────────────────────────────────────────────
@@ -130,6 +130,7 @@ async function buildSessionDoc(
     dayIndex: session.dayIndex,
     dayLabel: session.dayLabel,
     date: session.date,
+    completedAt: session.completedAt ?? new Date().toISOString(),
     completed: session.completed,
     totalVolume: session.totalVolume,
     linkedTaskId: session.linkedTaskId ?? null,
@@ -602,7 +603,6 @@ export function useKhet(): UseKhetReturn {
       let totalVolumeKg = 0;
       let totalReps = 0;
       let totalMinutes = 0;
-      let totalCardioCals = 0;
 
       // Foundational PR accumulators
       const prAcc: Record<string, {
@@ -619,7 +619,6 @@ export function useKhet(): UseKhetReturn {
       for (const session of sessions) {
         totalVolumeKg += session.totalVolume;
         totalMinutes += session.durationMinutes ?? 0;
-        totalCardioCals += session.cardioLog?.calories ?? 0;
         heatmapMap[session.date] = (heatmapMap[session.date] ?? 0) + 1;
 
         for (const log of session.exerciseLogs ?? []) {
@@ -776,7 +775,6 @@ export function useKhet(): UseKhetReturn {
           t + (s.exerciseLogs ?? []).reduce((et, el) =>
             et + el.sets.reduce((st, set) => st + (set.completed ? (set.reps ?? 0) : 0), 0), 0), 0),
         minutes: thisWeekSessions.reduce((t, s) => t + (s.durationMinutes ?? 0), 0),
-        cardioCals: Math.round(thisWeekSessions.reduce((t, s) => t + (s.cardioLog?.calories ?? 0), 0)),
         weekStart: weekStartStr,
         weekEnd: weekEndStr,
         days: eachDayOfInterval({ start: weekStart, end: weekEnd }).map((d, i) => ({
@@ -793,7 +791,6 @@ export function useKhet(): UseKhetReturn {
         totalVolumeKg: Math.round(totalVolumeKg),
         totalReps,
         totalMinutes,
-        totalCardioCals: Math.round(totalCardioCals),
         currentStreakWeeks,
         longestStreakWeeks,
         heatmap,

@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
-import { format, startOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import type { CardioProgram, CardioSessionLog, CardioStats } from '@/lib/endurance-types';
 
 function getWeekStr(): string {
@@ -89,7 +89,7 @@ export function useCardio(): UseCardioReturn {
 
       // Firestore rejects `undefined` values — strip them before writing
       const clean = Object.fromEntries(
-        Object.entries({ ...log, userId: user.uid }).filter(([, v]) => v !== undefined),
+        Object.entries({ ...log, userId: user.uid, completedAt: new Date().toISOString() }).filter(([, v]) => v !== undefined),
       );
       await addDoc(collection(db, 'cardioSessions'), clean);
 
@@ -220,6 +220,21 @@ export function useCardio(): UseCardioReturn {
         return { date: iso, count: heatmapMap[iso] ?? 0 };
       });
 
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const weekEnd   = endOfWeek(new Date(),   { weekStartsOn: 1 });
+      const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const weekDayMap: Record<string, number> = {};
+      for (const s of sessions) {
+        const ws = format(weekStart, 'yyyy-MM-dd');
+        const we = format(weekEnd,   'yyyy-MM-dd');
+        if (s.date >= ws && s.date <= we) weekDayMap[s.date] = (weekDayMap[s.date] ?? 0) + 1;
+      }
+      const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd }).map((d, i) => ({
+        date: format(d, 'yyyy-MM-dd'),
+        label: DAY_LABELS[i],
+        sessions: weekDayMap[format(d, 'yyyy-MM-dd')] ?? 0,
+      }));
+
       return {
         totalSessions: sessions.length,
         totalMinutes,
@@ -230,6 +245,7 @@ export function useCardio(): UseCardioReturn {
         longestStreakWeeks,
         heatmap,
         programBreakdown: Object.values(programMap).map((p) => ({ programName: p.name, sessions: p.count })),
+        weekDays,
       };
     } catch {
       return null;

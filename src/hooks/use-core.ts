@@ -17,7 +17,7 @@ import {
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import type { CoreProgram, CoreSessionLog, CoreStats } from '@/lib/core-types';
-import { format, startOfWeek, parseISO, startOfDay, addDays } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, startOfDay, addDays } from 'date-fns';
 
 function getWeekStr(): string {
   return format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -92,7 +92,7 @@ export function useCore(): UseCoreReturn {
       if (!user) throw new Error('Not authenticated');
 
       // 1. Save session log
-      await addDoc(collection(db, 'coreSessions'), { ...log, userId: user.uid });
+      await addDoc(collection(db, 'coreSessions'), { ...log, userId: user.uid, completedAt: new Date().toISOString() });
 
       // 2. Weekly log update
       const weekStr = getWeekStr();
@@ -199,7 +199,22 @@ export function useCore(): UseCoreReturn {
       sessions,
     }));
 
-    return { totalSessions, totalMinutes, currentStreakWeeks, longestStreakWeeks, heatmap, programBreakdown };
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd   = endOfWeek(new Date(),   { weekStartsOn: 1 });
+    const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekDayMap: Record<string, number> = {};
+    const wsStr = format(weekStart, 'yyyy-MM-dd');
+    const weStr = format(weekEnd,   'yyyy-MM-dd');
+    for (const l of logs) {
+      if (l.date >= wsStr && l.date <= weStr) weekDayMap[l.date] = (weekDayMap[l.date] ?? 0) + 1;
+    }
+    const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd }).map((d, i) => ({
+      date: format(d, 'yyyy-MM-dd'),
+      label: DAY_LABELS[i],
+      sessions: weekDayMap[format(d, 'yyyy-MM-dd')] ?? 0,
+    }));
+
+    return { totalSessions, totalMinutes, currentStreakWeeks, longestStreakWeeks, heatmap, programBreakdown, weekDays };
   }, [user]);
 
   return { programs, loading, addProgram, updateProgram, deleteProgram, logSession, getCoreStats };

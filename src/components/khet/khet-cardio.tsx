@@ -1179,7 +1179,6 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
                   >
                     {isCompleted && <Check className="w-3 h-3" />}
                     <span>{session.label}</span>
-                    <span className="ml-1 text-[9px] normal-case tracking-normal font-sans opacity-60">~{session.estimatedMinutes}m</span>
                   </button>
                 );
               })}

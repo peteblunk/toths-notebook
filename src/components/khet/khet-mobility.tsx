@@ -323,9 +323,6 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
                   )}
                 >
                   {session.label}
-                  <span className="ml-1.5 text-zinc-500 text-[9px] normal-case tracking-normal font-sans">
-                    ~{session.estimatedMinutes}m
-                  </span>
                 </Link>
               );
             })}

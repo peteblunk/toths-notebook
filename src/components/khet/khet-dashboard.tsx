@@ -51,6 +51,7 @@ import { CoreProgramWizard } from './core-program-wizard';
 import { KhetCardio } from './khet-cardio';
 import { CardioProgramWizard } from './cardio-program-wizard';
 import { KhetTorsionSystem } from './khet-torsion-system';
+import { WeekAtAGlancePanel } from './week-at-a-glance';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -196,6 +197,9 @@ export function KhetDashboard() {
           )}
         </div>
       </div>
+
+      {/* Week at a Glance */}
+      <WeekAtAGlancePanel programs={programs} />
 
       {/* 75 Hard Protocol — sits directly under New Program */}
       <Khet75Hard />

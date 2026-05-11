@@ -49,6 +49,8 @@ interface UseKhetReturn {
   setManualPR: (data: Omit<KhetManualPR, 'id' | 'userId'>) => Promise<void>;
   deleteManualPR: (movement: string) => Promise<void>;
   getDiaryEntries: (limitCount?: number) => Promise<WorkoutSession[]>;
+  /** All completed khetSessions for the current Mon–Sun week (decrypted). */
+  getWeekSessions: () => Promise<WorkoutSession[]>;
   // ── Measurement Logs ──────────────────────────────────────────
   getMeasurementLogs: (options?: { category?: MeasurementCategory; limitCount?: number }) => Promise<MeasurementLog[]>;
   logMeasurement: (entry: { timestamp: string; category: MeasurementCategory; value: number; unit: string; notes?: string }) => Promise<{ wasOverwrite: boolean; existingId?: string }>;
@@ -290,6 +292,32 @@ export function useKhet(): UseKhetReturn {
       return sessions;
     } catch (err) {
       console.error('[Khet] getDiaryEntries error:', err);
+      return [];
+    }
+  }, [user, masterKey]);
+
+  const getWeekSessions = useCallback(async (): Promise<WorkoutSession[]> => {
+    if (!user) return [];
+    try {
+      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const weekEnd   = format(endOfWeek(new Date(),   { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const q = query(
+        collection(db, 'khetSessions'),
+        where('userId', '==', user.uid),
+        where('completed', '==', true),
+        where('date', '>=', weekStart),
+        where('date', '<=', weekEnd),
+        orderBy('date', 'asc'),
+      );
+      const snap = await getDocs(q);
+      const sessions: WorkoutSession[] = [];
+      for (const d of snap.docs) {
+        const raw = { id: d.id, ...d.data() } as Record<string, unknown>;
+        sessions.push(await decryptSessionDoc(raw, masterKey));
+      }
+      return sessions;
+    } catch (err) {
+      console.error('[Khet] getWeekSessions error:', err);
       return [];
     }
   }, [user, masterKey]);
@@ -1094,6 +1122,7 @@ export function useKhet(): UseKhetReturn {
     setManualPR,
     deleteManualPR,
     getDiaryEntries,
+    getWeekSessions,
     getMeasurementLogs,
     logMeasurement,
     overwriteMeasurement,

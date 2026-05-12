@@ -493,9 +493,13 @@ export default function MobilitySessionPage() {
   const [levelUpMode, setLevelUpMode] = useState<boolean>(
     () => loadRawDraft<MobilityDraft>(draftKey)?.levelUpMode ?? false,
   );
-  const startTimeRef = useRef<number>(
-    loadRawDraft<MobilityDraft>(draftKey)?.startTime ?? Date.now(),
-  );
+  const startTimeRef = useRef<number>((() => {
+    const stored = loadRawDraft<MobilityDraft>(draftKey)?.startTime;
+    // If stored start time is > 8 hours old (stale/abandoned session) reset to now
+    // to prevent durationMinutes from inflating to hundreds of minutes.
+    const STALE_MS = 8 * 3600000;
+    return stored && (Date.now() - stored) < STALE_MS ? stored : Date.now();
+  })());
 
   // ── Persistence: debounced draft writes ──
   const mobilityDraftData = useMemo(

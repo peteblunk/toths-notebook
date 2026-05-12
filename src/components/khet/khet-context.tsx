@@ -146,7 +146,15 @@ export function KhetSessionProvider({
   // Hydrate from a persisted draft if one exists for this (program, day) pair.
   // The draft takes precedence over the ghost-seeded fresh state so in-progress
   // work is never lost on reload.
-  const initialState = loadDraft(program.id, dayIndex) ?? freshState;
+  // If the draft's startDate is stale (> 8 hours old), reset it to now so
+  // the computed durationMinutes doesn't balloon due to an abandoned session.
+  const rawDraft = loadDraft(program.id, dayIndex);
+  const STALE_MS = 8 * 3600000; // 8 hours
+  const refreshedDraft =
+    rawDraft && new Date(rawDraft.startDate).getTime() < Date.now() - STALE_MS
+      ? { ...rawDraft, startDate: new Date().toISOString() }
+      : rawDraft;
+  const initialState = refreshedDraft ?? freshState;
 
   const [state, dispatch] = useReducer(sessionReducer, initialState);
 

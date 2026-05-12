@@ -4,6 +4,11 @@
 
 body {}
 
+@keyframes today-glow {
+  0%, 100% { box-shadow: 0 0 14px 4px rgba(0, 204, 106, 0.9), 0 0 28px 6px rgba(0, 204, 106, 0.4); }
+  50%       { box-shadow: 0 0 2px 0px rgba(0, 204, 106, 0.05); }
+}
+
 @layer base {
   :root {
     --background: 0 0% 0%;
@@ -79,6 +84,15 @@ body {}
   @keyframes pulse-glow {
     0%, 100% { opacity: 1; filter: brightness(1.2) drop-shadow(0 0 15px rgba(251, 191, 36, 0.6)); }
     50% { opacity: 0.8; filter: brightness(0.8) drop-shadow(0 0 5px rgba(251, 191, 36, 0.2)); }
+  }
+
+  @keyframes pulse-glow-green {
+    0%, 100% { box-shadow: 0 0 8px 2px rgba(0, 204, 106, 0.6); opacity: 1; }
+    50%       { box-shadow: 0 0 2px 0px rgba(0, 204, 106, 0.15); opacity: 0.8; }
+  }
+
+  .animate-glow-green {
+    animation: pulse-glow-green 2.4s ease-in-out infinite;
   }
 
   /* 🔮 IPHTY NODE — fuchsia blinking orb for active channels */

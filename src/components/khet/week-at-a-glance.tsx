@@ -5,19 +5,33 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import { format, startOfWeek } from 'date-fns';
-import { Calendar, ChevronDown, ChevronUp, Dumbbell, Flame, TrendingUp } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useKhet } from '@/hooks/use-khet';
 import { useMobility } from '@/hooks/use-mobility';
 import { useCore } from '@/hooks/use-core';
 import { useCardio } from '@/hooks/use-cardio';
 import type { WorkoutProgram, WorkoutSession } from '@/lib/khet-types';
-import type { MobilityProgram } from '@/lib/mobility-types';
-import type { CoreProgram } from '@/lib/core-types';
-import type { CardioProgram } from '@/lib/endurance-types';
+import type { MobilityProgram, MobilitySessionLog } from '@/lib/mobility-types';
+import type { CoreProgram, CoreSessionLog } from '@/lib/core-types';
+import type { CardioProgram, CardioSessionLog } from '@/lib/endurance-types';
 import { cn } from '@/lib/utils';
 
 interface WeekAtAGlanceProps {
   programs: WorkoutProgram[];
+}
+
+// Unified session entry for the calendar / stats
+interface CalendarEntry {
+  id: string;
+  date: string;
+  label: string;       // "Day A", "Core B", "Session 1", etc.
+  programName: string;
+  module: 'strength' | 'mobility' | 'core' | 'cardio';
+  durationMinutes: number;
+  calories?: number;
+  totalVolume?: number;
+  programId?: string;
+  dayLabel?: string;   // strength uses this for pill
 }
 
 // ─── generic remaining-sessions helper for AB/single programs ─
@@ -50,7 +64,8 @@ function computeSimpleProgramWeek(
     if (program.structure === 'AB') {
       remainingLabels.push(nextIdx % 2 === 0 ? 'Day A' : 'Day B');
     } else {
-      remainingLabels.push(`Session ${nextIdx + 1}`);
+      const cycle = program.daysPerWeek > 0 ? program.daysPerWeek : 1;
+      remainingLabels.push(`Session ${(nextIdx % cycle) + 1}`);
     }
   }
 
@@ -75,8 +90,10 @@ function computeCardioProgramWeek(
     doneLabels.unshift(`Session ${program.lastSessionIndex - i + 1}`);
   }
   const remainingLabels: string[] = [];
+  const cycle = program.daysPerWeek > 0 ? program.daysPerWeek : 1;
   for (let i = 1; i <= remaining; i++) {
-    remainingLabels.push(`Session ${program.lastSessionIndex + i + 1}`);
+    const sessionNum = ((program.lastSessionIndex + i) % cycle) + 1;
+    remainingLabels.push(`Session ${sessionNum}`);
   }
   return { doneLabels, remainingLabels };
 }
@@ -116,40 +133,30 @@ function computeStrengthProgramWeek(
 function ProgramRemainingRow({
   name,
   nameColor,
-  doneDayLabels,
+  pillClassName,
   remainingDayLabels,
 }: {
   name: string;
   nameColor: string;
-  doneDayLabels: string[];
+  pillClassName: string;
+  doneDayLabels: string[];   // kept in signature for call-site compat, not rendered
   remainingDayLabels: string[];
 }) {
+  if (remainingDayLabels.length === 0) return null;
   return (
     <div className="space-y-1.5">
       <p className={cn('text-sm font-headline uppercase tracking-widest', nameColor)}>
         {name}
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {doneDayLabels.map((label, i) => (
-          <span
-            key={`done-${i}`}
-            className="flex items-center gap-1 px-2.5 py-1 rounded border border-green-500/60 bg-green-950/20 text-green-300 text-xs font-headline uppercase tracking-wider"
-          >
-            <span className="text-green-400">✓</span>
-            {label}
-          </span>
-        ))}
         {remainingDayLabels.map((label, i) => (
           <span
             key={`rem-${i}`}
-            className="px-2.5 py-1 rounded border border-[#00cc6a]/50 bg-zinc-800/40 text-zinc-300 text-xs font-headline uppercase tracking-wider"
+            className={cn('px-2.5 py-1 rounded border-2 text-xs font-headline uppercase tracking-wider', pillClassName)}
           >
             {label}
           </span>
         ))}
-        {doneDayLabels.length === 0 && remainingDayLabels.length === 0 && (
-          <span className="text-sm text-zinc-400">No sessions this week</span>
-        )}
       </div>
     </div>
   );
@@ -165,9 +172,9 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
   const { programs: cardioPrograms } = useCardio();
 
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [calEntries, setCalEntries] = useState<CalendarEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(true);
-  const [otherMinutes, setOtherMinutes] = useState(0);
 
   // Declare week string first — used in effects below
   const currentWeekStr = useMemo(
@@ -183,31 +190,72 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
     });
   }, [getWeekSessions]);
 
-  // Fetch durationMinutes from mobility, core, and cardio sessions this week
+  // Fetch mobility, core, and cardio sessions this week for calendar + minutes
   useEffect(() => {
     if (!user) return;
     const weekStart = currentWeekStr;
-    const weekEnd   = format(new Date(new Date(weekStart).getTime() + 6 * 86400000), 'yyyy-MM-dd');
+    const weekEnd = format(new Date(new Date(weekStart).getTime() + 6 * 86400000), 'yyyy-MM-dd');
 
-    const fetchMins = async () => {
-      let mins = 0;
-      for (const col of ['mobilitySessions', 'coreSessions', 'cardioSessions']) {
-        const snap = await getDocs(
-          query(
-            collection(db, col),
-            where('userId', '==', user.uid),
-            where('date', '>=', weekStart),
-            where('date', '<=', weekEnd),
-          )
-        );
-        snap.forEach((d) => {
-          const data = d.data() as { durationMinutes?: number };
-          mins += data.durationMinutes ?? 0;
+    const fetchOtherSessions = async () => {
+      const entries: CalendarEntry[] = [];
+
+      // Mobility (no completed filter — field not stored when sessions are logged)
+      const mobilitySnap = await getDocs(
+        query(collection(db, 'mobilitySessions'),
+          where('userId', '==', user.uid),
+          where('date', '>=', weekStart),
+          where('date', '<=', weekEnd),
+        )
+      );
+      mobilitySnap.forEach((d) => {
+        const s = d.data() as MobilitySessionLog;
+        entries.push({
+          id: d.id, date: s.date, label: s.label,
+          programName: s.programName, module: 'mobility',
+          durationMinutes: s.durationMinutes ?? 0,
         });
-      }
-      setOtherMinutes(mins);
+      });
+
+      // Core (no completed filter — field not stored when sessions are logged)
+      const coreSnap = await getDocs(
+        query(collection(db, 'coreSessions'),
+          where('userId', '==', user.uid),
+          where('date', '>=', weekStart),
+          where('date', '<=', weekEnd),
+        )
+      );
+      coreSnap.forEach((d) => {
+        const s = d.data() as CoreSessionLog;
+        entries.push({
+          id: d.id, date: s.date, label: s.label,
+          programName: s.programName, module: 'core',
+          durationMinutes: s.durationMinutes ?? 0,
+        });
+      });
+
+      // Cardio
+      const cardioSnap = await getDocs(
+        query(collection(db, 'cardioSessions'),
+          where('userId', '==', user.uid),
+          where('completed', '==', true),
+          where('date', '>=', weekStart),
+          where('date', '<=', weekEnd),
+        )
+      );
+      cardioSnap.forEach((d) => {
+        const s = d.data() as CardioSessionLog;
+        entries.push({
+          id: d.id, date: s.date, label: s.label,
+          programName: s.programName, module: 'cardio',
+          durationMinutes: s.durationMinutes ?? 0,
+          calories: s.calories,
+        });
+      });
+
+      setCalEntries(entries);
     };
-    fetchMins();
+
+    fetchOtherSessions();
   }, [user, currentWeekStr]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -216,20 +264,30 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
 
   const weekDayEntries = useMemo(() => {
     const ws = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const todayIso = format(new Date(), 'yyyy-MM-dd');
+    // Extend "today" until 3am local time for late-night workouts
+    const now = new Date();
+    const effectiveToday = now.getHours() < 3
+      ? new Date(now.getTime() - 86400000)
+      : now;
+    const todayIso = format(effectiveToday, 'yyyy-MM-dd');
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(ws.getTime());
       d.setDate(d.getDate() + i);
       const iso = format(d, 'yyyy-MM-dd');
+      const strengthOnDay = sessions.filter((s) => s.date === iso);
+      const otherOnDay = calEntries.filter((e) => e.date === iso);
       return {
         date: iso,
-        label: format(d, 'EEE'),  // Mon, Tue, …
-        dayNum: format(d, 'd'),   // 11, 12, …
+        label: format(d, 'EEE'),
+        dayNum: format(d, 'd'),
         isToday: iso === todayIso,
-        daySessions: sessions.filter((s) => s.date === iso),
+        isPast: iso < todayIso,
+        isFuture: iso > todayIso,
+        daySessions: strengthOnDay,
+        otherSessions: otherOnDay,
       };
     });
-  }, [sessions]);
+  }, [sessions, calEntries]);
 
   // ── aggregate stats ──────────────────────────────────────
 
@@ -237,15 +295,15 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
     .filter((s) => s.programId !== 'standalone')
     .reduce((sum, s) => sum + (s.totalVolume ?? 0), 0);
 
-  const totalCalories = sessions.reduce(
-    (sum, s) => sum + (s.cardioLog?.calories ?? 0), 0,
-  );
+  const totalCalories =
+    sessions.reduce((sum, s) => sum + (s.cardioLog?.calories ?? 0), 0) +
+    calEntries.reduce((sum, e) => sum + (e.calories ?? 0), 0);
 
-  const totalMinutes = sessions.reduce(
-    (sum, s) => sum + (s.durationMinutes ?? 0), 0,
-  ) + otherMinutes;
+  const totalMinutes =
+    sessions.filter((s) => (s.durationMinutes ?? 0) <= 180).reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0) +
+    calEntries.filter((e) => (e.durationMinutes ?? 0) <= 180).reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
 
-  const totalSessions = sessions.length;
+  const totalSessions = sessions.length + calEntries.length;
 
   const volumeDisplay =
     totalVolume === 0
@@ -302,7 +360,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
   // ─────────────────────────────────────────────────────────
 
   return (
-    <div className="rounded-xl border border-[#00cc6a]/40 shadow-[0_0_18px_rgba(0,204,106,0.12)] bg-gradient-to-br from-zinc-950 via-zinc-900/30 to-zinc-950 overflow-hidden">
+    <div className="rounded-xl border-2 border-[#00cc6a]/60 bg-gradient-to-br from-zinc-950 via-zinc-900/30 to-zinc-950 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded((v) => !v)}
@@ -310,10 +368,10 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
       >
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-[#00cc6a]" />
-          <span className="font-headline text-sm uppercase tracking-widest text-[#00cc6a] drop-shadow-[0_0_6px_#00cc6a]">
+          <span className="font-headline text-sm uppercase tracking-widest text-[#00cc6a]">
             This Week
           </span>
-          <span className="text-sm text-zinc-300">{weekLabelStr}</span>
+          <span className="text-sm text-[#00cc6a]">{weekLabelStr}</span>
         </div>
         {expanded
           ? <ChevronUp className="w-4 h-4 text-[#00cc6a] flex-shrink-0" />
@@ -328,140 +386,101 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
           {loading ? (
             <div className="grid grid-cols-4 gap-2">
               {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-14 rounded-lg border border-[#00cc6a]/20 bg-zinc-900/40 animate-pulse" />
+                <div key={i} className="h-14 rounded-lg border-2 border-[#00cc6a]/30 bg-zinc-900/40 animate-pulse" />
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-4 gap-2">
-              <div className="rounded-lg border border-[#00cc6a]/30 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <Dumbbell className="w-3.5 h-3.5 text-amber-500 mb-0.5" />
+              <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className="text-xl font-headline text-amber-300 leading-none">{totalSessions}</span>
-                <span className="text-xs text-zinc-300 uppercase tracking-wider">Sessions</span>
+                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Sessions</span>
               </div>
-              <div className="rounded-lg border border-[#00cc6a]/30 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <Flame className="w-3.5 h-3.5 text-red-500 mb-0.5" />
+              <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className="text-xl font-headline text-red-300 leading-none">
                   {totalCalories > 0 ? totalCalories.toLocaleString() : '—'}
                 </span>
-                <span className="text-xs text-zinc-300 uppercase tracking-wider">Calories</span>
+                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Calories</span>
               </div>
-              <div className="rounded-lg border border-[#00cc6a]/30 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <TrendingUp className="w-3.5 h-3.5 text-cyan-500 mb-0.5" />
+              <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className={cn(
                   'font-headline text-cyan-300 leading-none text-center',
                   volumeDisplay.length > 8 ? 'text-sm' : 'text-xl',
                 )}>
                   {volumeDisplay}
                 </span>
-                <span className="text-xs text-zinc-300 uppercase tracking-wider">Volume</span>
+                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Volume</span>
               </div>
-              <div className="rounded-lg border border-[#00cc6a]/30 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <Calendar className="w-3.5 h-3.5 text-[#00cc6a] mb-0.5" />
+              <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className="text-xl font-headline text-[#00cc6a] leading-none">
                   {totalMinutes > 0 ? totalMinutes : '—'}
                 </span>
-                <span className="text-xs text-zinc-300 uppercase tracking-wider">Mins</span>
+                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Mins</span>
               </div>
             </div>
           )}
 
           {/* ── 7-day session calendar ── */}
           {!loading && (
-            <div className="rounded-lg border border-[#00cc6a]/30 bg-zinc-950/40 p-3 space-y-3">
-
-              {/* Day-indicator strip */}
-              <div className="flex gap-1 justify-between">
-                {weekDayEntries.map(({ date, label, dayNum, isToday, daySessions }) => {
-                  const hasSessions = daySessions.length > 0;
+            <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-3">
+              <div className="flex gap-1 justify-between items-start">
+                {weekDayEntries.map(({ date, label, dayNum, isToday, isPast, isFuture, daySessions, otherSessions }) => {
+                  const allPills = [
+                    ...daySessions.map((s) => ({
+                      label: s.dayLabel ?? s.programName,
+                      module: 'strength' as const,
+                    })),
+                    ...otherSessions.map((e) => ({ label: e.label, module: e.module })),
+                  ];
+                  const hasAny = allPills.length > 0;
+                  const isGreen = isPast || isToday;
                   return (
-                    <div key={date} className="flex flex-col items-center gap-1 flex-1 min-w-0">
-                      <span className="text-xs text-[#00cc6a] uppercase tracking-wider">{label}</span>
-                      <div className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline transition-all',
-                        hasSessions
-                          ? 'bg-amber-500/20 border border-amber-500/60 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                          : isToday
-                          ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-zinc-800/50 shadow-[0_0_10px_rgba(0,204,106,0.6)]'
-                          : 'border-2 border-[#00994d] text-[#00cc6a] shadow-[0_0_6px_rgba(0,204,106,0.35)]',
-                      )}>
-                        {hasSessions ? '✓' : dayNum}
+                    <div key={date} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                      <span className={cn(
+                        'text-[10px] uppercase tracking-wide',
+                        isGreen ? 'text-[#00cc6a]' : 'text-blue-400',
+                      )}>{label}</span>
+                      <div
+                        className={cn(
+                          'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline',
+                          hasAny
+                            ? isGreen
+                              ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-[#00cc6a]/10'
+                              : 'border-2 border-blue-500/70 text-blue-300 bg-blue-500/10'
+                            : isToday
+                            ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-zinc-800/50'
+                            : isPast
+                          ? 'border-2 border-[#00994d] text-[#00cc6a]'
+                          : 'border-2 border-blue-500/50 text-blue-400',
+                        )}
+                        style={isToday ? {
+                          animation: 'today-glow 2.4s ease-in-out infinite',
+                        } : undefined}>
+                        {dayNum}
+                      </div>
+                      <div className="flex flex-col gap-0.5 w-full mt-0.5">
+                        {allPills.map((p, i) => (
+                          <span key={i} className={cn(
+                            'text-[9px] font-headline uppercase tracking-wide rounded px-1 py-0.5 text-center truncate block leading-tight',
+                            p.module === 'strength' ? 'bg-amber-900/50 text-amber-300 border border-amber-600/50'
+                            : p.module === 'mobility' ? 'bg-blue-900/50 text-blue-300 border border-blue-600/50'
+                            : p.module === 'core'     ? 'bg-orange-900/50 text-orange-300 border border-orange-600/50'
+                            :                          'bg-red-900/50 text-red-300 border border-red-600/50',
+                          )}>
+                            {p.label}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   );
                 })}
               </div>
-
-              {/* Session detail rows — one block per active day */}
-              {weekDayEntries.some((d) => d.daySessions.length > 0) ? (
-                <div className="space-y-2.5 pt-2 border-t border-[#00cc6a]/20">
-                  {weekDayEntries
-                    .filter((d) => d.daySessions.length > 0)
-                    .map(({ date, label, daySessions }) => (
-                      <div key={date} className="space-y-1">
-                        {/* Day header */}
-                        <p className="text-xs font-headline uppercase tracking-widest text-zinc-300">
-                          {label} · {format(new Date(date + 'T12:00:00'), 'MMM d')}
-                        </p>
-
-                        {/* Sessions on this day */}
-                        {daySessions.map((s) => {
-                          const vol = fmtVol(s.totalVolume);
-                          const cals = s.cardioLog?.calories;
-                          const isStandalone =
-                            s.programId === 'standalone' ||
-                            s.programId === 'standalone-abs';
-
-                          return (
-                            <div
-                              key={s.id}
-                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[#00cc6a]/25 bg-zinc-900/30"
-                            >
-                              {/* Session label pill */}
-                              <span className={cn(
-                                'text-xs font-headline uppercase tracking-wider rounded px-2 py-0.5 border flex-shrink-0',
-                                isStandalone
-                                  ? 'text-red-300 border-red-600/50 bg-red-950/30'
-                                  : 'text-amber-300 border-amber-600/50 bg-amber-950/30',
-                              )}>
-                                {s.dayLabel}
-                              </span>
-
-                              {/* Program name */}
-                              {!isStandalone ? (
-                                <span className="text-sm text-zinc-300 truncate min-w-0 flex-1">
-                                  {s.programName}
-                                </span>
-                              ) : (
-                                <span className="flex-1" />
-                              )}
-
-                              {/* Volume + calories */}
-                              <span className="flex-shrink-0 flex items-center gap-2">
-                                {vol && (
-                                  <span className="text-sm font-headline text-cyan-400">{vol}</span>
-                                )}
-                                {cals && cals > 0 && (
-                                  <span className="text-sm font-headline text-red-400">{cals} kcal</span>
-                                )}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <p className="text-sm text-zinc-400 text-center pt-1">
-                  No sessions logged this week yet.
-                </p>
-              )}
             </div>
           )}
 
           {/* ── Per-program remaining days ── */}
           {!loading && hasAnyBreakdowns && (
             <div className="space-y-3">
-              <p className="text-sm font-headline uppercase tracking-widest text-[#00cc6a] drop-shadow-[0_0_6px_#00cc6a]">
+              <p className="text-sm font-headline uppercase tracking-widest text-[#00cc6a]">
                 Remaining This Week
               </p>
 
@@ -471,6 +490,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
                   key={program.id}
                   name={program.name}
                   nameColor="text-amber-400"
+                  pillClassName="border-amber-500/50 bg-amber-900/20 text-amber-300"
                   doneDayLabels={doneDayLabels}
                   remainingDayLabels={remainingDayLabels}
                 />
@@ -482,6 +502,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
                   key={program.id}
                   name={program.name}
                   nameColor="text-blue-400"
+                  pillClassName="border-blue-500/50 bg-blue-900/20 text-blue-300"
                   doneDayLabels={doneDayLabels}
                   remainingDayLabels={remainingDayLabels}
                 />
@@ -493,6 +514,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
                   key={program.id}
                   name={program.name}
                   nameColor="text-orange-400"
+                  pillClassName="border-orange-500/50 bg-orange-900/20 text-orange-300"
                   doneDayLabels={doneDayLabels}
                   remainingDayLabels={remainingDayLabels}
                 />
@@ -504,6 +526,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
                   key={program.id}
                   name={program.name}
                   nameColor="text-red-400"
+                  pillClassName="border-red-500/50 bg-red-900/20 text-red-300"
                   doneDayLabels={doneDayLabels}
                   remainingDayLabels={remainingDayLabels}
                 />

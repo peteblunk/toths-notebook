@@ -51,6 +51,7 @@ interface UseKhetReturn {
   getDiaryEntries: (limitCount?: number) => Promise<WorkoutSession[]>;
   /** All completed khetSessions for the current Mon–Sun week (decrypted). */
   getWeekSessions: () => Promise<WorkoutSession[]>;
+  undoSession: (programId: string, dayIndex: number) => Promise<void>;
   // ── Measurement Logs ──────────────────────────────────────────
   getMeasurementLogs: (options?: { category?: MeasurementCategory; limitCount?: number }) => Promise<MeasurementLog[]>;
   logMeasurement: (entry: { timestamp: string; category: MeasurementCategory; value: number; unit: string; notes?: string }) => Promise<{ wasOverwrite: boolean; existingId?: string }>;
@@ -321,6 +322,29 @@ export function useKhet(): UseKhetReturn {
       return [];
     }
   }, [user, masterKey]);
+
+  const undoSession = useCallback(async (programId: string, dayIndex: number): Promise<void> => {
+    if (!user) throw new Error('Not authenticated');
+    const q = query(
+      collection(db, 'khetSessions'),
+      where('userId', '==', user.uid),
+      where('programId', '==', programId),
+      where('dayIndex', '==', dayIndex),
+      where('completed', '==', true),
+      orderBy('date', 'desc'),
+      limit(1),
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+    const sessionDoc = snap.docs[0];
+    const totalVolume = (sessionDoc.data().totalVolume as number) ?? 0;
+    await deleteDoc(sessionDoc.ref);
+    await updateDoc(doc(db, 'khetPrograms', programId), {
+      sessionsCompleted: increment(-1),
+      lifetimeVolume: increment(-totalVolume),
+      lastSessionDayIndex: Math.max(-1, dayIndex - 1),
+    });
+  }, [user]);
 
   const getGhostLogs = useCallback(async (
     programId: string,
@@ -1123,6 +1147,7 @@ export function useKhet(): UseKhetReturn {
     deleteManualPR,
     getDiaryEntries,
     getWeekSessions,
+    undoSession,
     getMeasurementLogs,
     logMeasurement,
     overwriteMeasurement,

@@ -1011,13 +1011,15 @@ interface ProgramCardProps {
 }
 
 function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
-  const { logSession, getGhostLog } = useCardio();
+  const { logSession, getGhostLog, undoSession } = useCardio();
   const { getUserSettings } = useKhet();
   const { user } = useAuth();
   const { toast } = useToast();
   const [sessionOpen, setSessionOpen] = useState(false);
   const [ghostLog, setGhostLog] = useState<CardioSessionLog | null>(null);
   const [activeSession, setActiveSession] = useState<GeneratedCardioSession | null>(null);
+  const [pendingUndo, setPendingUndo] = useState<number | null>(null);
+  const [undoing, setUndoing] = useState(false);
   // Always derive from Athlete Profile settings (canonical, already in kg).
   // Fall back to program.bodyWeightKg only as last resort, treating it as kg.
   const [bodyWeightKg, setBodyWeightKg] = useState(program.bodyWeightKg ?? 80);
@@ -1051,7 +1053,11 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
     ?? allSessions.find((s) => s.week === currentWeek)?.phaseName
     ?? 'Aerobic Base';
 
-  const handleBeginSession = async (session: GeneratedCardioSession) => {
+  const handleBeginSession = async (session: GeneratedCardioSession, isCompleted: boolean) => {
+    if (isCompleted) {
+      setPendingUndo(session.index);
+      return;
+    }
     if (!user) return;
     const settings = await getUserSettings();
     if (settings?.bodyWeight) {
@@ -1167,7 +1173,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
                 return (
                   <button
                     key={session.index}
-                    onClick={() => handleBeginSession(session)}
+                    onClick={() => handleBeginSession(session, isCompleted)}
                     className={cn(
                       'flex items-center gap-1 px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
                       isCompleted
@@ -1185,6 +1191,46 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
             </div>
           </div>
         )}
+
+        {/* Undo confirmation strip */}
+        {pendingUndo !== null && (() => {
+          const s = currentWeekSessions.find((s) => s.index === pendingUndo);
+          return (
+            <div className="px-4 pb-3">
+              <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
+                <span className="text-xs text-amber-300 font-headline uppercase tracking-wide">
+                  Undo &ldquo;{s?.label ?? `Session ${pendingUndo + 1}`}&rdquo;?
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={async () => {
+                      setUndoing(true);
+                      try {
+                        await undoSession(program.id, pendingUndo);
+                        toast({ title: 'Session undone', description: 'Log erased — re-do it when ready.' });
+                      } catch {
+                        toast({ title: 'Error undoing session', variant: 'destructive' });
+                      } finally {
+                        setUndoing(false);
+                        setPendingUndo(null);
+                      }
+                    }}
+                    disabled={undoing}
+                    className="px-2.5 py-1 rounded border border-red-500/50 bg-red-950/20 text-red-300 text-[10px] font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
+                  >
+                    {undoing ? '…' : 'Undo'}
+                  </button>
+                  <button
+                    onClick={() => setPendingUndo(null)}
+                    className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-400 text-[10px] font-headline uppercase tracking-wider hover:border-zinc-500 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {sessionOpen && activeSession && (

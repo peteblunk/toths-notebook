@@ -1414,9 +1414,11 @@ interface CoreCardProps {
 }
 
 function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
-  const { logSession } = useCore();
+  const { logSession, undoSession } = useCore();
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<GeneratedCoreSession | null>(null);
+  const [pendingUndo, setPendingUndo] = useState<number | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   const sessions = generateCoreProgram(
     program.fitnessLevel,
@@ -1582,12 +1584,14 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
                 return (
                   <button
                     key={session.index}
-                    onClick={() => !isCompleted && setActiveSession(session)}
-                    disabled={isCompleted}
+                    onClick={() => {
+                      if (isCompleted) { setPendingUndo(session.index); }
+                      else { setActiveSession(session); }
+                    }}
                     className={cn(
                       'flex items-center justify-center px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
                       isCompleted
-                        ? 'border-green-500/60 text-green-300 bg-green-950/20 cursor-default shadow-[0_0_8px_rgba(74,222,128,0.15)]'
+                        ? 'border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.15)] hover:border-amber-500/60 hover:text-amber-300 cursor-pointer'
                         : isNextUp
                           ? 'border-orange-400 text-orange-200 bg-orange-950/30 shadow-[0_0_12px_rgba(249,115,22,0.5)] [animation:pulse_4s_ease-in-out_infinite] hover:bg-orange-950/50 cursor-pointer'
                           : 'border-zinc-800 text-zinc-400 hover:border-orange-600/40 hover:text-orange-300 hover:bg-orange-950/5 cursor-pointer',
@@ -1601,6 +1605,44 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
             </div>
           </>
         )}
+
+        {/* Undo confirmation strip */}
+        {pendingUndo !== null && (() => {
+          const s = currentWeekSessions.find((s) => s.index === pendingUndo);
+          return (
+            <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
+              <span className="text-xs text-amber-300 font-headline uppercase tracking-wide">
+                Undo &ldquo;{s?.label ?? `Session ${pendingUndo + 1}`}&rdquo;?
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={async () => {
+                    setUndoing(true);
+                    try {
+                      await undoSession(program.id, pendingUndo);
+                      toast({ title: 'Session undone', description: 'Log erased — re-do it when ready.' });
+                    } catch {
+                      toast({ title: 'Error undoing session', variant: 'destructive' });
+                    } finally {
+                      setUndoing(false);
+                      setPendingUndo(null);
+                    }
+                  }}
+                  disabled={undoing}
+                  className="px-2.5 py-1 rounded border border-red-500/50 bg-red-950/20 text-red-300 text-[10px] font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
+                >
+                  {undoing ? '…' : 'Undo'}
+                </button>
+                <button
+                  onClick={() => setPendingUndo(null)}
+                  className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-400 text-[10px] font-headline uppercase tracking-wider hover:border-zinc-500 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Program complete state */}
         {isComplete && (

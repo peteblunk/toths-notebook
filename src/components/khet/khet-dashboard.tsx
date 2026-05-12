@@ -360,10 +360,13 @@ interface ProgramCardProps {
 }
 
 function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
-  const { updateProgram } = useKhet();
+  const { updateProgram, undoSession } = useKhet();
   const { toast } = useToast();
+  const router = useRouter();
   const [deloadOpen, setDeloadOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
+  const [pendingUndo, setPendingUndo] = useState<number | null>(null);
+  const [undoing, setUndoing] = useState(false);
   const [confirmDeloadStrategy, setConfirmDeloadStrategy] = useState<DeloadStrategy>(
     program.deloadStrategy ?? 'reduce-volume',
   );
@@ -649,15 +652,24 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
           // Green if completed in current cycle (indices 0..lastDone), clears on cycle reset
           const isCompletedInCycle = !cycleReset && lastDone >= 0 && idx <= lastDone;
           const isNextUp = !allDoneToday && idx === nextIdx;
+          if (isCompletedInCycle) {
+            return (
+              <button
+                key={idx}
+                onClick={() => setPendingUndo(idx)}
+                className="group flex items-center justify-center px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.2)] hover:border-amber-500/60 hover:text-amber-300 cursor-pointer"
+              >
+                <span>{day.label}</span>
+              </button>
+            );
+          }
           return (
             <Link
               key={idx}
               href={`/khet/session/${program.id}/${idx}`}
               className={cn(
                 'group flex items-center justify-center px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
-                isCompletedInCycle
-                  ? 'border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.2)]'
-                  : isNextUp
+                isNextUp
                   ? 'border-orange-400 text-orange-300 bg-orange-950/20 shadow-[0_0_12px_rgba(251,146,60,0.5)] [animation:pulse_4s_ease-in-out_infinite]'
                   : 'border-zinc-800 text-zinc-400 hover:border-amber-600/40 hover:text-amber-300 hover:bg-amber-950/5',
               )}
@@ -667,6 +679,42 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
           );
         })}
       </div>
+
+      {/* Undo confirmation strip */}
+      {pendingUndo !== null && (
+        <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
+          <span className="text-xs text-amber-300 font-headline uppercase tracking-wide">
+            Undo &ldquo;{program.days?.[pendingUndo]?.label ?? `Day ${pendingUndo + 1}`}&rdquo;?
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={async () => {
+                const idx = pendingUndo;
+                setUndoing(true);
+                try {
+                  await undoSession(program.id, idx);
+                  toast({ title: 'Session undone', description: 'Log erased — edit and re-seal when ready.' });
+                  router.push(`/khet/session/${program.id}/${idx}`);
+                } catch {
+                  toast({ title: 'Error undoing session', variant: 'destructive' });
+                  setUndoing(false);
+                  setPendingUndo(null);
+                }
+              }}
+              disabled={undoing}
+              className="px-2.5 py-1 rounded border border-red-500/50 bg-red-950/20 text-red-300 text-[10px] font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
+            >
+              {undoing ? '…' : 'Undo & Edit'}
+            </button>
+            <button
+              onClick={() => setPendingUndo(null)}
+              className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-400 text-[10px] font-headline uppercase tracking-wider hover:border-zinc-500 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Progress Panel drawer */}
       {progressOpen && (

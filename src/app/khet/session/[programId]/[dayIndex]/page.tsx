@@ -358,7 +358,7 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
           className={cn(
             'w-full h-12 font-headline uppercase tracking-[0.3em] text-sm transition-all duration-500',
             anySetCompleted
-              ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]'
+              ? 'bg-black border-2 border-amber-400 text-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.35)] hover:shadow-[0_0_28px_rgba(251,191,36,0.55)] hover:border-amber-300 hover:text-amber-300 [animation:pulse_2.8s_ease-in-out_infinite]'
               : 'bg-zinc-900 text-zinc-700 border border-zinc-800 cursor-not-allowed',
           )}
         >
@@ -367,7 +367,7 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
           ) : (
             <>
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              Workout Complete — Gold State
+              Workout Complete — Save
             </>
           )}
         </Button>

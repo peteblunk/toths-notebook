@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { format, parseISO, differenceInCalendarDays, startOfWeek } from 'date-fns';
 import {
   Activity,
@@ -157,7 +158,12 @@ interface MobilityCardProps {
 }
 
 function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
+  const { undoSession } = useMobility();
+  const { toast } = useToast();
+  const router = useRouter();
   const sessions = generateMobilityPlan(program, ALL_EXERCISES);
+  const [pendingUndo, setPendingUndo] = useState<number | null>(null);
+  const [undoing, setUndoing] = useState(false);
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const weekStr = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -309,17 +315,26 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
                 session.index === nextIdx &&
                 nextIdx < program.totalMainSessions;
 
+              if (isCompleted) {
+                return (
+                  <button
+                    key={session.index}
+                    onClick={() => setPendingUndo(session.index)}
+                    className="flex items-center justify-center px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.2)] hover:border-amber-500/60 hover:text-amber-300 cursor-pointer"
+                  >
+                    {session.label}
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={session.index}
                   href={`/khet/mobility/${program.id}/${session.index}`}
                   className={cn(
                     'flex items-center justify-center px-3 py-2 rounded border text-xs font-headline uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
-                    isCompleted
-                      ? 'border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.2)]'
-                      : isNextUp
-                        ? 'border-blue-400 text-blue-200 bg-blue-950/30 shadow-[0_0_12px_rgba(96,165,250,0.5)] [animation:pulse_4s_ease-in-out_infinite]'
-                        : 'border-zinc-800 text-zinc-400 hover:border-blue-600/40 hover:text-blue-300 hover:bg-blue-950/5',
+                    isNextUp
+                      ? 'border-blue-400 text-blue-200 bg-blue-950/30 shadow-[0_0_12px_rgba(96,165,250,0.5)] [animation:pulse_4s_ease-in-out_infinite]'
+                      : 'border-zinc-800 text-zinc-400 hover:border-blue-600/40 hover:text-blue-300 hover:bg-blue-950/5',
                   )}
                 >
                   {session.label}
@@ -329,6 +344,44 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
           </div>
         </>
       )}
+
+      {/* Undo confirmation strip */}
+      {pendingUndo !== null && (() => {
+        const s = currentWeekSessions.find((s) => s.index === pendingUndo);
+        return (
+          <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
+            <span className="text-xs text-amber-300 font-headline uppercase tracking-wide">
+              Undo &ldquo;{s?.label ?? `Session ${pendingUndo + 1}`}&rdquo;?
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={async () => {
+                  setUndoing(true);
+                  try {
+                    await undoSession(program.id, pendingUndo);
+                    toast({ title: 'Session undone', description: 'Log erased — edit and re-seal when ready.' });
+                    router.push(`/khet/mobility/${program.id}/${pendingUndo}`);
+                  } catch {
+                    toast({ title: 'Error undoing session', variant: 'destructive' });
+                    setUndoing(false);
+                    setPendingUndo(null);
+                  }
+                }}
+                disabled={undoing}
+                className="px-2.5 py-1 rounded border border-red-500/50 bg-red-950/20 text-red-300 text-[10px] font-headline uppercase tracking-wider hover:bg-red-950/40 transition-all disabled:opacity-50"
+              >
+                {undoing ? '…' : 'Undo & Edit'}
+              </button>
+              <button
+                onClick={() => setPendingUndo(null)}
+                className="px-2.5 py-1 rounded border border-zinc-700 text-zinc-400 text-[10px] font-headline uppercase tracking-wider hover:border-zinc-500 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Pre-bed button */}
       {program.includePreBed && (

@@ -32,6 +32,7 @@ interface UseCardioReturn {
   updateProgram: (id: string, updates: Partial<Omit<CardioProgram, 'id'>>) => Promise<void>;
   deleteProgram: (id: string) => Promise<void>;
   logSession: (log: Omit<CardioSessionLog, 'id'>) => Promise<void>;
+  undoSession: (programId: string, sessionIndex: number) => Promise<void>;
   getGhostLog: (programId: string, sessionIndex: number) => Promise<CardioSessionLog | null>;
   getCardioStats: () => Promise<CardioStats | null>;
 }
@@ -135,6 +136,36 @@ export function useCardio(): UseCardioReturn {
       } catch (err) {
         console.warn('[useCardio] diary entry skipped (non-critical):', err);
       }
+    },
+    [user, programs],
+  );
+
+  const undoSession = useCallback(
+    async (programId: string, sessionIndex: number): Promise<void> => {
+      if (!user) throw new Error('Not authenticated');
+      const weekStr = getWeekStr();
+      const program = programs.find((p) => p.id === programId);
+      const q = query(
+        collection(db, 'cardioSessions'),
+        where('userId', '==', user.uid),
+        where('programId', '==', programId),
+        where('sessionIndex', '==', sessionIndex),
+        where('completed', '==', true),
+        orderBy('date', 'desc'),
+        limit(1),
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return;
+      await deleteDoc(snap.docs[0].ref);
+      const currentCount = program?.weeklyLog?.weekStr === weekStr ? program.weeklyLog.count : 0;
+      const updates: Record<string, unknown> = {
+        sessionsCompleted: increment(-1),
+        lastSessionIndex: Math.max(-1, sessionIndex - 1),
+      };
+      if (currentCount > 0) {
+        updates.weeklyLog = { weekStr, count: Math.max(0, currentCount - 1) };
+      }
+      await updateDoc(doc(db, 'cardioPrograms', programId), updates);
     },
     [user, programs],
   );
@@ -252,5 +283,5 @@ export function useCardio(): UseCardioReturn {
     }
   }, [user]);
 
-  return { programs, loading, addProgram, updateProgram, deleteProgram, logSession, getGhostLog, getCardioStats };
+  return { programs, loading, addProgram, updateProgram, deleteProgram, logSession, undoSession, getGhostLog, getCardioStats };
 }

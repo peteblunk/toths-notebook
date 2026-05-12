@@ -638,18 +638,13 @@ export default function MobilitySessionPage() {
     }
   }, [activeKey]);
 
-  // Watch for all done
-  useEffect(() => {
-    const allDone = levelUpMode
-      ? items.length > 0 && items.every(({ slot, exercise, sideIndex }) => {
-          const side: 'left' | 'right' | 'both' = exercise.sides === 'bilateral' ? 'both' : sideIndex === 0 ? 'left' : 'right';
-          return completedKeys.has(getSlotKey(slot, side) + '__r2');
-        })
-      : totalItems > 0 && doneCount === totalItems;
-    if (allDone && !sessionComplete) {
-      setSessionComplete(true);
-    }
-  }, [completedKeys, doneCount, totalItems, items, levelUpMode, sessionComplete]);
+  // Watch for all done — just a derived flag now; no auto-navigation
+  const allDone = levelUpMode
+    ? items.length > 0 && items.every(({ slot, exercise, sideIndex }) => {
+        const side: 'left' | 'right' | 'both' = exercise.sides === 'bilateral' ? 'both' : sideIndex === 0 ? 'left' : 'right';
+        return completedKeys.has(getSlotKey(slot, side) + '__r2');
+      })
+    : totalItems > 0 && doneCount === totalItems;
 
   const handleFinish = async () => {
     if (!program || !session || saving) return;
@@ -891,8 +886,20 @@ export default function MobilitySessionPage() {
           </button>
         </div>
 
-        {/* Manual finish button */}
-        {doneCount > 0 && doneCount < totalItems && (
+        {/* Save button — visible when all done, or manual finish when partial */}
+        {allDone && (
+          <div className="pt-4 pb-2">
+            <button
+              onClick={handleFinish}
+              disabled={saving}
+              className="w-full py-4 rounded-xl border-2 border-emerald-500 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-950/50 font-headline uppercase tracking-widest text-sm transition-all shadow-[0_0_24px_rgba(52,211,153,0.35)] disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              {saving ? 'Logging…' : 'Session Complete — Save'}
+            </button>
+          </div>
+        )}
+        {!allDone && doneCount > 0 && doneCount < totalItems && (
           <div className="pt-4">
             <button
               onClick={() => setSessionComplete(true)}

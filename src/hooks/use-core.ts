@@ -30,6 +30,7 @@ interface UseCoreReturn {
   updateProgram: (id: string, updates: Partial<Omit<CoreProgram, 'id'>>) => Promise<void>;
   deleteProgram: (id: string) => Promise<void>;
   logSession: (log: Omit<CoreSessionLog, 'id'>, programId: string) => Promise<void>;
+  undoSession: (programId: string, sessionIndex: number) => Promise<void>;
   getCoreStats: () => Promise<CoreStats | null>;
 }
 
@@ -143,6 +144,38 @@ export function useCore(): UseCoreReturn {
     [user, programs],
   );
 
+  const undoSession = useCallback(
+    async (programId: string, sessionIndex: number): Promise<void> => {
+      if (!user) throw new Error('Not authenticated');
+      const weekStr = getWeekStr();
+      const program = programs.find((p) => p.id === programId);
+      const q = query(
+        collection(db, 'coreSessions'),
+        where('userId', '==', user.uid),
+        where('programId', '==', programId),
+        where('sessionIndex', '==', sessionIndex),
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return;
+      const sorted = snap.docs.sort((a, b) => {
+        const da = a.data().date ?? '';
+        const db_ = b.data().date ?? '';
+        return da < db_ ? 1 : da > db_ ? -1 : 0;
+      });
+      await deleteDoc(sorted[0].ref);
+      const currentCount = program?.weeklyLog?.weekStr === weekStr ? program.weeklyLog.count : 0;
+      const updates: Record<string, unknown> = {
+        sessionsCompleted: increment(-1),
+        lastSessionIndex: Math.max(-1, sessionIndex - 1),
+      };
+      if (currentCount > 0) {
+        updates.weeklyLog = { weekStr, count: Math.max(0, currentCount - 1) };
+      }
+      await updateDoc(doc(db, 'corePrograms', programId), updates);
+    },
+    [user, programs],
+  );
+
   const getCoreStats = useCallback(async (): Promise<CoreStats | null> => {
     if (!user) return null;
 
@@ -217,5 +250,5 @@ export function useCore(): UseCoreReturn {
     return { totalSessions, totalMinutes, currentStreakWeeks, longestStreakWeeks, heatmap, programBreakdown, weekDays };
   }, [user]);
 
-  return { programs, loading, addProgram, updateProgram, deleteProgram, logSession, getCoreStats };
+  return { programs, loading, addProgram, updateProgram, deleteProgram, logSession, undoSession, getCoreStats };
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useRef } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/components/auth-provider';
 import { format, startOfWeek } from 'date-fns';
@@ -190,72 +191,70 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
     });
   }, [getWeekSessions]);
 
-  // Fetch mobility, core, and cardio sessions this week for calendar + minutes
+  // Real-time listeners for mobility, core, and cardio sessions this week
+  const mobilityBucket = useRef<CalendarEntry[]>([]);
+  const coreBucket = useRef<CalendarEntry[]>([]);
+  const cardioBucket = useRef<CalendarEntry[]>([]);
+
   useEffect(() => {
     if (!user) return;
     const weekStart = currentWeekStr;
     const weekEnd = format(new Date(new Date(weekStart).getTime() + 6 * 86400000), 'yyyy-MM-dd');
 
-    const fetchOtherSessions = async () => {
-      const entries: CalendarEntry[] = [];
+    const merge = () =>
+      setCalEntries([
+        ...mobilityBucket.current,
+        ...coreBucket.current,
+        ...cardioBucket.current,
+      ]);
 
-      // Mobility (no completed filter — field not stored when sessions are logged)
-      const mobilitySnap = await getDocs(
-        query(collection(db, 'mobilitySessions'),
-          where('userId', '==', user.uid),
-          where('date', '>=', weekStart),
-          where('date', '<=', weekEnd),
-        )
-      );
-      mobilitySnap.forEach((d) => {
-        const s = d.data() as MobilitySessionLog;
-        entries.push({
-          id: d.id, date: s.date, label: s.label,
-          programName: s.programName, module: 'mobility',
-          durationMinutes: s.durationMinutes ?? 0,
+    const unsubMobility = onSnapshot(
+      query(collection(db, 'mobilitySessions'),
+        where('userId', '==', user.uid),
+        where('date', '>=', weekStart),
+        where('date', '<=', weekEnd),
+      ),
+      (snap) => {
+        mobilityBucket.current = snap.docs.map((d) => {
+          const s = d.data() as MobilitySessionLog;
+          return { id: d.id, date: s.date, label: s.label, programName: s.programName, module: 'mobility' as const, durationMinutes: s.durationMinutes ?? 0 };
         });
-      });
+        merge();
+      },
+    );
 
-      // Core (no completed filter — field not stored when sessions are logged)
-      const coreSnap = await getDocs(
-        query(collection(db, 'coreSessions'),
-          where('userId', '==', user.uid),
-          where('date', '>=', weekStart),
-          where('date', '<=', weekEnd),
-        )
-      );
-      coreSnap.forEach((d) => {
-        const s = d.data() as CoreSessionLog;
-        entries.push({
-          id: d.id, date: s.date, label: s.label,
-          programName: s.programName, module: 'core',
-          durationMinutes: s.durationMinutes ?? 0,
+    const unsubCore = onSnapshot(
+      query(collection(db, 'coreSessions'),
+        where('userId', '==', user.uid),
+        where('date', '>=', weekStart),
+        where('date', '<=', weekEnd),
+      ),
+      (snap) => {
+        coreBucket.current = snap.docs.map((d) => {
+          const s = d.data() as CoreSessionLog;
+          return { id: d.id, date: s.date, label: s.label, programName: s.programName, module: 'core' as const, durationMinutes: s.durationMinutes ?? 0 };
         });
-      });
+        merge();
+      },
+    );
 
-      // Cardio
-      const cardioSnap = await getDocs(
-        query(collection(db, 'cardioSessions'),
-          where('userId', '==', user.uid),
-          where('completed', '==', true),
-          where('date', '>=', weekStart),
-          where('date', '<=', weekEnd),
-        )
-      );
-      cardioSnap.forEach((d) => {
-        const s = d.data() as CardioSessionLog;
-        entries.push({
-          id: d.id, date: s.date, label: s.label,
-          programName: s.programName, module: 'cardio',
-          durationMinutes: s.durationMinutes ?? 0,
-          calories: s.calories,
+    const unsubCardio = onSnapshot(
+      query(collection(db, 'cardioSessions'),
+        where('userId', '==', user.uid),
+        where('completed', '==', true),
+        where('date', '>=', weekStart),
+        where('date', '<=', weekEnd),
+      ),
+      (snap) => {
+        cardioBucket.current = snap.docs.map((d) => {
+          const s = d.data() as CardioSessionLog;
+          return { id: d.id, date: s.date, label: s.label, programName: s.programName, module: 'cardio' as const, durationMinutes: s.durationMinutes ?? 0, calories: s.calories };
         });
-      });
+        merge();
+      },
+    );
 
-      setCalEntries(entries);
-    };
-
-    fetchOtherSessions();
+    return () => { unsubMobility(); unsubCore(); unsubCardio(); };
   }, [user, currentWeekStr]);
 
   useEffect(() => { refresh(); }, [refresh]);

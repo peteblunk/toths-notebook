@@ -81,10 +81,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className={`${quantico.variable} ${orbitron.variable} ${jura.variable} font-body antialiased bg-black text-foreground`}>
-        {/* Pre-hydration shell — visible instantly before React loads, hidden once JS kicks in */}
+        {/* Pre-hydration shell — hidden by default; shown only before JS hydrates */}
         <div id="pre-hydration-shell" style={{
           position: 'fixed', inset: 0, zIndex: 99999,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           backgroundColor: '#111827', color: '#22d3ee',
         }}>
           <svg style={{width:40,height:40,animation:'spin 1s linear infinite',marginBottom:16}} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -93,7 +93,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <path style={{opacity:.75}} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
           </svg>
           <p style={{fontFamily:'sans-serif',fontSize:13,letterSpacing:'0.2em',textTransform:'uppercase',opacity:.6}}>Loading…</p>
-          <script dangerouslySetInnerHTML={{__html:`document.getElementById('pre-hydration-shell').style.display='none'`}} />
         </div>
         <AuthProvider>
           <GlobalBanners />

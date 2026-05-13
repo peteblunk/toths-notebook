@@ -12,6 +12,8 @@ import { AddTaskDialog } from "@/components/add-task-dialog";
 import { useTasks } from "@/hooks/use-tasks"; // 👈 Make sure this is here
 import { useToast } from '@/hooks/use-toast';
 import { PwaInstallPrompt } from "@/pwa-install-prompt"; // 🏺 Import the Herald
+import { CrownCard } from "@/components/franklin/crown-card";
+import { useFranklin } from "@/hooks/use-franklin";
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('Today');
@@ -23,6 +25,8 @@ export default function Home() {
   // --- 1. THE CRITICAL FIX ---
   // We pull addTask directly from your useTasks hook
   const { addTask } = useTasks(activeCategory); 
+  const { settings: franklinSettings, currentVirtue } = useFranklin();
+  const franklinActive = franklinSettings?.franklinActive ?? false;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,6 +82,11 @@ export default function Home() {
         </header>
 
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {franklinActive && (
+              <div className="mb-4">
+                <CrownCard />
+              </div>
+            )}
             <TaskList filter={activeCategory} />
           </main>
         </SidebarInset>

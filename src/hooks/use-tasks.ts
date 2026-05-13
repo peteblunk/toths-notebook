@@ -197,9 +197,25 @@ const addTask = async (taskData: Omit<Task, 'id' | 'completed' | 'createdAt'>) =
     const targetCollection = (task as any).originRitualId ? "tasks" : (task.isRitual ? "dailyRituals" : "tasks");
     
     const taskRef = doc(db, targetCollection, task.id);
+    const becomingComplete = !task.completed;
     await updateDoc(taskRef, {
-      completed: !task.completed
+      completed: becomingComplete,
     });
+
+    // ── Franklin bi-directional event bus ──────────────────────────────────
+    // When a ritual instance is marked complete, notify the Crown Card so it
+    // can check for virtue keyword overlap and auto-log an alignment spot.
+    if (becomingComplete && task.isRitual && task.originRitualId) {
+      const plainTitle =
+        typeof task.title === "string" ? task.title : "";
+      if (plainTitle) {
+        window.dispatchEvent(
+          new CustomEvent("franklin:ritual-complete", {
+            detail: { title: plainTitle },
+          })
+        );
+      }
+    }
   };
 
   // --- THE SAFETY LOCK ---

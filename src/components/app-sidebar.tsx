@@ -29,6 +29,7 @@ import {
   Package,
   Stars,
   Dumbbell,
+  ShieldCheck,
 } from "lucide-react";
 import { OstraconIcon } from "@/components/icons/ostracon-icon";
 import { IphtyLinkIcon } from "@/components/icons/IphtyLinkIcon";
@@ -42,6 +43,7 @@ import { KhonsuTimer } from "@/components/khonsu-timer";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { useIphtyNodeActive } from "@/hooks/use-iphty-link";
 import { use75Hard } from "@/hooks/use-75hard";
+import { useFranklin } from "@/hooks/use-franklin";
 import { Flame } from "lucide-react";
 
 interface AppSidebarProps {
@@ -54,6 +56,8 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
   const { isMobile, setOpenMobile } = useSidebar();
   const hasActiveIphtyChannels = useIphtyNodeActive();
   const { data: hardData, daysCompleted, effectiveDays } = use75Hard();
+  const { settings: franklinSettings } = useFranklin();
+  const franklinActive = franklinSettings?.franklinActive ?? false;
   const hardActive = hardData?.active ?? false;
   const hardMode = hardData?.mode ?? 'super';
 
@@ -252,6 +256,16 @@ export function AppSidebar({ activeCategory, setActiveCategory }: AppSidebarProp
             <Link href="/khet/dashboard">
               <Dumbbell className="w-4 h-4 mr-2 group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] transition-all duration-500" />
               <span className="font-bold tracking-wide">Khet-Station</span>
+            </Link>
+          </SidebarMenuButton>
+
+          <SidebarMenuButton asChild className={`group w-full justify-start pl-2 transition-all duration-300 ${franklinActive ? 'text-cyan-300 hover:bg-cyan-950/40' : 'text-cyan-600 hover:text-cyan-300 hover:bg-cyan-950/30'}`} onClick={handleNavClick}>
+            <Link href="/franklin">
+              <ShieldCheck className={`w-4 h-4 mr-2 transition-all duration-300 ${franklinActive ? 'text-cyan-400 group-hover:scale-110 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]' : 'text-cyan-700'}`} />
+              <span className="font-bold tracking-wide">Franklin Initiative</span>
+              {franklinActive && (
+                <span className="ml-auto text-[10px] font-headline uppercase tracking-widest text-cyan-400">Active</span>
+              )}
             </Link>
           </SidebarMenuButton>
         </div>

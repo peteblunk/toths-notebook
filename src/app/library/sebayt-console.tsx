@@ -54,8 +54,112 @@ Nun: The primordial abyss of chaos and unformed potential. When tasks are abando
   },
   {
     id: 'gifts-of-ptah',
-    title: 'Gifts of Ptah',
-    content: `Ptah is the creator god, the master architect, and the patron of craftsmen. A Gift of Ptah is a special reward bestowed upon you by the network for exceptional dedication, monumental streaks, or discovering hidden truths within the Notebook. These artifacts enhance your interface and serve as badges of your ascension.`
+    title: 'Gifts of Ptah: The Franklin Initiative',
+    content: `Ptah is the opener of mouths. Before all things existed, he spoke the cosmos into being through thought and word alone — Sia and Hu, conception and utterance, the two pillars of creation. He did not forge the world with force. He willed it into order.
+
+A Gift of Ptah is not bestowed lightly. It is not given for a streak counter or a completed checklist. It is conferred when the architecture of the self has been deliberately redesigned — when a seeker has turned the craftsman's eye inward and begun the true work.
+
+You have received the Franklin Initiative.
+
+─────────────────────────────────────────────
+
+THE GIFT ITSELF
+
+Benjamin Franklin — statesman, scientist, and one of the most deliberately constructed human beings in recorded history — spent his life working through a system of thirteen virtues. Not by willpower alone, but through observation, record, and honest reckoning. He tracked his lapses in ink. He stared at the evidence. He did not flinch. And across decades, he became the shape of the man he intended to be.
+
+Thoth's Notebook carries that same system forward. The Franklin Initiative is your thirteen-virtue refinement cycle — a living, encrypted ledger of who you are versus who you resolve to be.
+
+─────────────────────────────────────────────
+
+THE THIRTEEN VIRTUES
+
+Each virtue is assigned its own week in rotation. The cycle runs continuously. You practice one virtue at a time, giving it your full focused attention while keeping all others in the background of your conduct.
+
+The thirteen virtues, in order:
+
+I. TEMPERANCE — Eat not to dullness. Drink not to elevation.
+II. SILENCE — Speak not but what may benefit others or yourself. Avoid trifling conversation.
+III. ORDER — Let all your things have their places. Let each part of your business have its time.
+IV. RESOLUTION — Resolve to perform what you ought. Perform without fail what you resolve.
+V. FRUGALITY — Make no expense but to do good to others or yourself. Waste nothing.
+VI. INDUSTRY — Lose no time. Be always employed in something useful. Cut off all unnecessary actions.
+VII. SINCERITY — Use no hurtful deceit. Think innocently and justly; speak accordingly.
+VIII. JUSTICE — Wrong none by doing injuries, or omitting the benefits that are your duty.
+IX. MODERATION — Avoid extremes. Forbear resenting injuries so much as you think they deserve.
+X. CLEANLINESS — Tolerate no uncleanliness in body, clothes, or habitation.
+XI. TRANQUILITY — Be not disturbed at trifles, or at accidents common or unavoidable.
+XII. CHASTITY — Rarely use venery but for health or offspring. Never to dullness, weakness, or the injury of your own or another's peace or reputation.
+XIII. HUMILITY — Imitate Jesus and Socrates.
+
+─────────────────────────────────────────────
+
+HOW THE SYSTEM WORKS
+
+The Crown Card appears on your Main Hall when the Franklin Initiative is active. It displays your current virtue — the one under focus this week. You log Black Spots (lapses) and Bright Spots (alignments) directly from this card. A note accompanies each entry; these notes form your honest ledger.
+
+The Cycle Dashboard (/franklin) shows the full state of your practice: which week you are in, all thirteen virtues, the Strategy Bank for each, the audit archive, and configuration controls.
+
+─────────────────────────────────────────────
+
+THE WEEKLY AUDIT GATE
+
+At the close of each virtue's week, the system requires an Audit. This is the heart of the Gift.
+
+You will be asked two questions:
+
+1. What triggered the lapses you recorded? — Write plainly. Name the circumstance, the emotional state, the environment, the pattern. The trigger is the root. Until you name it, you cannot address it.
+
+2. What strategy will you carry forward? — Select or write a standing directive. This becomes your operational order for the next time this virtue returns in the cycle.
+
+Both fields are encrypted with your personal key before they leave your device. The system itself cannot read them. Only you hold the cipher.
+
+Once you seal the audit, it is permanent. The record is immutable. This is intentional — the past cycle is a fact, not a draft.
+
+─────────────────────────────────────────────
+
+PREVIOUS CYCLE RECALL
+
+When a virtue returns on the wheel, the Crown Card surfaces your last sealed audit for it automatically. Your standing directive appears above the log buttons — a reminder of the strategy you committed to. Your known trigger pattern appears below it — the pattern you identified in the last cycle.
+
+You do not begin from zero. You begin from the last honest reckoning.
+
+─────────────────────────────────────────────
+
+THE STRATEGY BANK
+
+Every virtue in the system has a corresponding Strategy Bank entry. These are technical behavioral cues — not motivational slogans, but operational protocols drawn from behavioral science, stoic practice, and practical method.
+
+Access the Strategy Bank by tapping the teal glyph button beneath any virtue name on the Crown Card or the Cycle Dashboard. The panel slides open to reveal implementation-level techniques and further study references.
+
+The Further Study links open targeted searches for deeper reading. No external accounts. No paywalls in the path.
+
+─────────────────────────────────────────────
+
+FORCE AUDIT / MID-CYCLE REVIEW
+
+The audit is not only triggered at the end of a week. Any time you feel the need to reckon — after a significant lapse, at a turning point, or simply when the pattern demands attention — you may open a Mid-Cycle Review from the Config tab.
+
+This is a voluntary act of self-examination. It does not advance the cycle. It creates a sealed record. Use it when the evidence demands it.
+
+─────────────────────────────────────────────
+
+ZERO-KNOWLEDGE ENCRYPTION
+
+All personal reflections in the Franklin Initiative — audit trigger analyses, standing directives, and context notes — are encrypted on your device using AES-256-GCM before they are stored. The encryption key is derived from your seed phrase and never transmitted. The Ptah Network stores only ciphertext. The plaintext exists only in your hands.
+
+This is not a privacy policy. It is a cryptographic guarantee.
+
+─────────────────────────────────────────────
+
+ON THE NATURE OF THIS WORK
+
+Franklin ran his virtue cycle for the rest of his life. He never perfected any virtue. He noted, near the end of his autobiography, that he had given up on the project of perfection — but found the attempt had made him a better and happier man than he would otherwise have been.
+
+The system does not promise perfection. It promises clarity. It promises that you will know yourself more honestly at the end of the year than at the beginning — not because you were told to improve, but because you watched yourself and did not look away.
+
+Ptah speaks the form into existence. You supply the observation and the will.
+
+Begin the cycle.`
   },
   {
     id: 'seshat-interface',
@@ -135,7 +239,80 @@ Enter an x value in the input field and tap Compute to receive two numerical res
 • ∫₀ˣ f dt — the definite integral from 0 to x, computed via Simpson's rule with 200 intervals. This gives a highly accurate numerical approximation of the area under the curve from zero to your chosen point.
 
 The graph and the numbers speak the same language. This is the calculus of Newton and Leibniz made tactile.`
-  }
+  },
+  {
+    id: 'franklin-overview',
+    title: 'The Franklin Initiative: Character Architecture',
+    content: `The Franklin Initiative is a 13-week character development protocol embedded within Thoth's Notebook, inspired by Benjamin Franklin's method of moral perfection as described in his autobiography.
+
+Franklin believed that perfect virtue was achievable through focused, systematic attention — not by attempting to embody all virtues simultaneously, but by concentrating on one at a time. He created a small book in which he tracked his daily transgressions against each virtue with a simple mark. Over thirteen weeks, he would cycle through his complete list, returning to each virtue year after year, gradually clearing the marks from his pages.
+
+The Franklin Initiative digitizes and extends this method.
+
+THE 13-WEEK ROTATION: Each week, one virtue is designated as your Primary Virtue. The system rotates automatically through your full list using a modulo calculation against the cycle start date. You are not told to be perfect in all things — only to place one virtue under the microscope.
+
+THE BASELINE VIRTUES: The system ships with Franklin's original 13 virtues: Temperance, Silence, Order, Resolution, Frugality, Industry, Sincerity, Justice, Moderation, Cleanliness, Tranquility, and two additional virtues relevant to modern practice — Venery and Athleticism. All 13 are fully editable. You may rename them, rewrite their commands, add new virtues, or remove those that do not apply to your life.
+
+ACTIVATION: Navigate to the Franklin Initiative page via the sidebar. The initiative begins in an inactive state. You may pre-configure your virtue list before activating. When you press Begin the Initiative, the cycle starts from the current Monday and the Crown Card appears on your Main Hall.`
+  },
+  {
+    id: 'franklin-crown-card',
+    title: 'The Crown Card: Black Spots & Bright Spots',
+    content: `The Crown Card is a persistent HUD (Heads-Up Display) injected at the top of your Main Hall when the Franklin Initiative is active. It is your daily interface with the active virtue.
+
+THE CROWN CARD DISPLAYS:
+
+Current Week — Which week of the cycle you are in (e.g., Week 4 of 13) and the name and command of your Primary Virtue for that week.
+
+Black Spot Count (Lapses) — A row of dark dots, one for each recorded failure against the active virtue this week. This is your transgression ledger. The count resets to zero when the virtue rotates out of the primary slot.
+
+Bright Spot Count (Alignments) — A row of amber dots, one for each recorded alignment this week. These mark moments when you successfully embodied the virtue.
+
+THE BLACK SPOT — LAPSE:
+
+Press the Black Spot button when you have failed to live according to the active virtue. A modal opens prompting you to record a Context Note. Specificity is required. "Failed Order: desk was a mess after shift" is useful data. "Messed up" is not. The note is permanently archived in your Franklin Archive and will be available for review every time this virtue cycles back around.
+
+THE BRIGHT SPOT — ALIGNMENT:
+
+Press the Bright Spot button when you have demonstrated the active virtue with clarity. Record the specific action. "Industry: completed the SUDO module two hours ahead of schedule" is the correct format. The note is permanently archived alongside your lapses.
+
+NUMERICAL RESET: The dot counts reset each time a virtue returns to the primary position. This mirrors Franklin's original chart — each cycle is a fresh ledger.
+
+NOTE PERSISTENCE: Your Context Notes do not reset. They accumulate in The Franklin Archive, indexed by virtue, allowing you to read through years of lessons learned each time a virtue comes around again. This is the long-term learning mechanism of the system.
+
+AUTO-ALIGNMENT (RITUAL BRIDGE): The Crown Card listens to your Daily Rituals module. When you mark a ritual complete, the system automatically scans for keyword overlap between the ritual's title and the active virtue's name and command. If a match is detected — for example, completing a "Morning Exercise" ritual while Athleticism is the active virtue — the system automatically logs a Bright Spot alignment on your behalf and flashes a confirmation on the Crown Card.`
+  },
+  {
+    id: 'franklin-config-archive',
+    title: 'Virtue Configuration & The Franklin Archive',
+    content: `VIRTUE CONFIGURATION
+
+Access the configuration panel at /franklin (Franklin Initiative in the sidebar).
+
+ADDING A VIRTUE: Scroll to the bottom of the virtue list and press Add Virtue. Enter a name (e.g., "Courage") and a command — the behavioral directive that defines what success looks like (e.g., "Act despite fear; do not delay the difficult thing"). Press Add. The new virtue is appended to the rotation cycle.
+
+EDITING A VIRTUE: Press the pencil icon on any virtue row. The row expands inline. Modify the name and command and press the check mark to save. The change takes effect immediately, including on the currently active virtue if you are editing it.
+
+DELETING A VIRTUE: Press the trash icon on any virtue row. The virtue is removed and the remaining virtues are re-numbered sequentially. The cycle length adjusts automatically — if you have 10 virtues, the cycle becomes 10 weeks.
+
+THE CYCLE START DATE: Displayed at the bottom of the Cycle Status card. This is the Monday on which your current cycle began. It resets whenever you toggle the Initiative off and back on.
+
+THE AUDIT WINDOW: Configure the hour and minute at which your day ends for tracking purposes. If you work a 14:00–22:00 shift, set the audit window to 23:00 or later to ensure your evening session data is captured before midnight rolls the date. This mirrors the Scribe's End of Day logic used elsewhere in Thoth's Notebook.
+
+THE FRANKLIN ARCHIVE
+
+Access the archive via the Archive tab on the Franklin Initiative page.
+
+The Archive is the permanent record of all your Context Notes — every lapse and alignment you have ever logged, indexed by virtue and week.
+
+FILTERING: Use the type filter chips (All Types / Lapses / Alignments) and the virtue filter chips to narrow the archive to specific categories. Notes are grouped by week, displayed in reverse chronological order.
+
+READING THE ARCHIVE: Each time a virtue rotates back into the primary position, you should visit the archive and read the notes from every previous cycle. This is the learning loop Franklin intended — not perfection in a single pass, but incremental reduction of transgressions over years of practice.
+
+DELETING NOTES: Hover over any note to reveal the delete button. Deletion is permanent. Use this only to remove duplicate or incorrectly logged entries — the value of the archive is in its completeness.
+
+FIRESTORE COLLECTIONS: The Franklin module uses three Firestore collections: franklinSettings (one document per user, contains the virtue list and cycle configuration), franklinWeekRecords (one document per virtue per week, contains lapse and alignment counts), and franklinNotes (the permanent archive of all context notes, never auto-deleted).`
+  },
 ];
 
 export default function SebaytConsole({ onClose }: { onClose?: () => void }) {

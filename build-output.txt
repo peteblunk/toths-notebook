@@ -1,0 +1,69 @@
+
+> nextn@2.0.0 build
+> next build
+
+  Γû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+
+warn - The class `duration-[2000ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;2000ms&rsqb;` to silence this warning.
+
+warn - The class `duration-[2500ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;2500ms&rsqb;` to silence this warning.
+
+warn - The class `duration-[3000ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;3000ms&rsqb;` to silence this warning.
+
+warn - The class `duration-[3500ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;3500ms&rsqb;` to silence this warning.
+
+warn - The class `duration-[Xms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;Xms&rsqb;` to silence this warning.
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/25) ...
+   Generating static pages (6/25) 
+   Generating static pages (12/25) 
+   Generating static pages (18/25) 
+ Γ£ô Generating static pages (25/25)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                    Size     First Load JS
+Γöî Γùï /                                          57.2 kB         404 kB
+Γö£ Γùï /_not-found                                880 B          88.4 kB
+Γö£ Γùï /archives                                  3.79 kB         287 kB
+Γö£ Γùï /evening-chronicle                         16.7 kB         305 kB
+Γö£ Γùï /franklin                                  7.66 kB         292 kB
+Γö£ Γùï /iphty-link                                12.7 kB         283 kB
+Γö£ Γùï /IstanbulProtocol                          4.95 kB         294 kB
+Γö£ Γùï /khet                                      147 B          87.7 kB
+Γö£ Γùï /khet/dashboard                            211 kB          570 kB
+Γö£ ╞Æ /khet/mobility/[programId]/[sessionIndex]  10.4 kB         245 kB
+Γö£ Γùï /khet/program                              2.21 kB         319 kB
+Γö£ ╞Æ /khet/session/[programId]/[dayIndex]       12.1 kB         303 kB
+Γö£ Γùï /library                                   11.4 kB         179 kB
+Γö£ Γùï /login                                     16.8 kB         346 kB
+Γö£ Γùï /ostraca                                   15.6 kB         345 kB
+Γö£ Γùï /rituals                                   7.97 kB         284 kB
+Γö£ Γùï /scribe-dossier                            20.6 kB         472 kB
+Γö£ Γùï /SeshatInterface                           22.1 kB         274 kB
+Γö£ ╞Æ /task/[id]                                 6.39 kB         234 kB
+Γö£ Γùï /test-lab/debug-crypto                     2.97 kB        90.5 kB
+Γö£ Γùï /test-lab/decryption-header-preview        4.73 kB         130 kB
+Γö£ Γùï /test-lab/inspect-glyphs                   3.84 kB         146 kB
+Γö£ Γùï /test-lab/moon-phase-preview               2 kB            115 kB
+Γö£ Γùï /test-lab/neheh-circuit-preview            2.01 kB         113 kB
+Γöö Γùï /test-lab/obelisk-animations               4.84 kB         147 kB
++ First Load JS shared by all                  87.6 kB
+  Γö£ chunks/2117-29730092588f34d3.js            31.9 kB
+  Γö£ chunks/fd9d1056-dda8f8960881b7f6.js        53.6 kB
+  Γöö other shared chunks (total)                2.02 kB
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

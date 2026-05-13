@@ -172,5 +172,37 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
+    // 21. FRANKLIN SETTINGS: One document per user, keyed by userId (virtue list, cycle config)
+    match /franklinSettings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 22. FRANKLIN WEEK RECORDS: Count of lapses/alignments per virtue per week
+    //     Document ID is "{userId}_{virtueId}_{weekKey}" — owner-only access.
+    //     Read must allow resource==null (document not yet created) so the
+    //     onSnapshot listener can subscribe before the first write.
+    match /franklinWeekRecords/{recordId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid);
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // 23. FRANKLIN NOTES: Permanent archive of lapse/alignment context notes (owner-only)
+    match /franklinNotes/{noteId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Notes are immutable once written — no update rule.
+    }
+
+    // 24. FRANKLIN AUDITS: Sealed weekly audit records (trigger analysis + strategy)
+    //     Document ID is "{userId}_{virtueId}_{weekKey}" — owner-only access.
+    //     Read allows resource==null so the onSnapshot query can subscribe before
+    //     any audit has been written for a given virtue.
+    match /franklinAudits/{auditId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid);
+      // Audits are immutable once sealed — no update or delete rule.
+    }
+
   }
 }

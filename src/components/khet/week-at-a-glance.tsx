@@ -47,6 +47,7 @@ type SimpleProgram = {
 function computeSimpleProgramWeek(
   program: SimpleProgram,
   currentWeekStr: string,
+  prefix = 'Session',
 ): { doneCount: number; remainingLabels: string[]; doneLabels: string[] } {
   const doneCount =
     program.weeklyLog?.weekStr === currentWeekStr
@@ -66,7 +67,7 @@ function computeSimpleProgramWeek(
       remainingLabels.push(nextIdx % 2 === 0 ? 'Day A' : 'Day B');
     } else {
       const cycle = program.daysPerWeek > 0 ? program.daysPerWeek : 1;
-      remainingLabels.push(`Session ${(nextIdx % cycle) + 1}`);
+      remainingLabels.push(`${prefix} ${(nextIdx % cycle) + 1}`);
     }
   }
 
@@ -88,13 +89,13 @@ function computeCardioProgramWeek(
 
   const doneLabels: string[] = [];
   for (let i = doneCount - 1; i >= 0; i--) {
-    doneLabels.unshift(`Session ${program.lastSessionIndex - i + 1}`);
+    doneLabels.unshift(`Cardio ${program.lastSessionIndex - i + 1}`);
   }
   const remainingLabels: string[] = [];
   const cycle = program.daysPerWeek > 0 ? program.daysPerWeek : 1;
   for (let i = 1; i <= remaining; i++) {
     const sessionNum = ((program.lastSessionIndex + i) % cycle) + 1;
-    remainingLabels.push(`Session ${sessionNum}`);
+    remainingLabels.push(`Cardio ${sessionNum}`);
   }
   return { doneLabels, remainingLabels };
 }
@@ -277,7 +278,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
       const otherOnDay = calEntries.filter((e) => e.date === iso);
       return {
         date: iso,
-        label: format(d, 'EEE'),
+        label: format(d, 'EEEEE'),
         dayNum: format(d, 'd'),
         isToday: iso === todayIso,
         isPast: iso < todayIso,
@@ -308,8 +309,8 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
     totalVolume === 0
       ? '—'
       : weightUnit === 'lbs'
-      ? `${Math.round(totalVolume * 2.20462).toLocaleString()} lbs`
-      : `${Math.round(totalVolume).toLocaleString()} kg`;
+      ? `${(totalVolume * 2.20462 / 2000).toFixed(1)}t`
+      : `${(totalVolume / 1000).toFixed(1)}t`;
 
   // ── per-program remaining ─────────────────────────────────
 
@@ -326,7 +327,7 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
   });
 
   const coreBreakdowns = corePrograms.map((program) => {
-    const { doneLabels, remainingLabels } = computeSimpleProgramWeek(program, currentWeekStr);
+    const { doneLabels, remainingLabels } = computeSimpleProgramWeek(program, currentWeekStr, 'Core');
     return { program, doneDayLabels: doneLabels, remainingDayLabels: remainingLabels };
   });
 
@@ -383,34 +384,34 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
 
           {/* ── Summary stat tiles ── */}
           {loading ? (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 -mx-4 pl-[5px] pr-3">
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="h-14 rounded-lg border-2 border-[#00cc6a]/30 bg-zinc-900/40 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 -mx-4 pl-[5px] pr-3">
               <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className="text-xl font-headline text-amber-300 leading-none">{totalSessions}</span>
                 <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Sessions</span>
               </div>
               <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <span className="text-xl font-headline text-red-300 leading-none">
+                <span className="text-xl font-headline text-amber-300 leading-none">
                   {totalCalories > 0 ? totalCalories.toLocaleString() : '—'}
                 </span>
                 <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Calories</span>
               </div>
               <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
                 <span className={cn(
-                  'font-headline text-cyan-300 leading-none text-center',
+                  'font-headline text-amber-300 leading-none text-center',
                   volumeDisplay.length > 8 ? 'text-sm' : 'text-xl',
                 )}>
                   {volumeDisplay}
                 </span>
-                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Volume</span>
+                <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Tons</span>
               </div>
               <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-2.5 flex flex-col items-center justify-center gap-0.5">
-                <span className="text-xl font-headline text-[#00cc6a] leading-none">
+                <span className="text-xl font-headline text-amber-300 leading-none">
                   {totalMinutes > 0 ? totalMinutes : '—'}
                 </span>
                 <span className="text-xs text-[#00cc6a] uppercase tracking-wider">Mins</span>
@@ -420,8 +421,8 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
 
           {/* ── 7-day session calendar ── */}
           {!loading && (
-            <div className="rounded-lg border-2 border-[#00cc6a]/50 bg-zinc-950/40 p-3">
-              <div className="flex gap-1 justify-between items-start">
+            <div className="py-2 pr-3 pl-[6px] -mx-4">
+              <div className="flex flex-col divide-y divide-[#00cc6a]/50">
                 {weekDayEntries.map(({ date, label, dayNum, isToday, isPast, isFuture, daySessions, otherSessions }) => {
                   const allPills = [
                     ...daySessions.map((s) => ({
@@ -433,33 +434,37 @@ export function WeekAtAGlancePanel({ programs }: WeekAtAGlanceProps) {
                   const hasAny = allPills.length > 0;
                   const isGreen = isPast || isToday;
                   return (
-                    <div key={date} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                      <span className={cn(
-                        'text-[10px] uppercase tracking-wide',
-                        isGreen ? 'text-[#00cc6a]' : 'text-blue-400',
-                      )}>{label}</span>
-                      <div
-                        className={cn(
-                          'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-headline',
-                          hasAny
-                            ? isGreen
-                              ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-[#00cc6a]/10'
-                              : 'border-2 border-blue-500/70 text-blue-300 bg-blue-500/10'
-                            : isToday
-                            ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-zinc-800/50'
-                            : isPast
-                          ? 'border-2 border-[#00994d] text-[#00cc6a]'
-                          : 'border-2 border-blue-500/50 text-blue-400',
-                        )}
-                        style={isToday ? {
-                          animation: 'today-glow 2.4s ease-in-out infinite',
-                        } : undefined}>
-                        {dayNum}
+                    <div key={date} className="flex items-center gap-2 min-h-[24px] py-1">
+                      {/* Y-axis: single-letter day + date circle */}
+                      <div className="flex items-center gap-2 w-12 flex-shrink-0">
+                        <span className={cn(
+                          'text-[12px] uppercase font-headline w-3 text-center leading-none',
+                          isGreen ? 'text-[#00cc6a]' : 'text-blue-400',
+                        )}>{label}</span>
+                        <div
+                          className={cn(
+                            'w-7 h-7 rounded-lg flex items-center justify-center text-sm font-headline flex-shrink-0',
+                            hasAny
+                              ? isGreen
+                                ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-[#00cc6a]/10'
+                                : 'border-2 border-blue-500/70 text-blue-300 bg-blue-500/10'
+                              : isToday
+                              ? 'border-2 border-[#00cc6a] text-[#00cc6a] bg-zinc-800/50'
+                              : isPast
+                              ? 'border-2 border-[#00994d] text-[#00cc6a]'
+                              : 'border-2 border-blue-500/50 text-blue-400',
+                          )}
+                          style={isToday ? {
+                            animation: 'today-glow 2.4s ease-in-out infinite',
+                          } : undefined}>
+                          {dayNum}
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-0.5 w-full mt-0.5">
+                      {/* X-axis: session pills */}
+                      <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                         {allPills.map((p, i) => (
                           <span key={i} className={cn(
-                            'text-[9px] font-headline uppercase tracking-wide rounded px-1 py-0.5 text-center truncate block leading-tight',
+                            'text-[9px] font-headline uppercase tracking-wide rounded px-1.5 py-0.5 leading-tight',
                             p.module === 'strength' ? 'bg-amber-900/50 text-amber-300 border border-amber-600/50'
                             : p.module === 'mobility' ? 'bg-blue-900/50 text-blue-300 border border-blue-600/50'
                             : p.module === 'core'     ? 'bg-orange-900/50 text-orange-300 border border-orange-600/50'

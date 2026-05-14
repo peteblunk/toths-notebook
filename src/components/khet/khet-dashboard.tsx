@@ -441,8 +441,10 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border bg-gradient-to-br from-zinc-950 via-[#0a0f1e] to-[#0f0a00] p-4 space-y-4 overflow-hidden',
-        adaptationAlert ? 'border-amber-600/50' : 'border-zinc-800',
+        'rounded-xl border-2 bg-gradient-to-br from-zinc-950 via-[#0a0f1e] to-[#0f0a00] p-4 space-y-4 overflow-hidden',
+        adaptationAlert
+          ? 'border-amber-400 shadow-[0_0_22px_rgba(245,158,11,0.45)]'
+          : 'border-amber-400/85 shadow-[0_0_18px_rgba(245,158,11,0.28)]',
       )}
     >
       {/* Program header */}
@@ -465,13 +467,15 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
           </div>
 
           {/* Stacked meta lines */}
-          <div className="mt-1.5 space-y-0.5">
-            <div className="text-sm text-zinc-200">{splitLabel[program.split]}</div>
-            <div className="text-sm text-zinc-200">{program.frequency}× per week</div>
+          <div className="mt-1.5 space-y-1">
+            <span className="inline-block text-[10px] font-headline uppercase tracking-wider text-amber-300 border border-amber-400/80 rounded px-1.5 py-0.5 bg-amber-950/20">
+              {splitLabel[program.split]}
+            </span>
+            <div className="text-sm text-amber-300">{program.frequency}× per week</div>
             {program.mesocycleStart && (
-              <div className="text-sm text-zinc-200">
+              <div className="text-sm text-amber-300">
                 Week {mesocycleWeeks + 1} of {program.durationWeeks ?? 8}
-                <span className="text-zinc-400 ml-2">(Day {mesocycleDays})</span>
+                <span className="text-amber-300 ml-2">(Day {mesocycleDays})</span>
               </div>
             )}
           </div>
@@ -479,7 +483,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
           {/* Progress bar */}
           {program.mesocycleStart && (
             <div className="mt-2">
-              <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
+              <div className="flex justify-between text-xs text-amber-300 mb-0.5">
                 <span>Progress</span>
                 <span>{progressPct}%</span>
               </div>
@@ -487,7 +491,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
-                    progressPct >= 100 ? 'bg-amber-400' : 'bg-cyan-600',
+                    progressPct >= 100 ? 'bg-amber-400' : 'bg-amber-500',
                   )}
                   style={{ width: `${progressPct}%` }}
                 />
@@ -497,24 +501,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          {/* Volume stat */}
-          <div className="text-right">
-            <div className="flex items-center gap-1 justify-end">
-              <TrendingUp className="w-3.5 h-3.5 text-cyan-500" />
-              <span className="text-sm text-cyan-300 font-headline">
-                {(program.lifetimeVolume / 1000).toFixed(1)}t
-              </span>
-            </div>
-            <div className="text-xs text-zinc-300">lifetime</div>
-          </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => setProgressOpen(true)}
-              className="p-1.5 rounded transition-colors text-zinc-400 hover:text-amber-400"
-              title="Progress & PRs"
-            >
-              <BarChart2 className="w-8 h-8" />
-            </button>
             <button
               onClick={onEdit}
               className="p-1.5 rounded transition-colors text-zinc-400 hover:text-cyan-400"
@@ -536,11 +523,11 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
 
       {/* Last session */}
       {program.lastSessionDate && (
-        <div className="flex items-center gap-2 text-sm text-zinc-200">
+        <div className="flex items-center gap-2 text-sm text-amber-300">
           <Calendar className="w-3.5 h-3.5" />
           Last: {format(parseISO(program.lastSessionDate), 'EEE, MMM d')}
           {program.lastSessionDayIndex !== null && program.lastSessionDayIndex !== undefined && (
-            <span className="text-zinc-400">
+            <span className="text-amber-300">
               — {program.days[program.lastSessionDayIndex]?.label}
             </span>
           )}
@@ -549,7 +536,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
 
       {/* Deload info row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="text-xs text-zinc-500">
+        <div className="text-xs text-amber-300">
           {program.isDeloading && program.lastDeloadStart && program.lastDeloadEnd ? (
             <span className="text-blue-400">
               Deload: {format(parseISO(program.lastDeloadStart), 'MMM d')} – {format(parseISO(program.lastDeloadEnd), 'MMM d')}
@@ -558,7 +545,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
           ) : program.lastDeloadEnd ? (
             <span>Last deload: {format(parseISO(program.lastDeloadEnd), 'MMM d, yyyy')}</span>
           ) : (
-            <span className="text-zinc-700">No deload logged yet</span>
+            <span className="text-amber-300">No deload logged yet</span>
           )}
         </div>
 
@@ -577,7 +564,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
               'flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all text-xs font-headline uppercase tracking-wider',
               deloadRecommended
                 ? 'border-amber-500/60 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
-                : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500',
+                : 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500',
             )}
           >
             <BatteryLow className="w-3 h-3" />
@@ -643,7 +630,7 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
       {/* Day tabs */}
       <p className={cn(
         'text-[10px] font-headline uppercase tracking-widest mb-1',
-        allDoneToday ? 'text-green-400' : 'text-zinc-400',
+        allDoneToday ? 'text-green-400' : 'text-amber-300',
       )}>
         {allDoneToday ? 'All Sessions Complete — Rest Up' : 'Select Day to Begin Workout'}
       </p>

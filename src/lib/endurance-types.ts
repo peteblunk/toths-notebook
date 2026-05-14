@@ -925,7 +925,7 @@ export function generateCardioProgram(
       sessions.push({
         index,
         week,
-        label: `Session ${day + 1}`,
+        label: `Cardio ${day + 1}`,
         slot,
         estimatedMinutes: totalDuration,
         focus: buildFocusLabel(intervalType, goal),

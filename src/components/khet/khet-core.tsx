@@ -60,17 +60,17 @@ interface CoreDraft {
 // ─────────────────────────────────────────────────────────────
 
 const LEVEL_BADGE: Record<CoreFitnessLevel, string> = {
-  Beginner: 'text-green-400 border-green-500/40 bg-green-950/20',
-  Intermediate: 'text-amber-400 border-amber-500/40 bg-amber-950/20',
-  Advanced: 'text-orange-400 border-orange-500/40 bg-orange-950/20',
-  Elite: 'text-red-400 border-red-500/40 bg-red-950/20',
+  Beginner: 'text-green-400 border-green-400/80 bg-green-950/20',
+  Intermediate: 'text-amber-400 border-amber-400/80 bg-amber-950/20',
+  Advanced: 'text-orange-400 border-orange-400/80 bg-orange-950/20',
+  Elite: 'text-red-400 border-red-400/80 bg-red-950/20',
 };
 
 const GOAL_COLORS: Record<CoreGoal, string> = {
-  Strength: 'text-red-300',
-  Endurance: 'text-cyan-300',
-  Athletic: 'text-yellow-300',
-  Aesthetics: 'text-orange-300',
+  Strength: 'text-red-300 border-red-400/80 bg-red-950/20',
+  Endurance: 'text-cyan-300 border-cyan-400/80 bg-cyan-950/20',
+  Athletic: 'text-yellow-300 border-yellow-400/80 bg-yellow-950/20',
+  Aesthetics: 'text-orange-300 border-orange-400/80 bg-orange-950/20',
 };
 
 function localDateStr(d: Date = new Date()): string {
@@ -1119,7 +1119,7 @@ function CoreEditModal({ program, onClose, onSave }: CoreEditModalProps) {
         B: toExList(program.customExerciseOrder.B),
       };
     }
-    const sessionA = sessions.find((s) => s.label === 'Core A' || s.label.startsWith('Core Session'));
+    const sessionA = sessions.find((s) => s.label === 'Core A' || s.label.startsWith('Core Session') || s.label.startsWith('Core '));
     const sessionB = sessions.find((s) => s.label === 'Core B');
     const slotsToEx = (s: typeof sessionA): CoreExercise[] =>
       s ? s.slots.map((slot) => CORE_EXERCISES.find((e) => e.id === slot.exerciseId)).filter((e): e is CoreExercise => !!e) : [];
@@ -1457,6 +1457,16 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
   const lastIdx = program.lastSessionIndex;
   const isComplete = program.sessionsCompleted >= program.totalSessions;
 
+  // Always include the next-up session even if it falls in the next calendar week
+  const displaySessions = (() => {
+    const base = currentWeekSessions;
+    if (!isComplete && nextIdx < program.totalSessions && !base.some((s) => s.index === nextIdx)) {
+      const nextSession = sessions.find((s) => s.index === nextIdx);
+      return nextSession ? [...base, nextSession] : base;
+    }
+    return base;
+  })();
+
   const handleLogComplete = async (log: Omit<CoreSessionLog, 'id'>) => {
     try {
       await logSession(log, program.id);
@@ -1472,7 +1482,7 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
 
   return (
     <>
-      <div className="rounded-xl border border-orange-500/30 bg-gradient-to-br from-zinc-950 via-[#120a00] to-[#0f0800] p-4 space-y-4 overflow-hidden shadow-[0_0_20px_rgba(249,115,22,0.07)]">
+      <div className="rounded-xl border-2 border-orange-400/85 bg-gradient-to-br from-zinc-950 via-[#120a00] to-[#0f0800] p-4 space-y-4 overflow-hidden shadow-[0_0_18px_rgba(251,146,60,0.28)]">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -1488,31 +1498,32 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
               <span className={cn('text-[9px] font-headline uppercase tracking-wider border rounded px-1.5 py-0.5', LEVEL_BADGE[program.fitnessLevel])}>
                 {program.fitnessLevel}
               </span>
-              <span className={cn('text-[9px] font-headline uppercase tracking-wider', GOAL_COLORS[program.goal])}>
+              <span className={cn('text-[9px] font-headline uppercase tracking-wider border rounded px-1.5 py-0.5', GOAL_COLORS[program.goal])}>
                 {program.goal}
-              </span>
-              <span className="text-xs text-zinc-400">
-                {program.daysPerWeek}× / week
-                {program.structure === 'AB' && <span className="text-zinc-600 ml-1">A/B</span>}
               </span>
             </div>
 
-            {/* Focus area tags */}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {program.focusAreas.map((area) => (
-                <span
-                  key={area}
-                  className="text-[9px] font-headline uppercase tracking-wider text-orange-400 border border-orange-500/30 rounded px-1.5 py-0.5 bg-orange-950/20"
-                >
-                  {area}
-                </span>
-              ))}
+            {/* Focus areas as plain text */}
+            <div className="mt-1.5 space-y-0.5">
+              {program.focusAreas.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {program.focusAreas.map((area) => (
+                    <span key={area} className="text-[9px] font-headline uppercase tracking-wider text-orange-300 border border-orange-400/80 rounded px-1.5 py-0.5 bg-orange-950/20">
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="text-sm text-orange-300">
+                {program.daysPerWeek}× / week
+                {program.structure === 'AB' && <span className="text-orange-300 ml-1">A/B</span>}
+              </div>
             </div>
 
             {/* Progress bar */}
             {program.startDate && (
               <div className="mt-3">
-                <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
+                <div className="flex justify-between text-xs text-orange-300 mb-0.5">
                   <span>
                     {currentWeek ? `Week ${currentWeek} of ${program.durationWeeks}` : 'Progress'}
                   </span>
@@ -1522,7 +1533,7 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
                   <div
                     className={cn(
                       'h-full rounded-full transition-all',
-                      progressPct >= 100 ? 'bg-orange-400' : 'bg-orange-600',
+                      progressPct >= 100 ? 'bg-orange-400' : 'bg-orange-500',
                     )}
                     style={{ width: `${progressPct}%` }}
                   />
@@ -1531,55 +1542,48 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
             )}
           </div>
 
-          {/* Stats + actions */}
+          {/* Actions */}
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <div className="text-right">
-              <div className="flex items-center gap-1 justify-end">
-                <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
-                <span className="text-sm text-orange-300 font-headline">
-                  {sessionsThisWeek}/{program.daysPerWeek}
-                </span>
-              </div>
-              <div className="text-xs text-zinc-300">this week</div>
-            </div>
-            <BanishmentPortal onConfirm={onDelete} ritualTitle={program.name}>
+            <div className="flex items-center gap-1">
               <button
-                className="p-1.5 rounded transition-colors text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]"
-                title="Remove program"
+                onClick={onEdit}
+                className="p-1.5 rounded transition-colors text-zinc-400 hover:text-orange-400"
+                title="Edit exercises"
               >
-                <DuamatefJar className="w-7 h-7" />
+                <CyberStylus className="w-8 h-8" />
               </button>
-            </BanishmentPortal>
-            <button
-              onClick={onEdit}
-              className="p-1.5 rounded transition-colors text-zinc-500 hover:text-orange-400 hover:bg-zinc-800"
-              title="Edit exercises"
-            >
-              <CyberStylus className="w-5 h-5" />
-            </button>
+              <BanishmentPortal onConfirm={onDelete} ritualTitle={program.name}>
+                <button
+                  className="p-1.5 rounded transition-colors text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                  title="Remove program"
+                >
+                  <DuamatefJar className="w-8 h-8" />
+                </button>
+              </BanishmentPortal>
+            </div>
           </div>
         </div>
 
         {/* Last session */}
         {program.lastSessionDate && (
-          <div className="flex items-center gap-2 text-sm text-zinc-200">
+          <div className="flex items-center gap-2 text-sm text-orange-300">
             <Calendar className="w-3.5 h-3.5" />
             Last: {format(parseISO(program.lastSessionDate), 'EEE, MMM d')}
           </div>
         )}
 
         {/* Session tabs */}
-        {currentWeekSessions.length > 0 && !isComplete && (
+        {displaySessions.length > 0 && !isComplete && (
           <>
-            <p className={cn('text-[10px] font-headline uppercase tracking-widest', doneToday ? 'text-green-400' : 'text-zinc-400')}>
+            <p className={cn('text-[10px] font-headline uppercase tracking-widest', doneToday ? 'text-green-400' : 'text-orange-300')}>
               {doneToday
                 ? 'Forged today — rest and recover.'
-                : `${currentWeek ? `Week ${currentWeek}` : 'Current'} Sessions`}
+                : 'Select Day to Begin Session'}
             </p>
             <div className="flex flex-wrap gap-1">
-              {currentWeekSessions.map((session) => {
+              {displaySessions.map((session) => {
                 const isCompleted = session.index <= lastIdx && lastIdx >= 0;
-                const isNextUp = !doneToday && session.index === nextIdx && nextIdx < program.totalSessions;
+                const isNextUp = session.index === nextIdx && nextIdx < program.totalSessions;
 
                 return (
                   <button
@@ -1594,7 +1598,7 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
                         ? 'border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.15)] hover:border-amber-500/60 hover:text-amber-300 cursor-pointer'
                         : isNextUp
                           ? 'border-orange-400 text-orange-200 bg-orange-950/30 shadow-[0_0_12px_rgba(249,115,22,0.5)] [animation:pulse_4s_ease-in-out_infinite] hover:bg-orange-950/50 cursor-pointer'
-                          : 'border-zinc-800 text-zinc-400 hover:border-orange-600/40 hover:text-orange-300 hover:bg-orange-950/5 cursor-pointer',
+                          : 'border-zinc-800 text-zinc-200 hover:border-orange-600/40 hover:text-orange-300 hover:bg-orange-950/5 cursor-pointer',
                     )}
                   >
                     {isCompleted && <Check className="w-3 h-3 mr-1 text-green-400" />}

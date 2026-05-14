@@ -197,7 +197,7 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
   const lastIdx = program.lastSessionIndex;
 
   return (
-    <div className="rounded-xl border border-blue-500/30 bg-gradient-to-br from-zinc-950 via-[#050a18] to-[#0a0518] p-4 space-y-4 overflow-hidden shadow-[0_0_20px_rgba(59,130,246,0.08)]">
+    <div className="rounded-xl border-2 border-blue-400/85 bg-gradient-to-br from-zinc-950 via-[#050a18] to-[#0a0518] p-4 space-y-4 overflow-hidden shadow-[0_0_18px_rgba(96,165,250,0.28)]">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -206,17 +206,27 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
           </div>
 
           <div className="mt-1.5 space-y-0.5">
-            <div className="text-sm text-zinc-200">
+            {/* Tight spots as plain text */}
+            {program.tightSpots.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {program.tightSpots.map((spot) => (
+                  <span key={spot} className="text-[9px] font-headline uppercase tracking-wider text-blue-300 border border-blue-400/80 rounded px-1.5 py-0.5 bg-blue-950/20">
+                    {spot}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="text-sm text-blue-300">
               {program.daysPerWeek}× per week
               {program.structure === 'AB' && (
-                <span className="text-zinc-500 ml-2">A/B Split</span>
+                <span className="text-blue-300 ml-2">A/B Split</span>
               )}
             </div>
             {currentWeek && (
-              <div className="text-sm text-zinc-200">
+              <div className="text-sm text-blue-300">
                 Week {currentWeek} of 6
                 {program.startDate && (
-                  <span className="text-zinc-400 ml-2">
+                  <span className="text-blue-300 ml-2">
                     (Day {differenceInCalendarDays(new Date(), parseISO(program.startDate))})
                   </span>
                 )}
@@ -224,22 +234,12 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
             )}
           </div>
 
-          {/* Tight spot tags */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {program.tightSpots.map((spot) => (
-              <span
-                key={spot}
-                className="text-[9px] font-headline uppercase tracking-wider text-blue-400 border border-blue-500/30 rounded px-1.5 py-0.5 bg-blue-950/20"
-              >
-                {spot}
-              </span>
-            ))}
-          </div>
+          {/* Tight spot tags — removed, now shown as plain text above */}
 
           {/* Progress bar */}
           {program.startDate && (
             <div className="mt-2.5">
-              <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
+              <div className="flex justify-between text-xs text-blue-300 mb-0.5">
                 <span>Progress</span>
                 <span>{progressPct}%</span>
               </div>
@@ -247,7 +247,7 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
-                    progressPct >= 100 ? 'bg-blue-400' : 'bg-blue-600',
+                    progressPct >= 100 ? 'bg-blue-400' : 'bg-blue-500',
                   )}
                   style={{ width: `${progressPct}%` }}
                 />
@@ -256,39 +256,31 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
           )}
         </div>
 
-        {/* Stats + actions */}
+        {/* Actions */}
         <div className="flex flex-col items-end gap-1">
-          <div className="text-right">
-            <div className="flex items-center gap-1 justify-end">
-              <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-sm text-blue-300 font-headline">
-                {sessionsThisWeek}/{program.daysPerWeek}
-              </span>
-            </div>
-            <div className="text-xs text-zinc-300">this week</div>
-          </div>
-
-          <BanishmentPortal onConfirm={onDelete} ritualTitle={program.name}>
+          <div className="flex items-center gap-1">
             <button
-              className="p-1.5 rounded transition-colors text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]"
-              title="Remove program"
+              onClick={onEdit}
+              className="p-1.5 rounded transition-colors text-zinc-400 hover:text-blue-400"
+              title="Edit exercises"
             >
-              <DuamatefJar className="w-7 h-7" />
+              <CyberStylus className="w-8 h-8" />
             </button>
-          </BanishmentPortal>
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded transition-colors text-zinc-500 hover:text-blue-400 hover:bg-zinc-800"
-            title="Edit exercises"
-          >
-            <CyberStylus className="w-5 h-5" />
-          </button>
+            <BanishmentPortal onConfirm={onDelete} ritualTitle={program.name}>
+              <button
+                className="p-1.5 rounded transition-colors text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                title="Remove program"
+              >
+                <DuamatefJar className="w-8 h-8" />
+              </button>
+            </BanishmentPortal>
+          </div>
         </div>
       </div>
 
       {/* Last session */}
       {program.lastSessionDate && (
-        <div className="flex items-center gap-2 text-sm text-zinc-200">
+        <div className="flex items-center gap-2 text-sm text-blue-300">
           <Calendar className="w-3.5 h-3.5" />
           Last: {format(parseISO(program.lastSessionDate), 'EEE, MMM d')}
         </div>
@@ -300,12 +292,12 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
           <p
             className={cn(
               'text-[10px] font-headline uppercase tracking-widest',
-              doneToday ? 'text-green-400' : 'text-zinc-400',
+              doneToday ? 'text-green-400' : 'text-blue-300',
             )}
           >
             {doneToday && remainingMainSessions.length === 0
               ? 'Protocol Complete — Rest & Recover'
-              : `Week ${currentWeek ?? 1} Sessions`}
+              : 'Select Day to Begin Session'}
           </p>
           <div className="flex flex-wrap gap-1">
             {currentWeekSessions.map((session) => {

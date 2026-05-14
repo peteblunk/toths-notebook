@@ -57,15 +57,15 @@ import {
 // ─────────────────────────────────────────────────────────────
 
 const LEVEL_BADGE: Record<CardioFitnessLevel, string> = {
-  Novice:       'text-green-400 border-green-600/40 bg-green-950/20',
-  Intermediate: 'text-yellow-400 border-yellow-600/40 bg-yellow-950/20',
-  Elite:        'text-red-400 border-red-600/40 bg-red-950/20',
+  Novice:       'text-green-400 border-green-400/80 bg-green-950/20',
+  Intermediate: 'text-yellow-400 border-yellow-400/80 bg-yellow-950/20',
+  Elite:        'text-red-400 border-red-400/80 bg-red-950/20',
 };
 
 const GOAL_COLOR: Record<CardioGoal, string> = {
-  'Fat Loss':        'text-orange-300',
-  'Engine Building': 'text-cyan-300',
-  'VO2 Max':         'text-red-300',
+  'Fat Loss':        'text-orange-300 border-orange-400/80 bg-orange-950/20',
+  'Engine Building': 'text-cyan-300 border-cyan-400/80 bg-cyan-950/20',
+  'VO2 Max':         'text-red-300 border-red-400/80 bg-red-950/20',
 };
 
 const INTERVAL_BADGE: Record<CardioIntervalType, string> = {
@@ -1049,9 +1049,6 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
   const progressPct = program.totalSessions > 0
     ? Math.min(100, Math.round((program.sessionsCompleted / program.totalSessions) * 100))
     : 0;
-  const phaseName = allSessions.find((s) => s.index === nextIdx)?.phaseName
-    ?? allSessions.find((s) => s.week === currentWeek)?.phaseName
-    ?? 'Aerobic Base';
 
   const handleBeginSession = async (session: GeneratedCardioSession, isCompleted: boolean) => {
     if (isCompleted) {
@@ -1106,7 +1103,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
 
   return (
     <>
-      <div className="rounded-xl border border-red-900/40 bg-zinc-950/60 overflow-hidden">
+      <div className="rounded-xl border-2 border-red-400/85 bg-zinc-950/60 overflow-hidden shadow-[0_0_18px_rgba(248,113,113,0.28)]">
         {/* Header */}
         <div className="px-4 pt-4 pb-3 space-y-2">
           <div className="flex items-start justify-between gap-2">
@@ -1114,48 +1111,38 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
               <p className="font-headline text-red-200 text-sm uppercase tracking-widest leading-tight truncate">{program.name}</p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className={cn('text-[9px] font-headline uppercase px-1.5 py-0.5 rounded border', LEVEL_BADGE[program.fitnessLevel])}>{program.fitnessLevel}</span>
-                <span className={cn('text-[9px] font-headline', GOAL_COLOR[program.goal])}>{program.goal}</span>
-                <span className="text-[9px] text-zinc-600">{program.daysPerWeek}d/wk · {program.durationWeeks}wk</span>
+                <span className={cn('text-[9px] font-headline uppercase tracking-wider border rounded px-1.5 py-0.5', GOAL_COLOR[program.goal])}>{program.goal}</span>
               </div>
+              <div className="text-sm text-red-300 mt-1">{program.daysPerWeek}× per week</div>
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <div className="flex items-center gap-0.5">
-                <button onClick={onEdit} className="p-1.5 text-red-400 transition-all active:scale-90" title="Edit program">
-                  <CyberStylus className="w-5 h-5" />
+              <div className="flex items-center gap-1">
+                <button onClick={onEdit} className="p-1.5 rounded transition-colors text-zinc-400 hover:text-red-400" title="Edit program">
+                  <CyberStylus className="w-8 h-8" />
                 </button>
                 <BanishmentPortal onConfirm={onDelete} ritualTitle={program.name}>
-                  <button className="p-1.5 text-red-600/70 drop-shadow-[0_0_6px_rgba(239,68,68,0.6)]" title="Remove program">
-                    <DuamatefJar className="w-7 h-7" />
+                  <button className="p-1.5 rounded transition-colors text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" title="Remove program">
+                    <DuamatefJar className="w-8 h-8" />
                   </button>
                 </BanishmentPortal>
               </div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="w-3 h-3 text-red-500" />
-                <span className="text-[10px] font-headline text-red-400">{sessionsThisWeek}/{program.daysPerWeek}</span>
-              </div>
             </div>
-          </div>
-
-          {/* Phase */}
-          <div className="flex items-center gap-2">
-            <Zap className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-            <span className="text-[10px] font-headline text-red-300">Week {currentWeek}/{program.durationWeeks}: {phaseName}</span>
           </div>
 
           {/* Progress */}
           <div className="space-y-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] text-zinc-600">{program.sessionsCompleted} / {program.totalSessions} sessions</span>
-              <span className="text-[9px] font-headline text-red-400">{progressPct}%</span>
+            <div className="flex items-center justify-between text-xs text-red-300">
+              <span>Week {currentWeek}/{program.durationWeeks}</span>
+              <span>{progressPct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-red-700 to-red-400 transition-all" style={{ width: `${progressPct}%` }} />
+              <div className="h-full rounded-full bg-red-500 transition-all" style={{ width: `${progressPct}%` }} />
             </div>
           </div>
 
           {program.lastSessionDate && (
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Calendar className="w-3 h-3" />
+            <div className="flex items-center gap-2 text-sm text-red-300">
+              <Calendar className="w-3.5 h-3.5" />
               Last: {format(parseISO(program.lastSessionDate), 'EEE, MMM d')}
             </div>
           )}
@@ -1164,7 +1151,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
         {/* Week session tabs */}
         {currentWeekSessions.length > 0 && (
           <div className="px-4 pb-4 space-y-2">
-            <p className="text-[9px] font-headline uppercase tracking-widest text-zinc-600">Week {currentWeek} Sessions</p>
+            <p className="text-[9px] font-headline uppercase tracking-widest text-red-300">Tap to begin session</p>
             <div className="flex flex-wrap gap-1.5">
               {currentWeekSessions.map((session) => {
                 const isCompleted = session.index <= lastIdx && lastIdx >= 0;
@@ -1179,7 +1166,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
                       isCompleted
                         ? 'border-green-500/60 text-green-300 bg-green-950/20 shadow-[0_0_8px_rgba(74,222,128,0.2)]'
                         : isNextUp
-                        ? 'border-yellow-400 text-yellow-200 bg-yellow-950/20 shadow-[0_0_12px_rgba(234,179,8,0.5)] [animation:pulse_2s_ease-in-out_infinite]'
+                        ? 'border-red-400 text-red-200 bg-red-950/20 shadow-[0_0_12px_rgba(248,113,113,0.5)] [animation:pulse_2s_ease-in-out_infinite]'
                         : 'border-zinc-700 text-zinc-300 active:border-red-700/40',
                     )}
                   >
@@ -1199,7 +1186,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
             <div className="px-4 pb-3">
               <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
                 <span className="text-xs text-amber-300 font-headline uppercase tracking-wide">
-                  Undo &ldquo;{s?.label ?? `Session ${pendingUndo + 1}`}&rdquo;?
+                  Undo &ldquo;{s?.label ?? `Cardio ${pendingUndo + 1}`}&rdquo;?
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button

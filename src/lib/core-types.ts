@@ -1061,7 +1061,7 @@ export function generateCoreProgram(
       label = `Core ${sessionType}`;
     } else {
       sessionType = 'single';
-      label = `Core Session ${dayInWeek + 1}`;
+      label = `Core ${dayInWeek + 1}`;
     }
 
     const exerciseIds = selectExercises(

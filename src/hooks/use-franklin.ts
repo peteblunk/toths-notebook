@@ -528,6 +528,35 @@ export function useFranklin() {
     await deleteDoc(doc(db, "franklinNotes", noteId));
   }, []);
 
+  const updateNote = useCallback(
+    async (noteId: string, nextNote: string) => {
+      const trimmed = nextNote.trim();
+      if (!trimmed) return;
+
+      let finalNote = trimmed;
+      let noteIv: string | null = null;
+      let isEncrypted = false;
+
+      if (masterKey) {
+        try {
+          const { ciphertext, iv } = await encryptData(masterKey, trimmed);
+          finalNote = bufferToBase64(ciphertext);
+          noteIv = bufferToBase64(iv.buffer as ArrayBuffer);
+          isEncrypted = true;
+        } catch (err) {
+          console.error("[Franklin] Failed to encrypt note update:", err);
+        }
+      }
+
+      await updateDoc(doc(db, "franklinNotes", noteId), {
+        note: finalNote,
+        noteIv,
+        isEncrypted,
+      });
+    },
+    [masterKey]
+  );
+
   /** Force a mid-cycle audit for the current week's virtue. */
   const forceAudit = useCallback(async () => {
     if (!user) return;
@@ -619,6 +648,7 @@ export function useFranklin() {
     updateVirtues,
     toggleFranklinMode,
     deleteNote,
+    updateNote,
     sealAudit,
     forceAudit,
   };

@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { format, parseISO, differenceInCalendarDays, startOfWeek } from 'date-fns';
 import {
   Zap, Plus, TrendingUp, Calendar, X, Flame, Activity,
-  Play, Pause, RotateCcw, Check, ChevronDown, Search, ArrowLeftRight,
+  Play, Pause, RotateCcw, Check, ChevronDown, Search, ArrowLeftRight, BarChart2,
 } from 'lucide-react';
+import { ProgramHistoryPanel } from './program-history-panel';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -1011,7 +1012,7 @@ interface ProgramCardProps {
 }
 
 function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
-  const { logSession, getGhostLog, undoSession } = useCardio();
+  const { logSession, getGhostLog, undoSession, updateProgram } = useCardio();
   const { getUserSettings } = useKhet();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1020,6 +1021,8 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
   const [activeSession, setActiveSession] = useState<GeneratedCardioSession | null>(null);
   const [pendingUndo, setPendingUndo] = useState<number | null>(null);
   const [undoing, setUndoing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [resetting, setResetting] = useState(false);
   // Always derive from Athlete Profile settings (canonical, already in kg).
   // Fall back to program.bodyWeightKg only as last resort, treating it as kg.
   const [bodyWeightKg, setBodyWeightKg] = useState(program.bodyWeightKg ?? 80);
@@ -1037,18 +1040,50 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
   const lastIdx = program.lastSessionIndex;
   const nextIdx = lastIdx + 1;
 
+  // ── 3 AM day-boundary (sessions before 03:00 count for the previous day) ──
+  const now = new Date();
+  const boundaryDate = now.getHours() < 3
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    : now;
+  const todayStr = format(boundaryDate, 'yyyy-MM-dd');
+  const doneToday = program.lastSessionDate === todayStr;
+
   const weekStr = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const sessionsThisWeek = program.weeklyLog?.weekStr === weekStr ? program.weeklyLog.count : 0;
 
   const weekStart = program.startDate
     ? Math.floor(differenceInCalendarDays(new Date(), parseISO(program.startDate)) / 7) + 1
     : null;
-  const currentWeek = weekStart ? Math.min(weekStart, program.durationWeeks) : 1;
+  // weekAdvanceCount lets the user manually advance the week when they finish early
+  const currentWeek = weekStart
+    ? Math.min(weekStart + (program.weekAdvanceCount ?? 0), program.durationWeeks)
+    : 1;
 
   const currentWeekSessions = allSessions.filter((s) => s.week === currentWeek);
   const progressPct = program.totalSessions > 0
     ? Math.min(100, Math.round((program.sessionsCompleted / program.totalSessions) * 100))
     : 0;
+
+  const isComplete = program.sessionsCompleted >= program.totalSessions;
+
+  // All sessions in the current week slot have been completed
+  const allWeekDone =
+    !isComplete &&
+    currentWeekSessions.length > 0 &&
+    lastIdx >= 0 &&
+    currentWeekSessions.every((s) => s.index <= lastIdx);
+
+  const handleResetWeek = async () => {
+    setResetting(true);
+    try {
+      await updateProgram(program.id, { weekAdvanceCount: (program.weekAdvanceCount ?? 0) + 1 });
+      toast({ title: 'Next week loaded', description: 'Forge on.' });
+    } catch {
+      toast({ title: 'Reset failed', variant: 'destructive' });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const handleBeginSession = async (session: GeneratedCardioSession, isCompleted: boolean) => {
     if (isCompleted) {
@@ -1114,6 +1149,12 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
                 <span className={cn('text-[9px] font-headline uppercase tracking-wider border rounded px-1.5 py-0.5', GOAL_COLOR[program.goal])}>{program.goal}</span>
               </div>
               <div className="text-sm text-red-300 mt-1">{program.daysPerWeek}× per week</div>
+              {program.startDate && (
+                <div className="text-sm text-red-300">
+                  Week {currentWeek} of {program.durationWeeks}
+                  <span className="text-red-300 ml-2">(Day {differenceInCalendarDays(new Date(), parseISO(program.startDate))})</span>
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <div className="flex items-center gap-1">
@@ -1132,7 +1173,7 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
           {/* Progress */}
           <div className="space-y-0.5">
             <div className="flex items-center justify-between text-xs text-red-300">
-              <span>Week {currentWeek}/{program.durationWeeks}</span>
+              <span>Progress</span>
               <span>{progressPct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
@@ -1149,13 +1190,15 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
         </div>
 
         {/* Week session tabs */}
-        {currentWeekSessions.length > 0 && (
+        {currentWeekSessions.length > 0 && !isComplete && (
           <div className="px-4 pb-4 space-y-2">
-            <p className="text-[9px] font-headline uppercase tracking-widest text-red-300">Tap to begin session</p>
+            <p className={cn('text-[9px] font-headline uppercase tracking-widest', allWeekDone ? 'text-green-400' : 'text-red-300')}>
+              {allWeekDone ? 'Week Complete — Rest & Recover' : 'Tap to begin session'}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {currentWeekSessions.map((session) => {
                 const isCompleted = session.index <= lastIdx && lastIdx >= 0;
-                const isNextUp = session.index === nextIdx && nextIdx < program.totalSessions;
+                const isNextUp = !allWeekDone && session.index === nextIdx && nextIdx < program.totalSessions;
 
                 return (
                   <button
@@ -1218,6 +1261,28 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
             </div>
           );
         })()}
+
+        {/* Reset weekly sessions — shown when all this week's sessions are complete */}
+        {allWeekDone && (
+          <div className="px-4 pb-4">
+            <button
+              onClick={handleResetWeek}
+              disabled={resetting}
+              className="w-full py-2.5 rounded-lg border border-green-500/60 bg-green-950/20 text-green-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              <span>{resetting ? 'Loading…' : 'Reset Weekly Sessions'}</span>
+            </button>
+          </div>
+        )}
+
+        {/* All Session Data */}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="w-full py-2 rounded-lg border border-red-700/60 text-red-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+        >
+          <BarChart2 className="w-4 h-4" />
+          All Session Data
+        </button>
       </div>
 
       {sessionOpen && activeSession && (
@@ -1228,6 +1293,15 @@ function CardioProgramCard({ program, onDelete, onEdit }: ProgramCardProps) {
           bodyWeightKg={bodyWeightKg}
           onClose={() => setSessionOpen(false)}
           onSave={handleSaveSession}
+        />
+      )}
+
+      {showHistory && (
+        <ProgramHistoryPanel
+          programId={program.id}
+          programName={program.name}
+          module="cardio"
+          onClose={() => setShowHistory(false)}
         />
       )}
     </>

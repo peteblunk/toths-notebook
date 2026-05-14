@@ -14,6 +14,7 @@ import {
   BarChart2,
   X,
 } from 'lucide-react';
+import { ProgramHistoryPanel } from './program-history-panel';
 import { cn } from '@/lib/utils';
 import { useMobility } from '@/hooks/use-mobility';
 import { useToast } from '@/hooks/use-toast';
@@ -158,13 +159,21 @@ interface MobilityCardProps {
 }
 
 function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
-  const { undoSession } = useMobility();
+  const { undoSession, updateProgram } = useMobility();
   const { toast } = useToast();
   const router = useRouter();
   const sessions = generateMobilityPlan(program, ALL_EXERCISES);
   const [pendingUndo, setPendingUndo] = useState<number | null>(null);
   const [undoing, setUndoing] = useState(false);
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const [showHistory, setShowHistory] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  // ── 3 AM day-boundary (sessions before 03:00 count for the previous day) ──
+  const now = new Date();
+  const boundaryDate = now.getHours() < 3
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    : now;
+  const todayStr = format(boundaryDate, 'yyyy-MM-dd');
 
   const weekStr = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const sessionsThisWeek =
@@ -182,19 +191,41 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
         differenceInCalendarDays(new Date(), parseISO(program.startDate)) / 7,
       ) + 1
     : null;
-  const currentWeek = weekStart ? Math.min(weekStart, 6) : null;
+  // weekAdvanceCount lets the user manually advance the week when they finish early
+  const currentWeek = weekStart
+    ? Math.min(weekStart + (program.weekAdvanceCount ?? 0), 6)
+    : null;
 
   const doneToday = program.lastSessionDate === todayStr;
   const nextIdx = program.lastSessionIndex + 1;
   const remainingMainSessions = sessions.filter((s) => s.index >= nextIdx);
 
   // Build the week's sessions for the day-tab row
-  // Show: sessions from the CURRENT week block (same week number)
   const currentWeekSessions = currentWeek
     ? sessions.filter((s) => s.week === currentWeek)
     : sessions.slice(0, program.daysPerWeek);
 
   const lastIdx = program.lastSessionIndex;
+
+  // All sessions in the current week slot have been completed
+  const isComplete = program.sessionsCompleted >= program.totalMainSessions;
+  const allWeekDone =
+    !isComplete &&
+    currentWeekSessions.length > 0 &&
+    lastIdx >= 0 &&
+    currentWeekSessions.every((s) => s.index <= lastIdx);
+
+  const handleResetWeek = async () => {
+    setResetting(true);
+    try {
+      await updateProgram(program.id, { weekAdvanceCount: (program.weekAdvanceCount ?? 0) + 1 });
+      toast({ title: 'Next week loaded', description: 'Forge on.' });
+    } catch {
+      toast({ title: 'Reset failed', variant: 'destructive' });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div className="rounded-xl border-2 border-blue-400/85 bg-gradient-to-br from-zinc-950 via-[#050a18] to-[#0a0518] p-4 space-y-4 overflow-hidden shadow-[0_0_18px_rgba(96,165,250,0.28)]">
@@ -287,23 +318,23 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
       )}
 
       {/* Session tabs for current week */}
-      {currentWeekSessions.length > 0 && (
+      {currentWeekSessions.length > 0 && !isComplete && (
         <>
           <p
             className={cn(
               'text-[10px] font-headline uppercase tracking-widest',
-              doneToday ? 'text-green-400' : 'text-blue-300',
+              allWeekDone ? 'text-green-400' : 'text-blue-300',
             )}
           >
-            {doneToday && remainingMainSessions.length === 0
-              ? 'Protocol Complete — Rest & Recover'
+            {allWeekDone
+              ? 'Week Complete — Rest & Recover'
               : 'Select Day to Begin Session'}
           </p>
           <div className="flex flex-wrap gap-1">
             {currentWeekSessions.map((session) => {
               const isCompleted = session.index <= lastIdx && lastIdx >= 0;
               const isNextUp =
-                !doneToday &&
+                !allWeekDone &&
                 session.index === nextIdx &&
                 nextIdx < program.totalMainSessions;
 
@@ -375,6 +406,17 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
         );
       })()}
 
+      {/* Reset weekly sessions — shown when all this week's sessions are complete */}
+      {allWeekDone && (
+        <button
+          onClick={handleResetWeek}
+          disabled={resetting}
+          className="w-full py-2.5 rounded-lg border border-green-500/60 bg-green-950/20 text-green-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          <span>{resetting ? 'Loading…' : 'Reset Weekly Sessions'}</span>
+        </button>
+      )}
+
       {/* Pre-bed button */}
       {program.includePreBed && (
         <Link
@@ -386,6 +428,24 @@ function MobilityCard({ program, onDelete, onEdit }: MobilityCardProps) {
           <span className="text-zinc-500 text-[9px] normal-case tracking-normal font-sans">~10m</span>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
         </Link>
+      )}
+
+      {/* All Session Data */}
+      <button
+        onClick={() => setShowHistory(true)}
+        className="w-full py-2 rounded-lg border border-blue-700/60 text-blue-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+      >
+        <BarChart2 className="w-4 h-4" />
+        All Session Data
+      </button>
+
+      {showHistory && (
+        <ProgramHistoryPanel
+          programId={program.id}
+          programName={program.name}
+          module="mobility"
+          onClose={() => setShowHistory(false)}
+        />
       )}
     </div>
   );

@@ -29,6 +29,7 @@ import { BanishmentPortal } from '@/components/banishment-portal';
 import { DuamatefJar } from '@/components/icons/duamatef-jar';
 import { CyberStylus } from '@/components/icons/cyber-stylus';
 import { CoreProgramWizard } from './core-program-wizard';
+import { ProgramHistoryPanel } from './program-history-panel';
 import {
   CORE_EXERCISES,
   generateCoreProgram,
@@ -1414,11 +1415,13 @@ interface CoreCardProps {
 }
 
 function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
-  const { logSession, undoSession } = useCore();
+  const { logSession, undoSession, updateProgram } = useCore();
   const { toast } = useToast();
   const [activeSession, setActiveSession] = useState<GeneratedCoreSession | null>(null);
   const [pendingUndo, setPendingUndo] = useState<number | null>(null);
   const [undoing, setUndoing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const sessions = generateCoreProgram(
     program.fitnessLevel,
@@ -1431,7 +1434,13 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
     program.maxModeEnabled ?? false,
   );
 
-  const todayStr = localDateStr();
+  // ── 3 AM day-boundary (sessions before 03:00 count for the previous day) ──
+  const now = new Date();
+  const boundaryDate = now.getHours() < 3
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    : now;
+  const todayStr = format(boundaryDate, 'yyyy-MM-dd');
+
   const weekStr = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const sessionsThisWeek =
     program.weeklyLog?.weekStr === weekStr ? program.weeklyLog.count : 0;
@@ -1444,12 +1453,15 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
   const weekStart = program.startDate
     ? Math.floor(differenceInCalendarDays(new Date(), parseISO(program.startDate)) / 7) + 1
     : null;
-  const currentWeek = weekStart ? Math.min(weekStart, program.durationWeeks) : null;
+  // weekAdvanceCount lets the user manually advance the week when they finish early
+  const currentWeek = weekStart
+    ? Math.min(weekStart + (program.weekAdvanceCount ?? 0), program.durationWeeks)
+    : null;
 
   const doneToday = program.lastSessionDate === todayStr;
   const nextIdx = program.lastSessionIndex + 1;
 
-  // Current week's sessions to display
+  // Only show the current week's sessions — no bleed into adjacent weeks
   const currentWeekSessions = currentWeek
     ? sessions.filter((s) => s.week === currentWeek)
     : sessions.slice(0, program.daysPerWeek);
@@ -1457,15 +1469,24 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
   const lastIdx = program.lastSessionIndex;
   const isComplete = program.sessionsCompleted >= program.totalSessions;
 
-  // Always include the next-up session even if it falls in the next calendar week
-  const displaySessions = (() => {
-    const base = currentWeekSessions;
-    if (!isComplete && nextIdx < program.totalSessions && !base.some((s) => s.index === nextIdx)) {
-      const nextSession = sessions.find((s) => s.index === nextIdx);
-      return nextSession ? [...base, nextSession] : base;
+  // All sessions in the current week slot have been completed
+  const allWeekDone =
+    !isComplete &&
+    currentWeekSessions.length > 0 &&
+    lastIdx >= 0 &&
+    currentWeekSessions.every((s) => s.index <= lastIdx);
+
+  const handleResetWeek = async () => {
+    setResetting(true);
+    try {
+      await updateProgram(program.id, { weekAdvanceCount: (program.weekAdvanceCount ?? 0) + 1 });
+      toast({ title: 'Next week loaded', description: 'Forge on.' });
+    } catch {
+      toast({ title: 'Reset failed', variant: 'destructive' });
+    } finally {
+      setResetting(false);
     }
-    return base;
-  })();
+  };
 
   const handleLogComplete = async (log: Omit<CoreSessionLog, 'id'>) => {
     try {
@@ -1518,15 +1539,19 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
                 {program.daysPerWeek}× / week
                 {program.structure === 'AB' && <span className="text-orange-300 ml-1">A/B</span>}
               </div>
+              {program.startDate && currentWeek && (
+                <div className="text-sm text-orange-300">
+                  Week {currentWeek} of {program.durationWeeks}
+                  <span className="text-orange-300 ml-2">(Day {differenceInCalendarDays(new Date(), parseISO(program.startDate))})</span>
+                </div>
+              )}
             </div>
 
             {/* Progress bar */}
             {program.startDate && (
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-orange-300 mb-0.5">
-                  <span>
-                    {currentWeek ? `Week ${currentWeek} of ${program.durationWeeks}` : 'Progress'}
-                  </span>
+                  <span>Progress</span>
                   <span>{progressPct}%</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
@@ -1573,17 +1598,17 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
         )}
 
         {/* Session tabs */}
-        {displaySessions.length > 0 && !isComplete && (
+        {currentWeekSessions.length > 0 && !isComplete && (
           <>
-            <p className={cn('text-[10px] font-headline uppercase tracking-widest', doneToday ? 'text-green-400' : 'text-orange-300')}>
-              {doneToday
-                ? 'Forged today — rest and recover.'
+            <p className={cn('text-[10px] font-headline uppercase tracking-widest', allWeekDone ? 'text-green-400' : 'text-orange-300')}>
+              {allWeekDone
+                ? 'Week Complete — Rest & Recover'
                 : 'Select Day to Begin Session'}
             </p>
             <div className="flex flex-wrap gap-1">
-              {displaySessions.map((session) => {
+              {currentWeekSessions.map((session) => {
                 const isCompleted = session.index <= lastIdx && lastIdx >= 0;
-                const isNextUp = session.index === nextIdx && nextIdx < program.totalSessions;
+                const isNextUp = !allWeekDone && session.index === nextIdx && nextIdx < program.totalSessions;
 
                 return (
                   <button
@@ -1648,6 +1673,17 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
           );
         })()}
 
+        {/* Reset weekly sessions — shown when all this week's sessions are complete */}
+        {allWeekDone && (
+          <button
+            onClick={handleResetWeek}
+            disabled={resetting}
+            className="w-full py-2.5 rounded-lg border border-green-500/60 bg-green-950/20 text-green-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            <span>{resetting ? 'Loading…' : 'Reset Weekly Sessions'}</span>
+          </button>
+        )}
+
         {/* Program complete state */}
         {isComplete && (
           <div className="rounded-lg border border-green-500/30 bg-green-950/10 px-3 py-2.5 flex items-center gap-2">
@@ -1657,6 +1693,15 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
             </p>
           </div>
         )}
+
+        {/* All Session Data */}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="w-full py-2 rounded-lg border border-orange-700/60 text-orange-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+        >
+          <BarChart2 className="w-4 h-4" />
+          All Session Data
+        </button>
       </div>
 
       {/* Session logger modal */}
@@ -1666,6 +1711,15 @@ function CoreCard({ program, onDelete, onEdit }: CoreCardProps) {
           session={activeSession}
           onClose={() => setActiveSession(null)}
           onComplete={handleLogComplete}
+        />
+      )}
+
+      {showHistory && (
+        <ProgramHistoryPanel
+          programId={program.id}
+          programName={program.name}
+          module="core"
+          onClose={() => setShowHistory(false)}
         />
       )}
     </>

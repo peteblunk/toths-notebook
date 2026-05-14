@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils';
 
 interface GhostLogProps {
   sessions: WorkoutSession[];
-  exerciseId: string; // Show ghost data for this specific exercise
+  exerciseId: string; // Show ghost data for this specific exercise (original id)
 }
 
 /**
  * Renders the last 3 logged set entries for a given exercise
  * as ghost/reference data to guide progressive overload.
+ * Also shows any substitute exercise used, and per-exercise notes.
  */
 export function GhostLog({ sessions, exerciseId }: GhostLogProps) {
   if (sessions.length === 0) return null;
@@ -20,35 +21,59 @@ export function GhostLog({ sessions, exerciseId }: GhostLogProps) {
   const relevant = sessions
     .map((s) => ({
       date: s.date,
-      log: s.exerciseLogs.find((e) => e.exerciseId === exerciseId),
+      // Match direct use OR substitution of the original exercise
+      log: s.exerciseLogs.find(
+        (e) => e.exerciseId === exerciseId || e.originalExerciseId === exerciseId,
+      ),
     }))
     .filter((x) => x.log && x.log.sets.some((s) => s.completed));
 
   if (relevant.length === 0) return null;
 
   return (
-    <div className="mt-1 space-y-1">
-      {relevant.map(({ date, log }, idx) => (
-        <div
-          key={idx}
-          className={cn(
-            'text-[10px] font-body tracking-wide',
-            idx === 0 ? 'text-amber-400/70' : 'text-zinc-600',
-          )}
-        >
-          <span className="mr-2 text-zinc-500">{format(parseISO(date), 'MMM d')}</span>
-          {log!.sets
-            .filter((s) => s.completed)
-            .map((s, si) => (
-              <span key={si} className="mr-2">
-                {s.weight}×{s.reps}
-                {s.rpe !== undefined ? (
-                  <span className="text-zinc-600 ml-0.5">@{s.rpe}</span>
-                ) : null}
+    <div className="mt-2 space-y-2">
+      {relevant.map(({ date, log }, idx) => {
+        const wasSubstituted = !!log!.originalExerciseId && log!.originalExerciseId === exerciseId && log!.exerciseId !== exerciseId;
+        const completedSets = log!.sets.filter((s) => s.completed);
+        return (
+          <div
+            key={idx}
+            className={cn(
+              'rounded border px-2.5 py-2 space-y-1',
+              idx === 0
+                ? 'border-amber-500/30 bg-amber-950/10'
+                : 'border-zinc-800 bg-zinc-950/20',
+            )}
+          >
+            {/* Date + substitute label */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={cn('text-xs font-headline', idx === 0 ? 'text-amber-400' : 'text-zinc-400')}>
+                {format(parseISO(date), 'EEE, MMM d')}
               </span>
-            ))}
-        </div>
-      ))}
+              {wasSubstituted && (
+                <span className="text-xs text-cyan-300 font-headline">
+                  → {log!.name}
+                </span>
+              )}
+            </div>
+            {/* Sets */}
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+              {completedSets.map((s, si) => (
+                <span key={si} className={cn('text-sm font-headline tabular-nums', idx === 0 ? 'text-amber-300' : 'text-zinc-300')}>
+                  {s.weight}×{s.reps}
+                  {s.rpe !== undefined && (
+                    <span className="text-zinc-500 ml-0.5 text-xs">@{s.rpe}</span>
+                  )}
+                </span>
+              ))}
+            </div>
+            {/* Exercise notes */}
+            {log!.notes && log!.notes.trim() && (
+              <p className="text-xs text-zinc-400 italic leading-snug">{log!.notes}</p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   ChevronLeft,
   CheckCircle2,
@@ -17,7 +17,6 @@ import { useKhet } from '@/hooks/use-khet';
 import { KhetSessionProvider, useKhetSession } from '@/components/khet/khet-context';
 import { ExerciseRow } from '@/components/khet/exercise-row';
 import { VolumeDashboard } from '@/components/khet/volume-dashboard';
-import { GhostLogPanel } from '@/components/khet/ghost-log';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Sidebar, SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
@@ -132,7 +131,6 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
   const { toast } = useToast();
   const router = useRouter();
   const [completing, setCompleting] = useState(false);
-  const [ghostOpen, setGhostOpen] = useState(false);
   const [exerciseDb, setExerciseDb] = useState<Exercise[]>([]);
 
   // ── Persistence: debounced localStorage writes + dirty-state tracking ──
@@ -303,21 +301,6 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
         ))}
       </div>
 
-      {/* Ghost log toggle */}
-      {!ghostLoading && ghostSessions.length > 0 && (
-        <div>
-          <button
-            onClick={() => setGhostOpen((v) => !v)}
-            className="flex items-center gap-2 text-[10px] font-headline uppercase tracking-[0.25em] text-zinc-600 hover:text-zinc-400 transition-colors"
-          >
-            <span>{ghostOpen ? '▾' : '▸'}</span>
-            Akashic Record{' '}
-            <span className="text-zinc-700">({ghostSessions.length} session{ghostSessions.length > 1 ? 's' : ''})</span>
-          </button>
-          {ghostOpen && <GhostLogPanel sessions={ghostSessions} />}
-        </div>
-      )}
-
       {/* Exercise rows */}
       <div className="space-y-3">
         {day.exercises.map((programEx, exIdx) => (
@@ -348,6 +331,25 @@ function SessionInner({ program, dayIndex, ghostSessions, ghostLoading }: Sessio
           placeholder="Technical cues, how you felt, equipment settings…"
           className="bg-black border-zinc-700 resize-none text-sm text-zinc-300 placeholder:text-zinc-700 min-h-[80px]"
         />
+        {/* Past session notes */}
+        {ghostSessions.filter((s) => s.notes?.trim()).length > 0 && (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-headline uppercase tracking-widest text-zinc-500">Previous Session Notes</p>
+            {ghostSessions
+              .filter((s) => s.notes?.trim())
+              .map((s, i) => (
+                <div key={i} className={cn(
+                  'rounded border px-2.5 py-2',
+                  i === 0 ? 'border-amber-500/30 bg-amber-950/10' : 'border-zinc-800 bg-zinc-950/20',
+                )}>
+                  <p className={cn('text-xs font-headline mb-1', i === 0 ? 'text-amber-400' : 'text-zinc-400')}>
+                    {format(parseISO(s.date), 'EEE, MMM d')}
+                  </p>
+                  <p className="text-sm text-zinc-300 leading-snug">{s.notes}</p>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
 
       {/* Complete session button */}

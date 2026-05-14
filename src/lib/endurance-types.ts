@@ -94,6 +94,8 @@ export interface CardioProgram {
   varietyMode?: boolean;
   /** When true a burpee finisher is appended to every session */
   maxModeEnabled?: boolean;
+  /** Number of manual weekly-reset advances the user has triggered. */
+  weekAdvanceCount?: number;
 }
 
 /** Stored in Firestore — cardioSessions/{id} */

@@ -48,6 +48,7 @@ import { KhetMobility, MobilityLaunchButton } from './khet-mobility';
 import { KhetCore, CoreLaunchButton } from './khet-core';
 import { MobilityProgramWizard } from './mobility-program-wizard';
 import { CoreProgramWizard } from './core-program-wizard';
+import { ProgramHistoryPanel } from './program-history-panel';
 import { KhetCardio } from './khet-cardio';
 import { CardioProgramWizard } from './cardio-program-wizard';
 import { KhetTorsionSystem } from './khet-torsion-system';
@@ -367,6 +368,8 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
   const [progressOpen, setProgressOpen] = useState(false);
   const [pendingUndo, setPendingUndo] = useState<number | null>(null);
   const [undoing, setUndoing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [confirmDeloadStrategy, setConfirmDeloadStrategy] = useState<DeloadStrategy>(
     program.deloadStrategy ?? 'reduce-volume',
   );
@@ -391,18 +394,36 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
   };
 
   // ── Day-status logic ─────────────────────────────────────────
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  // Sessions before 03:00 local time are considered part of the previous
+  // calendar day, so the cycle doesn't auto-reset until 03:00.
+  const now = new Date();
+  const boundaryDate = now.getHours() < 3
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    : now;
+  const todayStr = format(boundaryDate, 'yyyy-MM-dd');
   const lastDone = program.lastSessionDayIndex ?? -1;
   const doneToday = program.lastSessionDate === todayStr;
   const totalDays = program.days?.length ?? 0;
   // Every day 0..lastDone has been completed in the current cycle
   const allCycleDone = totalDays > 0 && lastDone === totalDays - 1;
-  // Completed the final day TODAY → all glow green until midnight
+  // Completed the final day in today's boundary window → all glow green
   const allDoneToday = allCycleDone && doneToday;
-  // Completed the final day on a PREVIOUS day → new cycle begins, reset to day 0
+  // Completed the final day before today's 03:00 boundary → new cycle begins
   const cycleReset = allCycleDone && !doneToday;
   // Next day in rotation
   const nextIdx = (lastDone === -1 || cycleReset) ? 0 : (lastDone + 1) % (totalDays || 1);
+
+  const handleResetWeekly = async () => {
+    setResetting(true);
+    try {
+      await updateProgram(program.id, { lastSessionDayIndex: -1, lastSessionDate: '' });
+      toast({ title: 'Sessions reset', description: 'Ready to run the rotation again.' });
+    } catch {
+      toast({ title: 'Reset failed', variant: 'destructive' });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const deloadLabel: Record<DeloadStrategy, string> = {
     'reduce-volume': 'Reduce Volume (Best)',
@@ -667,6 +688,17 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
         })}
       </div>
 
+      {/* Reset weekly sessions — shown when all days are green */}
+      {allDoneToday && (
+        <button
+          onClick={handleResetWeekly}
+          disabled={resetting}
+          className="w-full py-2.5 rounded-lg border border-green-500/60 bg-green-950/20 text-green-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          <span>{resetting ? 'Resetting…' : 'Reset Weekly Sessions'}</span>
+        </button>
+      )}
+
       {/* Undo confirmation strip */}
       {pendingUndo !== null && (
         <div className="rounded border border-amber-500/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
@@ -706,6 +738,24 @@ function ProgramCard({ program, onEdit, onDelete }: ProgramCardProps) {
       {/* Progress Panel drawer */}
       {progressOpen && (
         <ProgressPanel program={program} onClose={() => setProgressOpen(false)} />
+      )}
+
+      {/* All Session Data */}
+      <button
+        onClick={() => setShowHistory(true)}
+        className="w-full py-2 rounded-lg border border-amber-700/60 text-amber-300 text-sm font-headline uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+      >
+        <BarChart2 className="w-4 h-4" />
+        All Session Data
+      </button>
+
+      {showHistory && (
+        <ProgramHistoryPanel
+          programId={program.id}
+          programName={program.name}
+          module="strength"
+          onClose={() => setShowHistory(false)}
+        />
       )}
     </div>
   );

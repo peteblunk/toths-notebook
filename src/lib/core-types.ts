@@ -69,6 +69,8 @@ export interface CoreProgram {
   volumeIntensity?: 1 | 2 | 3;
   /** Hard-cap session volume at 12 total sets with intelligent redistribution. */
   maxModeEnabled?: boolean;
+  /** Number of manual weekly-reset advances the user has triggered. */
+  weekAdvanceCount?: number;
 }
 
 /** Stored in Firestore — coreSessions/{id} */

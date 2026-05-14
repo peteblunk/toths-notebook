@@ -57,6 +57,8 @@ export interface MobilityProgram {
   };
   /** User-defined exercise ordering per session type (set in wizard review step) */
   customSlotOrder?: Record<'single' | 'A' | 'B', string[]>;
+  /** Number of manual weekly-reset advances the user has triggered. */
+  weekAdvanceCount?: number;
 }
 
 /** Stored in Firestore — mobilitySessions/{id} */

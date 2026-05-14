@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useFranklin, getWeekKey } from "@/hooks/use-franklin";
 import { SpotModal } from "@/components/franklin/spot-modal";
 import { AuditLockBanner } from "@/components/franklin/audit-gate";
@@ -121,38 +121,7 @@ export function CrownCard() {
     type: "lapse" | "alignment";
     virtue: FranklinVirtue | null;
   } | null>(null);
-  const [autoAligned, setAutoAligned] = useState(false);
   const [showVirtues, setShowVirtues] = useState(false);
-
-  // ── Bi-directional ritual event bus ───────────────────────────────────────
-  const handleRitualComplete = useCallback(
-    (e: Event) => {
-      if (!currentVirtue) return;
-      const { title } = (e as CustomEvent<{ title: string }>).detail;
-
-      const virtueTokens = `${currentVirtue.name} ${currentVirtue.command}`
-        .toLowerCase()
-        .split(/\W+/)
-        .filter((w) => w.length > 3);
-      const titleTokens = title.toLowerCase().split(/\W+/);
-      const hasOverlap = titleTokens.some((t) =>
-        virtueTokens.some((v) => v.includes(t) || t.includes(v))
-      );
-
-      if (hasOverlap) {
-        logSpot("alignment", `Auto-aligned: "${title}" ritual completed.`);
-        setAutoAligned(true);
-        setTimeout(() => setAutoAligned(false), 3000);
-      }
-    },
-    [currentVirtue, logSpot]
-  );
-
-  useEffect(() => {
-    window.addEventListener("franklin:ritual-complete", handleRitualComplete);
-    return () =>
-      window.removeEventListener("franklin:ritual-complete", handleRitualComplete);
-  }, [handleRitualComplete]);
 
   if (!settings?.franklinActive || !currentVirtue) return null;
 
@@ -192,9 +161,7 @@ export function CrownCard() {
       <div
         className={cn(
           "relative rounded-xl border-2 bg-zinc-950 px-4 py-4 space-y-4 transition-all duration-500",
-          autoAligned
-            ? "border-emerald-500 shadow-[0_0_28px_rgba(52,211,153,0.35),inset_0_0_14px_rgba(52,211,153,0.07)]"
-            : "border-cyan-500 shadow-[0_0_28px_rgba(6,182,212,0.3),0_0_56px_rgba(6,182,212,0.1),inset_0_0_14px_rgba(6,182,212,0.05)]"
+          "border-cyan-500 shadow-[0_0_28px_rgba(6,182,212,0.3),0_0_56px_rgba(6,182,212,0.1),inset_0_0_14px_rgba(6,182,212,0.05)]"
         )}
       >
         {/* Header */}
@@ -296,13 +263,6 @@ export function CrownCard() {
               </Link>
             )}
           </div>
-        )}
-
-        {/* Auto-aligned flash */}
-        {autoAligned && (
-          <p className="text-[9px] text-emerald-400 font-headline uppercase tracking-widest text-center animate-pulse">
-            ✦ Virtue alignment auto-detected from ritual
-          </p>
         )}
 
         {/* Previous Cycle Directive — shown when this virtue has a prior sealed audit */}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFranklin } from "@/hooks/use-franklin";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil, Check, X } from "lucide-react";
 import type { FranklinNote } from "@/lib/franklin-types";
 
 // ── Filter controls ───────────────────────────────────────────────────────────
@@ -19,11 +19,35 @@ interface ArchiveFilters {
 function NoteCard({
   note,
   onDelete,
+  onUpdate,
 }: {
   note: FranklinNote;
   onDelete: (id: string) => void;
+  onUpdate: (id: string, note: string) => Promise<void>;
 }) {
   const isLapse = note.type === "lapse";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note.note);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(note.note);
+  }, [note.note]);
+
+  const handleSave = async () => {
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === note.note) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onUpdate(note.id, trimmed);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div
@@ -56,16 +80,58 @@ function NoteCard({
             {format(parseISO(note.date), "MMM d, yyyy")}
           </span>
         </div>
-        <p className="text-sm text-zinc-200 leading-snug">{note.note}</p>
+        {editing ? (
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full min-h-[72px] rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-200"
+          />
+        ) : (
+          <p className="text-sm text-zinc-200 leading-snug">{note.note}</p>
+        )}
       </div>
 
-      {/* Delete — always visible on mobile */}
-      <button
-        onClick={() => onDelete(note.id)}
-        className="text-zinc-500 active:text-rose-400 transition-colors flex-shrink-0 self-start mt-0.5 p-1"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      <div className="flex flex-col gap-1 flex-shrink-0 self-start mt-0.5">
+        {editing ? (
+          <>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="text-zinc-400 active:text-emerald-400 transition-colors p-1 disabled:opacity-50"
+              aria-label="Save note"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setDraft(note.note);
+                setEditing(false);
+              }}
+              className="text-zinc-500 active:text-zinc-200 transition-colors p-1"
+              aria-label="Cancel edit"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setEditing(true)}
+              className="text-zinc-500 active:text-cyan-400 transition-colors p-1"
+              aria-label="Edit note"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete(note.id)}
+              className="text-zinc-500 active:text-rose-400 transition-colors p-1"
+              aria-label="Delete note"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -73,7 +139,7 @@ function NoteCard({
 // ── Main Archive ──────────────────────────────────────────────────────────────
 
 export function FranklinArchive() {
-  const { settings, notes, deleteNote } = useFranklin();
+  const { settings, notes, deleteNote, updateNote } = useFranklin();
   const [filters, setFilters] = useState<ArchiveFilters>({
     virtueId: "all",
     type: "all",
@@ -164,12 +230,12 @@ export function FranklinArchive() {
               <p className="text-xs font-headline uppercase tracking-[0.4em] text-zinc-400 mb-2">
                 Week of {format(parseISO(weekKey), "MMMM d, yyyy")}
               </p>
-              <div className="space-y-1.5">
-                {weekNotes.map((n) => (
-                  <NoteCard key={n.id} note={n} onDelete={deleteNote} />
-                ))}
+                <div className="space-y-1.5">
+                  {weekNotes.map((n) => (
+                    <NoteCard key={n.id} note={n} onDelete={deleteNote} onUpdate={updateNote} />
+                  ))}
+                </div>
               </div>
-            </div>
           ))}
         </div>
       )}

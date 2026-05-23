@@ -53,6 +53,7 @@ import { KhetCardio } from './khet-cardio';
 import { CardioProgramWizard } from './cardio-program-wizard';
 import { KhetTorsionSystem } from './khet-torsion-system';
 import { WeekAtAGlancePanel } from './week-at-a-glance';
+import { ExportVaultButton } from './export-vault-button';
 
 export function KhetDashboard() {
   const { programs, loading, deleteProgram } = useKhet();
@@ -323,6 +324,11 @@ export function KhetDashboard() {
           <KhetTorsionSystem />
         </div>
       )}
+
+      {/* Export Utility */}
+      <div className="pt-4 border-t border-zinc-800/60 mt-8">
+        <ExportVaultButton />
+      </div>
 
       {/* Program Wizard — create */}
       <ProgramWizard
